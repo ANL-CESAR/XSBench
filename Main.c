@@ -6,10 +6,16 @@ int main( int argc, char* argv[] )
 	int n_isotopes = 300;
 	int n_gridpoints = 200;
 	int lookups = 1000000;
-	int (*cmp) (const void *, const void *);
-	cmp = NGP_compare;
 	int max_procs = omp_get_num_procs();
-	omp_set_num_threads( max_procs );
+	int i, thread, nthreads;
+	double omp_start, omp_end;
+
+	if( argc == 2 )
+		nthreads = atoi(argv[1]);
+	else
+		nthreads = max_procs;
+	
+	omp_set_num_threads(nthreads); 
 
 	logo();
 	
@@ -29,15 +35,16 @@ int main( int argc, char* argv[] )
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
 	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	
+	if( INFO ) printf("Using %d threads.\n", nthreads);
 
-	double omp_start = omp_get_wtime();
+	omp_start = omp_get_wtime();
 	
 	// Energy grid built. Now to make a loop.
-	int i, thread;
 	#pragma omp parallel default(none) \
 	private(i, thread) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
-	energy_grid, nuclide_grids, lookups )
+	energy_grid, nuclide_grids, lookups, nthreads )
 	{	
 		thread = omp_get_thread_num();
 
@@ -46,7 +53,7 @@ int main( int argc, char* argv[] )
 		{
 			if( DEBUG && thread == 0 && i % 100 == 0 )
 				printf("\rRunning Sim... Calculating XS's... (%.1lf%% completed)",
-						i / ( lookups / (double) max_procs ) * 100.0);
+						i / ( lookups / (double) nthreads ) * 100.0);
 
 			double p_energy = (double) rand() / (double) RAND_MAX;
 			int p_nuc = rand() % n_isotopes;
@@ -57,7 +64,7 @@ int main( int argc, char* argv[] )
 	}
 	if( DEBUG ) printf("\n" );
 
-	double omp_end = omp_get_wtime();
+	omp_end = omp_get_wtime();
 
 	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
 	if( INFO ) printf("Lookups:   %d\n", lookups);
