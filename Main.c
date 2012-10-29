@@ -39,7 +39,7 @@ int main( int argc, char* argv[] )
 	shared( n_isotopes, n_gridpoints, energy_grid, nuclide_grids, lookups )
 	for( i = 0; i < lookups; i++ )
 	{
-		if( DEBUG ) printf("\rRunning MC... (%d of %d completed)", i+1, lookups );
+		if( DEBUG ) printf("\rRunning MC... (%d of %d completed)",i+1,lookups );
 
 		double p_energy = (double) rand() / (double) RAND_MAX;
 		int p_nuc = rand() % n_isotopes;
