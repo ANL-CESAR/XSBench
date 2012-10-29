@@ -4,8 +4,8 @@ int main( int argc, char* argv[] )
 {
 	srand(time(NULL));
 	int n_isotopes = 300;
-	int n_gridpoints = 100;
-	int lookups = 100000;
+	int n_gridpoints = 200;
+	int lookups = 1000000;
 	int (*cmp) (const void *, const void *);
 	cmp = NGP_compare;
 	int max_procs = omp_get_num_procs();
@@ -33,20 +33,28 @@ int main( int argc, char* argv[] )
 	double omp_start = omp_get_wtime();
 	
 	// Energy grid built. Now to make a loop.
-	int i;
-	#pragma omp parallel for default(none) \
-	private( i ) \
-	shared( n_isotopes, n_gridpoints, energy_grid, nuclide_grids, lookups )
-	for( i = 0; i < lookups; i++ )
-	{
-		if( DEBUG ) printf("\rRunning MC... (%d of %d completed)",i+1,lookups );
+	int i, thread;
+	#pragma omp parallel default(none) \
+	private(i, thread) \
+	shared( max_procs, n_isotopes, n_gridpoints, \
+	energy_grid, nuclide_grids, lookups )
+	{	
+		thread = omp_get_thread_num();
 
-		double p_energy = (double) rand() / (double) RAND_MAX;
-		int p_nuc = rand() % n_isotopes;
+		#pragma omp for
+		for( i = 0; i < lookups; i++ )
+		{
+			if( DEBUG && thread == 0 && i % 100 == 0 )
+				printf("\rRunning Sim... Calculating XS's... (%.1lf%% completed)",
+						i / ( lookups / (double) max_procs ) * 100.0);
 
-		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-                        n_gridpoints, energy_grid, nuclide_grids );
-	}	
+			double p_energy = (double) rand() / (double) RAND_MAX;
+			int p_nuc = rand() % n_isotopes;
+
+			calculate_micro_xs( p_energy, p_nuc, n_isotopes,
+					n_gridpoints, energy_grid, nuclide_grids );
+		}	
+	}
 	if( DEBUG ) printf("\n" );
 
 	double omp_end = omp_get_wtime();
