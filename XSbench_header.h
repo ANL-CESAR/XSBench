@@ -43,3 +43,6 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
                            GridPoint * energy_grid,
                            NuclideGridPoint ** nuclide_grids );
+
+void load_mats( int ** _mats, double ** _concs, int * _num_nucs);
+int pick_mat(void);
