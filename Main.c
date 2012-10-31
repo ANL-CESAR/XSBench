@@ -68,7 +68,8 @@ int main( int argc, char* argv[] )
 
 	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
 	if( INFO ) printf("Lookups:   %d\n", lookups);
-	if( INFO ) printf("Lookups/s: %lf\n", (double) lookups / (omp_end-omp_start));
+	if( INFO ) printf("Lookups/s: %.0lf\n",
+		                (double) lookups / (omp_end-omp_start));
 
 	return 0;
 }
