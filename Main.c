@@ -47,11 +47,15 @@ int main( int argc, char* argv[] )
 	omp_start = omp_get_wtime();
 	
 	// variables we'll need
-	
+	double p_energy;
+	double macro_xs;
+	double p_nuc;
+	double conc;	
+	int mat;
 
 	// Energy grid built. Now to make a loop.
 	#pragma omp parallel default(none) \
-	private(i, thread) \
+	private(i, thread, p_energy, macro_xs, p_nuc, conc, mat) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
@@ -65,13 +69,11 @@ int main( int argc, char* argv[] )
 				printf("\rRunning Sim... Calculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 
-			double p_energy = (double) rand() / (double) RAND_MAX;
+			p_energy = (double) rand() / (double) RAND_MAX;
 		
-			int mat = pick_mat(); 
+			mat = pick_mat(); 
 			
-			double macro_xs = 0;
-			int p_nuc;
-			double conc;
+			macro_xs = 0;
 			for( int j = 0; j < num_nucs[mat]; j++ )
 			{
 				p_nuc = mats[mat][j];
