@@ -1,8 +1,30 @@
-#include "XSBench_header.h"
+#include "XSbench_header.h"
 
-void load_mats( int ** _mats, double ** _concs, int * _num_nucs)
+int * load_num_nucs(void)
 {
-	int *mats[12];
+	int * num_nucs = (int*)malloc(12*sizeof(int));
+	num_nucs[0]  = 34;
+	num_nucs[1]  = 5;
+	num_nucs[2]  = 4;
+	num_nucs[3]  = 4;
+	num_nucs[4]  = 27;
+	num_nucs[5]  = 21;
+	num_nucs[6]  = 21;
+	num_nucs[7]  = 21;
+	num_nucs[8]  = 21;
+	num_nucs[9]  = 21;
+	num_nucs[10] = 9;
+	num_nucs[11] = 9;
+
+	return num_nucs;
+}
+
+int ** load_mats( int * num_nucs )
+{
+	int ** mats = (int **) malloc( 12 * sizeof(int *) );
+	for( int i = 0; i < 12; i++ )
+		mats[i] = (int *) malloc(num_nucs[i] * sizeof(int) );
+	
 	int mats0[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 									 54, 55, 56, 18, 23, 41, -1 }; //fuel
@@ -25,28 +47,24 @@ void load_mats( int ** _mats, double ** _concs, int * _num_nucs)
 	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // top of fuel assemblies
 	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // bottom of fuel assemblies
 
-	mats[0] = mats0;
-	mats[1] = mats1;
-	mats[2] = mats2;
-	mats[3] = mats3;
-	mats[4] = mats4;
-	mats[5] = mats5;
-	mats[6] = mats6;
-	mats[7] = mats7;
-	mats[8] = mats8;
-	mats[9] = mats9;
-	mats[10] = mats10;
-	mats[11] = mats11;
+	memcpy( mats[0], mats0, num_nucs[0]*sizeof(int) );	
+	memcpy( mats[1], mats1, num_nucs[1]*sizeof(int) );	
+	memcpy( mats[2], mats2, num_nucs[2]*sizeof(int) );	
+	memcpy( mats[3], mats3, num_nucs[3]*sizeof(int) );	
+	memcpy( mats[4], mats4, num_nucs[4]*sizeof(int) );	
+	memcpy( mats[5], mats5, num_nucs[5]*sizeof(int) );	
+	memcpy( mats[6], mats6, num_nucs[6]*sizeof(int) );	
+	memcpy( mats[7], mats7, num_nucs[7]*sizeof(int) );	
+	memcpy( mats[8], mats8, num_nucs[8]*sizeof(int) );	
+	memcpy( mats[9], mats9, num_nucs[9]*sizeof(int) );	
+	memcpy( mats[10], mats10, num_nucs[10]*sizeof(int) );	
+	memcpy( mats[11], mats11, num_nucs[11]*sizeof(int) );	
 
-	int num_nucs[12];
-	for( int i = 0; i < 12; i++ )
-		for( int j = 0; ; j++ )
-			if( mats[i][j] == -1 )
-			{	
-				num_nucs[i] = j;
-				break;
-			}
-	
+	return mats;
+}
+
+double ** load_concs( int * num_nucs )
+{
 	double ** concs = (double **)malloc( 12 * sizeof( double *) );
 	for( int i = 0; i < 12; i++ )
 		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
@@ -54,13 +72,7 @@ void load_mats( int ** _mats, double ** _concs, int * _num_nucs)
 		for( int j = 0; j < num_nucs[i]; j++ )
 			concs[i][j] = (double) rand() / (double) RAND_MAX;
 
-	// So - now we have 3 arrays
-	// 1) 2-D array of material compositions, by index in nuclide ID grid
-	// 2) 2-D array of nuclide concentrations, corresponding to above array
-	// 3) 1-D array of number of nuclides per material.
-	_mats = mats;
-	_concs = concs;
-	_num_nucs = num_nucs;
+	return concs;
 }
 
 int pick_mat(void)

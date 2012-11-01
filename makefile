@@ -5,4 +5,4 @@ clean:
 run:
 	./XSBench
 edit:
-	vim -p Main.c GridInit.c XSutils.c CalculateXS.c Materials.c XSBench_header.h
+	vim -p Main.c GridInit.c XSutils.c CalculateXS.c Materials.c XSbench_header.h

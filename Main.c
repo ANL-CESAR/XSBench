@@ -38,20 +38,17 @@ int main( int argc, char* argv[] )
 	
 	// Get material data
 	if( INFO ) printf("Loading Mats...\n");
-	int **mats;
-	double **concs;
-	int *num_nucs;
-	load_mats( mats, concs, num_nucs );
+	int *num_nucs = load_num_nucs();
+	int **mats = load_mats(num_nucs);
+	double **concs = load_concs(num_nucs);
 
 	for( int k = 0; k < 12; k++ )
-	{		
-		printf("mat = %d\n", k);
+	{
+		printf("mat %d has %d nuclides.\n", k, num_nucs[k]);
 		for( int l = 0; l < num_nucs[k]; l++ )
-		{
-			printf("nuc = %d. conc = %lf\n", l, concs[k][l]);
-		}
+			printf("mats[%d][%d] = %d. concs[%d][%d] = %lf\n",
+			        k, l, mats[k][l], k, l, concs[k][l]);
 	}
-
 	if( INFO ) printf("Using %d threads.\n", nthreads);
 
 	omp_start = omp_get_wtime();
@@ -79,7 +76,6 @@ int main( int argc, char* argv[] )
 
 			double p_energy = (double) rand() / (double) RAND_MAX;
 		
-			printf("picking mats");	
 			int mat = pick_mat(); 
 			
 			double macro_xs = 0;
@@ -87,9 +83,6 @@ int main( int argc, char* argv[] )
 			double conc;
 			for( int j = 0; j < num_nucs[mat]; j++ )
 			{
-				printf("mat = %d. num_nucs[mat] = %d. mats[mat][j] = %d. "
-				       "concs[mat][j] = %lf\n", mat, num_nucs[mat],
-							 mats[mat][j], concs[mat][j]);
 				p_nuc = mats[mat][j];
 				conc = concs[mat][j];
 				macro_xs += calculate_micro_xs( p_energy, p_nuc, n_isotopes,
