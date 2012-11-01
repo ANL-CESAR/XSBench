@@ -56,10 +56,13 @@ int main( int argc, char* argv[] )
 						i / ( lookups / (double) nthreads ) * 100.0);
 
 			double p_energy = (double) rand() / (double) RAND_MAX;
-			int p_nuc = rand() % n_isotopes;
-
+			int p_nuc = rand() % n_isotopes; // ADD IN MATERIAL PICKING
+			
+			// This will be in a material loop.
 			calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 					n_gridpoints, energy_grid, nuclide_grids );
+
+			// Then calculate macro_xs
 		}	
 	}
 	if( DEBUG ) printf("\n" );

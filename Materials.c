@@ -85,7 +85,6 @@ int pick_mat(void)
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
 	double roll = (double) rand() / (double) RAND_MAX;
-	int pick = 0;
 
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )
