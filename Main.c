@@ -3,7 +3,7 @@
 int main( int argc, char* argv[] )
 {
 	srand(time(NULL));
-	int n_isotopes = 300;
+	int n_isotopes = 68;
 	int n_gridpoints = 200;
 	int lookups = 1000000;
 	int max_procs = omp_get_num_procs();
@@ -36,33 +36,67 @@ int main( int argc, char* argv[] )
 	// nuclide_energy_grids.
 	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
 	
+	// Get material data
+	if( INFO ) printf("Loading Mats...\n");
+	int **mats;
+	double **concs;
+	int *num_nucs;
+	load_mats( mats, concs, num_nucs );
+
+	for( int k = 0; k < 12; k++ )
+	{		
+		printf("mat = %d\n", k);
+		for( int l = 0; l < num_nucs[k]; l++ )
+		{
+			printf("nuc = %d. conc = %lf\n", l, concs[k][l]);
+		}
+	}
+
 	if( INFO ) printf("Using %d threads.\n", nthreads);
 
 	omp_start = omp_get_wtime();
 	
+	// variables we'll need
+	
+
 	// Energy grid built. Now to make a loop.
 	#pragma omp parallel default(none) \
 	private(i, thread) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
-	energy_grid, nuclide_grids, lookups, nthreads )
+	energy_grid, nuclide_grids, lookups, nthreads, \
+	mats, concs, num_nucs)
 	{	
 		thread = omp_get_thread_num();
 
+		if( INFO ) printf("entering parallel region...\n");
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
 		{
+			if( INFO ) printf("i = %d\n", i);
 			if( DEBUG && thread == 0 && i % 100 == 0 )
 				printf("\rRunning Sim... Calculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 
 			double p_energy = (double) rand() / (double) RAND_MAX;
-			int p_nuc = rand() % n_isotopes; // ADD IN MATERIAL PICKING
+		
+			printf("picking mats");	
+			int mat = pick_mat(); 
 			
-			// This will be in a material loop.
-			calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-					n_gridpoints, energy_grid, nuclide_grids );
-
-			// Then calculate macro_xs
+			double macro_xs = 0;
+			int p_nuc;
+			double conc;
+			for( int j = 0; j < num_nucs[mat]; j++ )
+			{
+				printf("mat = %d. num_nucs[mat] = %d. mats[mat][j] = %d. "
+				       "concs[mat][j] = %lf\n", mat, num_nucs[mat],
+							 mats[mat][j], concs[mat][j]);
+				p_nuc = mats[mat][j];
+				conc = concs[mat][j];
+				macro_xs += calculate_micro_xs( p_energy, p_nuc, n_isotopes,
+					                  n_gridpoints, energy_grid, nuclide_grids )
+				            * conc;
+			}
+			macro_xs = macro_xs / num_nucs[mat];
 		}	
 	}
 	if( DEBUG ) printf("\n" );
