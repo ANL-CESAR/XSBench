@@ -5,7 +5,7 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            GridPoint * energy_grid,
                            NuclideGridPoint ** nuclide_grids ){
 	// find ptr in energy grid
-	NuclideGridPoint * high = NULL;
+	NuclideGridPoint * high = energy_grid[1].xs_ptrs[1];
 	NuclideGridPoint * low;
 	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
 		if( energy_grid[i].energy <= p_energy )

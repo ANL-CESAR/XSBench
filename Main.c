@@ -42,13 +42,6 @@ int main( int argc, char* argv[] )
 	int **mats = load_mats(num_nucs);
 	double **concs = load_concs(num_nucs);
 
-	for( int k = 0; k < 12; k++ )
-	{
-		printf("mat %d has %d nuclides.\n", k, num_nucs[k]);
-		for( int l = 0; l < num_nucs[k]; l++ )
-			printf("mats[%d][%d] = %d. concs[%d][%d] = %lf\n",
-			        k, l, mats[k][l], k, l, concs[k][l]);
-	}
 	if( INFO ) printf("Using %d threads.\n", nthreads);
 
 	omp_start = omp_get_wtime();
@@ -65,11 +58,9 @@ int main( int argc, char* argv[] )
 	{	
 		thread = omp_get_thread_num();
 
-		if( INFO ) printf("entering parallel region...\n");
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
 		{
-			if( INFO ) printf("i = %d\n", i);
 			if( DEBUG && thread == 0 && i % 100 == 0 )
 				printf("\rRunning Sim... Calculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
