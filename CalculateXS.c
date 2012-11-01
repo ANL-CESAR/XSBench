@@ -7,6 +7,8 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	// find ptr in energy grid
 	NuclideGridPoint * high = energy_grid[1].xs_ptrs[1];
 	NuclideGridPoint * low;
+	
+	// Really need a binary search here!!!!!!!!!
 	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
 		if( energy_grid[i].energy <= p_energy )
 			high = energy_grid[i].xs_ptrs[nuc];

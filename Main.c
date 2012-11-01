@@ -7,7 +7,7 @@ int main( int argc, char* argv[] )
 	int n_gridpoints = 200;
 	int lookups = 1000000;
 	int max_procs = omp_get_num_procs();
-	int i, thread, nthreads;
+	int i, j, thread, nthreads;
 	double omp_start, omp_end;
 
 	if( argc == 2 )
@@ -55,7 +55,7 @@ int main( int argc, char* argv[] )
 
 	// Energy grid built. Now to make a loop.
 	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, macro_xs, p_nuc, conc, mat) \
+	private(i, j, thread, p_energy, macro_xs, p_nuc, conc, mat) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
@@ -74,7 +74,7 @@ int main( int argc, char* argv[] )
 			mat = pick_mat(); 
 			
 			macro_xs = 0;
-			for( int j = 0; j < num_nucs[mat]; j++ )
+			for( j = 0; j < num_nucs[mat]; j++ )
 			{
 				p_nuc = mats[mat][j];
 				conc = concs[mat][j];
