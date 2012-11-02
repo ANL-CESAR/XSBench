@@ -4,7 +4,7 @@ int main( int argc, char* argv[] )
 {
 	srand(time(NULL));
 	int n_isotopes = 68;
-	int n_gridpoints = 200;
+	int n_gridpoints = 1000;
 	int lookups = 1000000;
 	int max_procs = omp_get_num_procs();
 	int i, thread, nthreads;

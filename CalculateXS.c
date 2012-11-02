@@ -5,7 +5,6 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            GridPoint * energy_grid,
                            NuclideGridPoint ** nuclide_grids,
                            int idx ){
-	
 	// pull ptr from energy grid
 	NuclideGridPoint * high = energy_grid[idx].xs_ptrs[nuc];
 	NuclideGridPoint * low = high - 1;
@@ -19,11 +18,11 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 
 	// interpolate
 	xs = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
-	
+
 	return xs;
 }
 
-double calculate_macro_xs( int p_energy, int mat, int n_isotopes,
+double calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                            int n_gridpoints, int * num_nucs,
                            double ** concs, GridPoint * energy_grid,
                            NuclideGridPoint ** nuclide_grids,
@@ -49,6 +48,6 @@ double calculate_macro_xs( int p_energy, int mat, int n_isotopes,
 	}
 	
 	macro_xs = macro_xs / num_nucs[mat];
-
+	
 	return macro_xs;
 }
