@@ -8,7 +8,15 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	NuclideGridPoint * high = energy_grid[1].xs_ptrs[1];
 	NuclideGridPoint * low;
 	
+	// Also, need to account for unionized grid. Right now
+	// I'm completely wasting the grid. mat loop needs to
+	// be part of this function.
+
+	// Also, binary search should be broken out so it can be
+	// analyzed via gprof
+
 	// Really need a binary search here!!!!!!!!!
+	// FOR REALS - BINARY SEARCH
 	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
 		if( energy_grid[i].energy <= p_energy )
 			high = energy_grid[i].xs_ptrs[nuc];

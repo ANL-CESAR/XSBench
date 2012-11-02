@@ -74,6 +74,10 @@ int main( int argc, char* argv[] )
 			mat = pick_mat(); 
 			
 			macro_xs = 0;
+			
+			// This isn't quite right. I'm wasting all the efficiency of
+			// the unionized grid. Need to move loop into calc_xs, and
+			// account for double index sharing.
 			for( j = 0; j < num_nucs[mat]; j++ )
 			{
 				p_nuc = mats[mat][j];
