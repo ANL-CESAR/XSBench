@@ -33,10 +33,16 @@ double calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 	double macro_xs = 0;
 
 	// CONVERT TO BINARY SEARCH
+	/*
 	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
 		if( energy_grid[i].energy <= p_energy )
 			idx = i;
-		
+	*/
+
+	// binary search
+	idx = grid_search( n_isotopes * n_gridpoints, p_energy,
+	                   energy_grid);	
+
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
 		p_nuc = mats[mat][j];
@@ -50,4 +56,24 @@ double calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 	macro_xs = macro_xs / num_nucs[mat];
 	
 	return macro_xs;
+}
+
+// binary search for energy on unionized energy grid
+int grid_search( int n, double quarry, GridPoint * A)
+{
+	int min = 0;
+	int max = n-1;
+	int mid;
+	
+	while( max >= min )
+	{
+		mid = min + floor( (max-min) / 2.0);
+		if( A[mid].energy < quarry )
+			min = mid+1;
+		else if( A[mid].energy > quarry )
+			max = mid-1;
+		else
+			return mid;
+	}
+	return mid;
 }

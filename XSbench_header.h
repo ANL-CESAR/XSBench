@@ -50,6 +50,8 @@ double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            GridPoint * energy_grid,
                            NuclideGridPoint ** nuclide_grids, int idx );
 
+int grid_search( int n, double quarry, GridPoint * A);
+
 int * load_num_nucs(void);
 int ** load_mats( int * num_nucs );
 double ** load_concs( int * num_nucs );
