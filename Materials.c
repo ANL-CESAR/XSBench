@@ -1,3 +1,9 @@
+// Material data is hard coded into the three functions in this file.
+// I agree, this isn't the best way to do this. It would be much
+// smarter to read from an input text file, or even better, from
+// an xml file. However, for the time being, H-M serves as a good
+// basis for development purposes.
+
 #include "XSbench_header.h"
 
 int * load_num_nucs(void)
@@ -44,8 +50,8 @@ int ** load_mats( int * num_nucs )
 	                 49, 50, 51, 11, 12, 13, 14, -1 }; // bottom nozzle
 	int mats9[] =  { 24, 41, 4, 5, 19, 20, 21, 22, 35, 36, 37, 38, 39, 25,
 	                 49, 50, 51, 11, 12, 13, 14, -1 }; // top nozzle
-	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // top of fuel assemblies
-	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // bottom of fuel assemblies
+	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // top of FA's
+	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // bottom FA's
 
 	memcpy( mats[0],  mats0,  num_nucs[0]  * sizeof(int) );	
 	memcpy( mats[1],  mats1,  num_nucs[1]  * sizeof(int) );	
