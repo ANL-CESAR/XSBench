@@ -63,7 +63,7 @@ int grid_search( int n, double quarry, GridPoint * A)
 {
 	int min = 0;
 	int max = n-1;
-	int mid;
+	int mid = 0;
 	
 	while( max >= min )
 	{

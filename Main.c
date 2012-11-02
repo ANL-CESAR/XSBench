@@ -48,12 +48,11 @@ int main( int argc, char* argv[] )
 	
 	// variables we'll need
 	double p_energy;
-	double macro_xs;
 	int mat;
 
 	// Energy grid built. Now to make a loop.
 	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, macro_xs, mat) \
+	private(i, thread, p_energy, mat) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
@@ -71,9 +70,11 @@ int main( int argc, char* argv[] )
 		
 			mat = pick_mat(); 
 		
-			macro_xs = calculate_macro_xs( p_energy, mat, n_isotopes,
-			                               n_gridpoints, num_nucs, concs,
-			                               energy_grid, nuclide_grids, mats );
+			// This returns the macro_xs, but we're not going to do anything
+      // with it in this program, so it's not stored.
+      calculate_macro_xs( p_energy, mat, n_isotopes,
+			                    n_gridpoints, num_nucs, concs,
+			                    energy_grid, nuclide_grids, mats );
 		}	
 	}
 	if( DEBUG ) printf("\n" );
