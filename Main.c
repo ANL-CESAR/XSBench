@@ -7,7 +7,7 @@ int main( int argc, char* argv[] )
 	int n_gridpoints = 200;
 	int lookups = 1000000;
 	int max_procs = omp_get_num_procs();
-	int i, j, thread, nthreads;
+	int i, thread, nthreads;
 	double omp_start, omp_end;
 
 	if( argc == 2 )
@@ -49,13 +49,11 @@ int main( int argc, char* argv[] )
 	// variables we'll need
 	double p_energy;
 	double macro_xs;
-	double p_nuc;
-	double conc;	
 	int mat;
 
 	// Energy grid built. Now to make a loop.
 	#pragma omp parallel default(none) \
-	private(i, j, thread, p_energy, macro_xs, p_nuc, conc, mat) \
+	private(i, thread, p_energy, macro_xs, mat) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
@@ -72,21 +70,10 @@ int main( int argc, char* argv[] )
 			p_energy = (double) rand() / (double) RAND_MAX;
 		
 			mat = pick_mat(); 
-			
-			macro_xs = 0;
-			
-			// This isn't quite right. I'm wasting all the efficiency of
-			// the unionized grid. Need to move loop into calc_xs, and
-			// account for double index sharing.
-			for( j = 0; j < num_nucs[mat]; j++ )
-			{
-				p_nuc = mats[mat][j];
-				conc = concs[mat][j];
-				macro_xs += calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-					                  n_gridpoints, energy_grid, nuclide_grids )
-				            * conc;
-			}
-			macro_xs = macro_xs / num_nucs[mat];
+		
+			macro_xs = calculate_macro_xs( p_energy, mat, n_isotopes,
+			                               n_gridpoints, num_nucs, concs,
+			                               energy_grid, nuclide_grids, mats );
 		}	
 	}
 	if( DEBUG ) printf("\n" );

@@ -4,6 +4,7 @@
 #include<string.h>
 #include<math.h>
 #include<omp.h>
+#include<unistd.h>
 
 #define INFO 1
 #define DEBUG 1
@@ -39,10 +40,15 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n );
 
+double calculate_macro_xs( int p_energy, int mat, int n_isotopes,
+                           int n_gridpoints, int * num_nucs,
+                           double ** concs, GridPoint * energy_grid,
+                           NuclideGridPoint ** nuclide_grids, int ** mats );
+
 double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
                            GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids );
+                           NuclideGridPoint ** nuclide_grids, int idx );
 
 int * load_num_nucs(void);
 int ** load_mats( int * num_nucs );
