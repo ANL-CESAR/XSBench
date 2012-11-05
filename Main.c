@@ -2,13 +2,14 @@
 
 int main( int argc, char* argv[] )
 {
-	srand(time(NULL));
 	int n_isotopes = 68;
 	int n_gridpoints = 10000;
 	int lookups = 100000000;
-	int max_procs = omp_get_num_procs();
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
+	int max_procs = omp_get_num_procs();
+	
+	srand(time(NULL));
 
 	if( argc == 2 )
 		nthreads = atoi(argv[1]);
@@ -25,10 +26,10 @@ int main( int argc, char* argv[] )
 	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
 	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
 	
-	// Sort grids
+	// Sort grids by energy
 	sort_nuclide_grids( nuclide_grids, n_isotopes );
 
-	// Build Unionized Grid Framework
+	// Prepare Unionized Energy Grid Framework
 	GridPoint * energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,
 	                                                nuclide_grids ); 	
 
@@ -82,7 +83,7 @@ int main( int argc, char* argv[] )
 	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
 	if( INFO ) printf("Lookups:   %d\n", lookups);
 	if( INFO ) printf("Lookups/s: %.0lf\n",
-		                (double) lookups / (omp_end-omp_start));
+		               (double) lookups / (omp_end-omp_start));
 
 	return 0;
 }
