@@ -1,4 +1,4 @@
-include "XSbench_header.h"
+#include "XSbench_header.h"
 
 int main( int argc, char* argv[] )
 {
@@ -7,8 +7,8 @@ int main( int argc, char* argv[] )
 	int n_gridpoints = 10000;
 	int lookups = 100000000;
 	int max_procs = omp_get_num_procs();
-	int i, thread, nthreads;
-	double omp_start, omp_end;
+	int i, thread, nthreads, mat;
+	double omp_start, omp_end, p_energy;
 
 	if( argc == 2 )
 		nthreads = atoi(argv[1]);
@@ -46,11 +46,7 @@ int main( int argc, char* argv[] )
 
 	omp_start = omp_get_wtime();
 	
-	// variables we'll need
-	double p_energy;
-	int mat;
-
-	// Energy grid built. Now to make a loop.
+	// Energy grid built. Now to enter parallel region
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
@@ -62,16 +58,17 @@ int main( int argc, char* argv[] )
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
 		{
+			// Status text
 			if( DEBUG && thread == 0 && i % 100 == 0 )
 				printf("\rCalculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 
+			// Randomly pick an energy and material for the particle
 			p_energy = (double) rand() / (double) RAND_MAX;
-		
 			mat = pick_mat(); 
 		
 			// This returns the macro_xs, but we're not going to do anything
-			// with it in this program, so it's not stored.
+			// with it in this program, so return value is not stored.
 			calculate_macro_xs( p_energy, mat, n_isotopes,
 			                    n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats );
@@ -81,6 +78,7 @@ int main( int argc, char* argv[] )
 
 	omp_end = omp_get_wtime();
 
+	// Print the results
 	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
 	if( INFO ) printf("Lookups:   %d\n", lookups);
 	if( INFO ) printf("Lookups/s: %.0lf\n",
