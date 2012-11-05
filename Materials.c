@@ -4,8 +4,11 @@
 // an xml file. However, for the time being, H-M serves as a good
 // basis for development purposes.
 
+// Note that there are 12 materials present in H-M
+
 #include "XSbench_header.h"
 
+// num_nucs represents the number of nuclides that each material contains
 int * load_num_nucs(void)
 {
 	int * num_nucs = (int*)malloc(12*sizeof(int));
@@ -25,6 +28,7 @@ int * load_num_nucs(void)
 	return num_nucs;
 }
 
+// Assigns an array of nuclide ID's to each material
 int ** load_mats( int * num_nucs )
 {
 	int ** mats = (int **) malloc( 12 * sizeof(int *) );
@@ -69,6 +73,7 @@ int ** load_mats( int * num_nucs )
 	return mats;
 }
 
+// Creates a randomized array of 'concentrations' of nuclides in each mat
 double ** load_concs( int * num_nucs )
 {
 	double ** concs = (double **)malloc( 12 * sizeof( double *) );
@@ -81,6 +86,7 @@ double ** load_concs( int * num_nucs )
 	return concs;
 }
 
+// picks a material based on a probabilistic distribution
 int pick_mat(void)
 {
 	// I have a nice spreadsheet supporting these numbers. They are
@@ -94,7 +100,7 @@ int pick_mat(void)
 	dist[2]  = 0.275;	// cold, borated water
 	dist[3]  = 0.134;	// hot, borated water
 	dist[4]  = 0.154;	// RPV
-	dist[5]  = 0.064; // Lower, radial reflector
+	dist[5]  = 0.064;	// Lower, radial reflector
 	dist[6]  = 0.066;	// Upper reflector / top plate
 	dist[7]  = 0.055;	// bottom plate
 	dist[8]  = 0.008;	// bottom nozzle

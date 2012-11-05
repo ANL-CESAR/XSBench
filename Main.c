@@ -1,4 +1,4 @@
-#include "XSbench_header.h"
+include "XSbench_header.h"
 
 int main( int argc, char* argv[] )
 {
@@ -63,7 +63,7 @@ int main( int argc, char* argv[] )
 		for( i = 0; i < lookups; i++ )
 		{
 			if( DEBUG && thread == 0 && i % 100 == 0 )
-				printf("\rRunning Sim... Calculating XS's... (%.1lf%% completed)",
+				printf("\rCalculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 
 			p_energy = (double) rand() / (double) RAND_MAX;
@@ -71,8 +71,8 @@ int main( int argc, char* argv[] )
 			mat = pick_mat(); 
 		
 			// This returns the macro_xs, but we're not going to do anything
-      // with it in this program, so it's not stored.
-      calculate_macro_xs( p_energy, mat, n_isotopes,
+			// with it in this program, so it's not stored.
+			calculate_macro_xs( p_energy, mat, n_isotopes,
 			                    n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats );
 		}	

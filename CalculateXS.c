@@ -49,8 +49,7 @@ double calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 		conc = concs[mat][j];
 		macro_xs += calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 		                                n_gridpoints, energy_grid,
-		                                nuclide_grids, idx )
-		            * conc;
+		                                nuclide_grids, idx ) * conc;
 	}
 	
 	macro_xs = macro_xs / num_nucs[mat];
