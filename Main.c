@@ -60,7 +60,7 @@ int main( int argc, char* argv[] )
 		for( i = 0; i < lookups; i++ )
 		{
 			// Status text
-			if( DEBUG && thread == 0 && i % 100 == 0 )
+			if( DEBUG && thread == 0 && i % 10000 == 0 )
 				printf("\rCalculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 
