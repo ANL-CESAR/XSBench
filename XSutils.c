@@ -1,4 +1,9 @@
 #include "XSbench_header.h"
+	
+extern long idnum2;
+extern long iy;
+extern long iv[NTAB];
+extern long * idnum;
 
 NuclideGridPoint ** gpmatrix(size_t m, size_t n)
 {
@@ -87,10 +92,6 @@ double rn(void)
 // Press, Teukolsky, Vetterling, Flannery
 float ran2( )
 {
-	extern long idnum2;
-	extern long iy;
-	extern long iv[NTAB];
-	extern long * idnum;
 	int j;
 	long k;
 	float temp;
