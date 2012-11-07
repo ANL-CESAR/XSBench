@@ -81,8 +81,8 @@ double ** load_concs( int * num_nucs )
 		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
 	for( int i = 0; i < 12; i++ )
 		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i][j] = (double) rand() / (double) RAND_MAX;
-
+			//concs[i][j] = (double) rand() / (double) RAND_MAX;
+			concs[i][j] = rn();
 	return concs;
 }
 
@@ -108,7 +108,8 @@ int pick_mat(void)
 	dist[10] = 0.025;	// top of fuel assemblies
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
-	double roll = (double) rand() / (double) RAND_MAX;
+	//double roll = (double) rand() / (double) RAND_MAX;
+	double roll = rn();
 
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )

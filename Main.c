@@ -65,7 +65,8 @@ int main( int argc, char* argv[] )
 						i / ( lookups / (double) nthreads ) * 100.0);
 
 			// Randomly pick an energy and material for the particle
-			p_energy = (double) rand() / (double) RAND_MAX;
+			//p_energy = (double) rand() / (double) RAND_MAX;
+			p_energy = rn();
 			mat = pick_mat(); 
 		
 			// This returns the macro_xs, but we're not going to do anything

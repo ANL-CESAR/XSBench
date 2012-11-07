@@ -73,3 +73,11 @@ NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 	}
 	return &A[max];
 }
+
+double rn(void)
+{
+	double intpart;
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	return modf( ((double) tv.tv_usec)/791.9, &intpart);
+}

@@ -5,6 +5,7 @@
 #include<math.h>
 #include<omp.h>
 #include<unistd.h>
+#include<sys/time.h>
 
 #define INFO 1
 #define DEBUG 1
@@ -56,3 +57,4 @@ int * load_num_nucs(void);
 int ** load_mats( int * num_nucs );
 double ** load_concs( int * num_nucs );
 int pick_mat(void);
+double rn(void);

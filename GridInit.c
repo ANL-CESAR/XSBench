@@ -5,8 +5,10 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 	for( int i = 0; i < n_isotopes; i++ )
 		for( int j = 0; j < n_gridpoints; j++ )
 		{
-			nuclide_grids[i][j].energy =((double)rand() / (double)RAND_MAX);
-			nuclide_grids[i][j].micro_xs =((double)rand() / (double)RAND_MAX );
+			//nuclide_grids[i][j].energy =((double)rand() / (double)RAND_MAX);
+			//nuclide_grids[i][j].micro_xs =((double)rand() /(double)RAND_MAX );
+			nuclide_grids[i][j].energy =rn();
+			nuclide_grids[i][j].micro_xs =rn();
 		}
 }
 
