@@ -1,5 +1,10 @@
 #include "XSbench_header.h"
 
+long idnum2 = 123456789;
+long iy= 0;
+long iv[NTAB];
+long * idnum;
+
 int main( int argc, char* argv[] )
 {
 	int n_isotopes = 68;
@@ -9,7 +14,8 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 	
-	srand(time(NULL));
+	long a = time(NULL);
+	idnum = &a;	
 
 	if( argc == 2 )
 		nthreads = atoi(argv[1]);
@@ -49,7 +55,7 @@ int main( int argc, char* argv[] )
 	
 	// Energy grid built. Now to enter parallel region
 	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, mat) \
+	private(i, thread, p_energy, mat, idnum, idnum2, iy, iv) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)

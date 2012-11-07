@@ -76,8 +76,54 @@ NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 
 double rn(void)
 {
-	double intpart;
-	struct timeval tv;
-	gettimeofday(&tv,NULL);
-	return modf( ((double) tv.tv_usec)/791.9, &intpart);
+	double b;
+	b = ran2();
+	//printf("%lf\n", b);
+	//sleep(1);
+	return b;
+}
+
+// From "Numerical Recipes", Second Edition
+// Press, Teukolsky, Vetterling, Flannery
+float ran2( )
+{
+	extern long idnum2;
+	extern long iy;
+	extern long iv[NTAB];
+	extern long * idnum;
+	int j;
+	long k;
+	float temp;
+
+	if( *idnum <= 0 ) {
+		if( -(*idnum) < 1) *idnum=1;
+		else *idnum = -(*idnum);
+		idnum2=(*idnum);
+		for( j = NTAB + 7; j >= 0; j-- )
+		{
+			k = (*idnum)/IQ1;
+			*idnum = IA1 * (*idnum - k * IQ1 ) - k * IR1;
+			if( *idnum < 0 )
+				*idnum += IM1;
+			if ( j < NTAB )
+				iv[j] = *idnum;
+		}
+		iy=iv[0];
+	}
+	k=(*idnum)/IQ1;
+	*idnum=IA1 * (*idnum-k * IQ1) - k * IR1;
+	if( *idnum < 0 )
+		*idnum += IM1;
+	k = idnum2/IQ2;
+	idnum2 = IA2 * (idnum2-k*IQ2) - k * IR2;
+	if( idnum2 < 0 )
+		idnum2 += IM2;
+	j = iy / NDIV;
+	iy = iv[j] - idnum2;
+	iv[j] = *idnum;
+	if( iy < 1 ) iy += IMM1;
+	if( (temp=AM*iy) > RNMX)
+		return RNMX;
+	else
+		return temp;
 }
