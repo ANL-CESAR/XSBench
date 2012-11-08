@@ -2,7 +2,7 @@
 
 int main( int argc, char* argv[] )
 {
-	//unsigned long seed;
+	unsigned long seed;
 	int n_isotopes = 68;
 	int n_gridpoints = 10000;
 	int lookups = 100000000;
@@ -47,7 +47,6 @@ int main( int argc, char* argv[] )
 	if( INFO ) printf("Using %d threads.\n", nthreads);
 
 	omp_start = omp_get_wtime();
-	unsigned long seed;
 	
 	// Energy grid built. Now to enter parallel region
 	#pragma omp parallel default(none) \
@@ -57,7 +56,7 @@ int main( int argc, char* argv[] )
 	mats, concs, num_nucs)
 	{	
 		thread = omp_get_thread_num();
-		seed = thread;
+		seed = thread+1;
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
 		{
@@ -65,7 +64,6 @@ int main( int argc, char* argv[] )
 			if( DEBUG && thread == 0 && i % 10000 == 0 )
 				printf("\rCalculating XS's... (%.1lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
-
 			// Randomly pick an energy and material for the particle
 			//p_energy = (double) rand() / (double) RAND_MAX;
 			p_energy = rn(&seed);

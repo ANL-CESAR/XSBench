@@ -72,7 +72,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 		// find where our energy matches -OR- the first energy level that
 		// is GREATER than (?) the quarry.
 		double quarry = energy_grid[i].energy;
-		if( DEBUG && i % 100 == 0 )
+		if( DEBUG && i % 1000 == 0 )
 			printf("\rAligning Unionized Grid...(%.1lf%% complete)",
 			       100.0 * (double) i / (n_isotopes*n_gridpoints) );
 		for( int j = 0; j < n_isotopes; j++ )
