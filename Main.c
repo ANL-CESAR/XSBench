@@ -90,7 +90,7 @@ int main( int argc, char* argv[] )
 		{
 			// Status text
 			if( DEBUG && thread == 0 && i % 10000 == 0 )
-				printf("\rCalculating XS's... (%.1lf%% completed)",
+				printf("\rCalculating XS's... (%.0lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 			// Randomly pick an energy and material for the particle
 			//p_energy = (double) rand() / (double) RAND_MAX;
@@ -105,6 +105,7 @@ int main( int argc, char* argv[] )
 		}	
 	}
 	if( DEBUG ) printf("\n" );
+	printf("Simulation complete.\n" );
 
 	omp_end = omp_get_wtime();
 	
