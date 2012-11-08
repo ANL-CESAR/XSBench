@@ -21,6 +21,26 @@ int main( int argc, char* argv[] )
 
 	logo();
 	
+	// Print out input summary
+	printf(
+	"\tINPUT SUMMARY\n"
+	"###################################################################"
+	"#############\n"
+	);
+	printf("Materials:                    %d\n", 12);
+	printf("Total Isotopes:               %d\n", n_isotopes);
+	printf("Gridpoints (per Nuclide):     %d\n", n_gridpoints);
+	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
+	printf("XS Lookups:                   %d\n", lookups);
+	printf("Threads:                      %d\n", nthreads);
+	printf(
+	"###################################################################"
+	"#############\n"
+	"\tINITIALIZATION\n"
+	"###################################################################"
+	"#############\n"
+	);
+
 	// Allocate & fill energy grids
 	if( DEBUG ) printf("Generating Nuclide Energy Grids...\n");
 	
@@ -45,6 +65,14 @@ int main( int argc, char* argv[] )
 	double **concs = load_concs(num_nucs);
 
 	if( INFO ) printf("Using %d threads.\n", nthreads);
+	
+	printf(
+	"###################################################################"
+	"#############\n"
+	"\tSIMULATION\n"
+	"###################################################################"
+	"#############\n"
+	);
 
 	omp_start = omp_get_wtime();
 	
@@ -79,12 +107,24 @@ int main( int argc, char* argv[] )
 	if( DEBUG ) printf("\n" );
 
 	omp_end = omp_get_wtime();
+	
+	printf(
+	"###################################################################"
+	"#############\n"
+	"\tRESULTS\n"
+	"###################################################################"
+	"#############\n"
+	);
 
 	// Print the results
 	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
 	if( INFO ) printf("Lookups:   %d\n", lookups);
 	if( INFO ) printf("Lookups/s: %.0lf\n",
 		               (double) lookups / (omp_end-omp_start));
+	printf(
+	"###################################################################"
+	"#############\n"
+	);
 
 	return 0;
 }
