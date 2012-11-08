@@ -1,10 +1,5 @@
 #include "XSbench_header.h"
 	
-extern long idnum2;
-extern long iy;
-extern long iv[NTAB];
-extern long * idnum;
-
 NuclideGridPoint ** gpmatrix(size_t m, size_t n)
 {
 	int i,j;
@@ -79,15 +74,21 @@ NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 	return &A[max];
 }
 
-double rn(void)
+// Park & Miller Multiplicative Conguential Algorithm
+// From "Numerical Recipes" Second Edition
+double rn(unsigned long * seed)
 {
-	double b;
-	b = ran2();
-	//printf("%lf\n", b);
-	//sleep(1);
-	return b;
+	double ret;
+	unsigned long n1;
+	unsigned long a = 16807;
+	unsigned long m = 2147483647;
+	n1 = ( a * (*seed) ) % m;
+	*seed = n1;
+	ret = (double) n1 / m;
+	return ret;
 }
 
+/*
 // From "Numerical Recipes", Second Edition
 // Press, Teukolsky, Vetterling, Flannery
 float ran2( )
@@ -128,3 +129,4 @@ float ran2( )
 	else
 		return temp;
 }
+*/

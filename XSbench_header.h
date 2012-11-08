@@ -10,6 +10,7 @@
 #define INFO 1
 #define DEBUG 1
 
+// For the numerical methods rand() algorithm
 #define IM1 2147483563
 #define IM2 2147483399
 #define AM (1.0/IM1)
@@ -72,6 +73,6 @@ int grid_search( int n, double quarry, GridPoint * A);
 int * load_num_nucs(void);
 int ** load_mats( int * num_nucs );
 double ** load_concs( int * num_nucs );
-int pick_mat(void);
-double rn(void);
+int pick_mat(unsigned long * seed);
+double rn(unsigned long * seed);
 float ran2( void );

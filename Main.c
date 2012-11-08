@@ -1,12 +1,8 @@
 #include "XSbench_header.h"
 
-long idnum2 = 123456789;
-long iy= 0;
-long iv[NTAB];
-long * idnum;
-
 int main( int argc, char* argv[] )
 {
+	unsigned long seed;
 	int n_isotopes = 68;
 	int n_gridpoints = 10000;
 	int lookups = 100000000;
@@ -14,8 +10,7 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 	
-	long a = time(NULL);
-	idnum = &a;	
+	srand(time(NULL));
 
 	if( argc == 2 )
 		nthreads = atoi(argv[1]);
@@ -55,12 +50,13 @@ int main( int argc, char* argv[] )
 	
 	// Energy grid built. Now to enter parallel region
 	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, mat, idnum, idnum2, iy, iv) \
+	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
 	{	
 		thread = omp_get_thread_num();
+		seed = thread;
 
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
@@ -72,8 +68,8 @@ int main( int argc, char* argv[] )
 
 			// Randomly pick an energy and material for the particle
 			//p_energy = (double) rand() / (double) RAND_MAX;
-			p_energy = rn();
-			mat = pick_mat(); 
+			p_energy = rn(&seed);
+			mat = pick_mat(&seed); 
 		
 			// This returns the macro_xs, but we're not going to do anything
 			// with it in this program, so return value is not stored.

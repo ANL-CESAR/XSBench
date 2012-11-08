@@ -81,13 +81,12 @@ double ** load_concs( int * num_nucs )
 		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
 	for( int i = 0; i < 12; i++ )
 		for( int j = 0; j < num_nucs[i]; j++ )
-			//concs[i][j] = (double) rand() / (double) RAND_MAX;
-			concs[i][j] = rn();
+			concs[i][j] = (double) rand() / (double) RAND_MAX;
 	return concs;
 }
 
 // picks a material based on a probabilistic distribution
-int pick_mat(void)
+int pick_mat( unsigned long * seed )
 {
 	// I have a nice spreadsheet supporting these numbers. They are
 	// the fractions (by volume) of material in the core. Not a 
@@ -109,7 +108,7 @@ int pick_mat(void)
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
 	//double roll = (double) rand() / (double) RAND_MAX;
-	double roll = rn();
+	double roll = rn(seed);
 
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )
