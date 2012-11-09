@@ -6,7 +6,11 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 		for( int j = 0; j < n_gridpoints; j++ )
 		{
 			nuclide_grids[i][j].energy =((double)rand() / (double)RAND_MAX);
-			nuclide_grids[i][j].micro_xs =((double)rand() /(double)RAND_MAX );
+			nuclide_grids[i][j].total_xs =((double)rand() /(double)RAND_MAX );
+			nuclide_grids[i][j].elastic_xs =((double)rand() /(double)RAND_MAX );
+			nuclide_grids[i][j].absorbtion_xs=((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].fission_xs =((double)rand() /(double)RAND_MAX );
+			nuclide_grids[i][j].nu_fission_xs=((double)rand()/(double)RAND_MAX);
 		}
 }
 
@@ -67,10 +71,6 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	
 	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
-		// for each energy grid level, we need to look at all the nuclide
-		// grids. For each nuclide grid, we need to scan through, and
-		// find where our energy matches -OR- the first energy level that
-		// is GREATER than (?) the quarry.
 		double quarry = energy_grid[i].energy;
 		if( DEBUG && i % 500 == 0 )
 			printf("\rAligning Unionized Grid...(%.0lf%% complete)",
@@ -78,23 +78,9 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 		for( int j = 0; j < n_isotopes; j++ )
 		{
 			int nuc_id = j;
-			// Now scan through the relevant nuclide grid
-			// This would be much better done as a binary search
-			
 			// log n binary search
 			energy_grid[i].xs_ptrs[nuc_id] = 
 				binary_search( nuclide_grids[nuc_id], quarry, n_gridpoints);
-
-			// n search
-			/*
-			for( int k = 0; k < n_gridpoints; k++ )
-			{
-				if( k == n_gridpoints - 1 )
-					energy_grid[i].xs_ptrs[nuc_id] = &nuclide_grids[nuc_id][k];
-				else if( quarry <= nuclide_grids[nuc_id][k].energy )
-					energy_grid[i].xs_ptrs[nuc_id] = &nuclide_grids[nuc_id][k];
-			}
-			*/
 		}
 	}
 	if( DEBUG ) printf("\n");

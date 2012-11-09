@@ -10,6 +10,8 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 	
+	// rand() is only used in the serial initialization stages.
+	// A custom RNG is used in parallel portions.
 	srand(time(NULL));
 
 	if( argc == 2 )
@@ -83,6 +85,7 @@ int main( int argc, char* argv[] )
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
 	{	
+		double * macro_xs_vector = (double *) malloc( 5 * sizeof(double));
 		thread = omp_get_thread_num();
 		seed = thread+1;
 		#pragma omp for
@@ -97,12 +100,15 @@ int main( int argc, char* argv[] )
 			p_energy = rn(&seed);
 			mat = pick_mat(&seed); 
 		
-			// This returns the macro_xs, but we're not going to do anything
-			// with it in this program, so return value is not stored.
+			// This returns the macro_xs_vector, but we're not going
+			//to do anything with it in this program, so return value
+			//is written over stored.
 			calculate_macro_xs( p_energy, mat, n_isotopes,
 			                    n_gridpoints, num_nucs, concs,
-			                    energy_grid, nuclide_grids, mats );
-		}	
+			                    energy_grid, nuclide_grids, mats,
+                                macro_xs_vector );
+		}
+		free(macro_xs_vector);	
 	}
 	if( DEBUG ) printf("\n" );
 	printf("Simulation complete.\n" );

@@ -29,7 +29,12 @@
 
 typedef struct{
 	double energy;
-	double micro_xs;
+	
+	double total_xs;
+	double elastic_xs;
+	double absorbtion_xs;
+	double fission_xs;
+	double nu_fission_xs;
 } NuclideGridPoint;
 
 typedef struct{
@@ -58,15 +63,17 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n );
 
-double calculate_macro_xs( double p_energy, int mat, int n_isotopes,
+void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                            int n_gridpoints, int * num_nucs,
                            double ** concs, GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids, int ** mats );
+                           NuclideGridPoint ** nuclide_grids, int ** mats,
+                           double * macro_xs_vector );
 
-double calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
+void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
                            GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids, int idx );
+                           NuclideGridPoint ** nuclide_grids, int idx,
+                           double * xs_vector );
 
 int grid_search( int n, double quarry, GridPoint * A);
 
