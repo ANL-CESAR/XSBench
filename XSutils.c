@@ -48,11 +48,23 @@ void logo(void)
 		"                   / /^\\ \\/\\__/ / |_/ /  __/ | | | (__| | | |                   \n"
 		"                   \\/   \\/\\____/\\____/ \\___|_| |_|\\___|_| |_|                   \n\n"
 	"###################################################################"
-	"#############\n"
-	"                    Developed at Argonne National Laboratory\n"
-	"                                   Version: 0\n"
+	"#############\n");
+	center_print("Developed at Argonne National Laboratory", 79);
+	center_print("Version: 0", 79);
+	printf(
 	"###################################################################"
 	"#############\n");
+}
+
+void center_print(const char *s, int width)
+{
+	int length = strlen(s);
+	int i;
+	for (i=0; i<=(width-length)/2; i++) {
+		fputs(" ", stdout);
+	}
+	fputs(s, stdout);
+	fputs("\n", stdout);
 }
 
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )

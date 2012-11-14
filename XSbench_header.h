@@ -43,6 +43,7 @@ typedef struct{
 } GridPoint;
 
 void logo(void);
+void center_print(const char *s, int width);
 
 NuclideGridPoint ** gpmatrix(size_t m, size_t n);
 

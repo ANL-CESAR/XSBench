@@ -24,8 +24,8 @@ int main( int argc, char* argv[] )
 	logo();
 	
 	// Print out input summary
+	center_print("INPUT SUMMARY", 79);
 	printf(
-	"\tINPUT SUMMARY\n"
 	"###################################################################"
 	"#############\n"
 	);
@@ -37,8 +37,9 @@ int main( int argc, char* argv[] )
 	printf("Threads:                      %d\n", nthreads);
 	printf(
 	"###################################################################"
-	"#############\n"
-	"\tINITIALIZATION\n"
+	"#############\n");
+	center_print("INITIALIZATION", 79);
+	printf(
 	"###################################################################"
 	"#############\n"
 	);
@@ -70,8 +71,9 @@ int main( int argc, char* argv[] )
 	
 	printf(
 	"###################################################################"
-	"#############\n"
-	"\tSIMULATION\n"
+	"#############\n");
+	center_print("SIMULATION", 79);
+	printf(
 	"###################################################################"
 	"#############\n"
 	);
@@ -117,13 +119,15 @@ int main( int argc, char* argv[] )
 	
 	printf(
 	"###################################################################"
-	"#############\n"
-	"\tRESULTS\n"
+	"#############\n");
+	center_print("RESULTS", 79);
+	printf(
 	"###################################################################"
 	"#############\n"
 	);
 
 	// Print the results
+	if( INFO ) printf("Threads:   %d\n", nthreads);
 	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
 	if( INFO ) printf("Lookups:   %d\n", lookups);
 	if( INFO ) printf("Lookups/s: %.0lf\n",

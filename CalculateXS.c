@@ -41,7 +41,8 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                            double ** concs, GridPoint * energy_grid,
                            NuclideGridPoint ** nuclide_grids, int ** mats,
                            double * macro_xs_vector ){
-	double * xs_vector = (double *) malloc( 5 * sizeof(double) );
+	//double * xs_vector = (double *) malloc( 5 * sizeof(double) );
+	double xs_vector[5];
 	int p_nuc;
 	int idx = 0;	
 	double conc;
@@ -71,7 +72,7 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-	free(xs_vector);
+	//free(xs_vector);
 	
 	for( int k = 0; k < 5; k++ )
 		macro_xs_vector[k] = macro_xs_vector[k] / num_nucs[mat];
