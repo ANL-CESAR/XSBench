@@ -36,6 +36,20 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	xs_vector[4] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
 }
 
+/*
+As we make the jump from 1 -> cores, the amount of time spent in macro_xs
+jumps significantly (from 36 to 170 seconds). Nearly a factor of 5x. This
+jump occurs while practically everything else stays the same (as expected).
+
+So, the question is: What's going on in macro_xs that causes poor scaling?
+It's not grid search (that's measured to stay the same). What else could
+it be?
+
+My initial thoughts was that the xs_vector allocation was expensive, but
+now I'm thinking that's not a big deal. If that were the problem, we'd be
+going slow, but scaling would be just fine.
+
+*/
 void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                            int n_gridpoints, int * num_nucs,
                            double ** concs, GridPoint * energy_grid,
@@ -62,6 +76,9 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 	idx = grid_search( n_isotopes * n_gridpoints, p_energy,
 	                   energy_grid);	
 
+	// I think our contention problem may be here.
+	// Think about it. This is a pretty small set of information compared
+	// to the giant energy grid arrays.
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
 		p_nuc = mats[mat][j];
