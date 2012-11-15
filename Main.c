@@ -134,5 +134,13 @@ int main( int argc, char* argv[] )
 	"#############\n"
 	);
 
+	// For bechmarking, output lookup/s data to file
+	if( SAVE )
+	{
+		FILE * out = fopen( "results.txt", "a" );
+		fprintf(out, "%.0lf\n", (double) lookups / (omp_end-omp_start));
+		fclose(out);
+	}
+
 	return 0;
 }

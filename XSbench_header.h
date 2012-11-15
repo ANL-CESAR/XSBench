@@ -10,6 +10,7 @@
 // I/O Specifiers
 #define INFO 1
 #define DEBUG 1
+#define SAVE 1
 
 // For the numerical methods ran2() algorithm
 #define IM1 2147483563
