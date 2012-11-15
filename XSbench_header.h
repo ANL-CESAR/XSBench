@@ -66,16 +66,18 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n );
 
 void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
-                           int n_gridpoints, int * num_nucs,
-                           double ** concs, GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids, int ** mats,
-                           double * macro_xs_vector );
+                           int n_gridpoints, int * restrict num_nucs,
+                           double ** restrict concs,
+						   GridPoint * restrict energy_grid,
+                           NuclideGridPoint ** restrict nuclide_grids,
+						   int ** restrict mats,
+                           double * restrict macro_xs_vector );
 
 void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
-                           GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids, int idx,
-                           double * xs_vector );
+                           GridPoint * restrict energy_grid,
+                           NuclideGridPoint ** restrict nuclide_grids, int idx,
+                           double * restrict xs_vector );
 
 int grid_search( int n, double quarry, GridPoint * A);
 

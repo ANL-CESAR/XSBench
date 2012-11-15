@@ -2,9 +2,9 @@
 
 void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
-                           GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids,
-                           int idx, double * xs_vector ){
+                           GridPoint * restrict energy_grid,
+                           NuclideGridPoint ** restrict nuclide_grids,
+                           int idx, double * restrict xs_vector ){
 	// pull ptr from energy grid
 	NuclideGridPoint * high = energy_grid[idx].xs_ptrs[nuc];
 	NuclideGridPoint * low = high - 1;
@@ -38,7 +38,7 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 
 /*
 As we make the jump from 1 -> cores, the amount of time spent in macro_xs
-jumps significantly (from 36 to 170 seconds). Nearly a factor of 5x. This
+jumps significantly (from 36 to 170 cpu seconds). Nearly a factor of 5x. This
 jump occurs while practically everything else stays the same (as expected).
 
 So, the question is: What's going on in macro_xs that causes poor scaling?
@@ -51,10 +51,12 @@ going slow, but scaling would be just fine.
 
 */
 void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
-                           int n_gridpoints, int * num_nucs,
-                           double ** concs, GridPoint * energy_grid,
-                           NuclideGridPoint ** nuclide_grids, int ** mats,
-                           double * macro_xs_vector ){
+                           int n_gridpoints, int * restrict num_nucs,
+                           double ** restrict concs,
+						   GridPoint * restrict energy_grid,
+                           NuclideGridPoint ** restrict nuclide_grids,
+						   int ** restrict mats,
+                           double * restrict macro_xs_vector ){
 	//double * xs_vector = (double *) malloc( 5 * sizeof(double) );
 	double xs_vector[5];
 	int p_nuc;

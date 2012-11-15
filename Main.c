@@ -85,7 +85,7 @@ int main( int argc, char* argv[] )
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs)
 	{	
-		double * macro_xs_vector = (double *) malloc( 5 * sizeof(double));
+		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
 		seed = thread+1;
 		#pragma omp for
@@ -108,7 +108,7 @@ int main( int argc, char* argv[] )
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
 		}
-		free(macro_xs_vector);	
+		//free(macro_xs_vector);	
 	}
 	printf("\n" );
 	printf("Simulation complete.\n" );
