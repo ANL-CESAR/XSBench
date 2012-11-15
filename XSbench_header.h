@@ -7,10 +7,11 @@
 #include<unistd.h>
 #include<sys/time.h>
 
+// I/O Specifiers
 #define INFO 1
 #define DEBUG 1
 
-// For the numerical methods rand() algorithm
+// For the numerical methods ran2() algorithm
 #define IM1 2147483563
 #define IM2 2147483399
 #define AM (1.0/IM1)

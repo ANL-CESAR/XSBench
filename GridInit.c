@@ -16,7 +16,7 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes)
 {
-	if( DEBUG ) printf("Sorting Nuclide Energy Grids...\n");
+	printf("Sorting Nuclide Energy Grids...\n");
 	
 	int (*cmp) (const void *, const void *);
 	cmp = NGP_compare;
@@ -28,7 +28,7 @@ void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes)
 
 GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
                                   NuclideGridPoint ** nuclide_grids) {
-	if( DEBUG ) printf("Generating Unionized Energy Grid...\n");
+	printf("Generating Unionized Energy Grid...\n");
 	
 	int n_unionized_grid_points = n_isotopes*n_gridpoints;
 	int (*cmp) (const void *, const void *);
@@ -37,7 +37,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	GridPoint * energy_grid = (GridPoint *)malloc( n_unionized_grid_points
 	                                               * sizeof( GridPoint ) );
 	
-	if( DEBUG ) printf("Copying and Sorting all nuclide grids...\n");
+	printf("Copying and Sorting all nuclide grids...\n");
 	
 	NuclideGridPoint ** n_grid_sorted = gpmatrix( n_isotopes, n_gridpoints );
 	
@@ -47,15 +47,13 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	qsort( &n_grid_sorted[0][0], n_unionized_grid_points,
 	       sizeof(NuclideGridPoint), cmp);
 
-	if( DEBUG ) printf("Assigning energies to unionized grid...\n");
+	printf("Assigning energies to unionized grid...\n");
 	
 	for( int i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].energy = ( n_grid_sorted[0] + i)->energy;
 	
 	gpmatrix_free(n_grid_sorted);
 	
-	// also, need to allocate pointer arrays
-
 	for( int i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].xs_ptrs = (NuclideGridPoint **)
 		                         malloc( n_isotopes*sizeof(NuclideGridPoint*));
@@ -67,12 +65,12 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
                     int n_isotopes, int n_gridpoints ){
 	
-	if( DEBUG ) printf("Assigning pointers to Unionized Energy Grid...\n");
+	printf("Assigning pointers to Unionized Energy Grid...\n");
 	
 	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
 		double quarry = energy_grid[i].energy;
-		if( DEBUG && i % 500 == 0 )
+		if( INFO && i % 500 == 0 )
 			printf("\rAligning Unionized Grid...(%.0lf%% complete)",
 			       100.0 * (double) i / (n_isotopes*n_gridpoints) );
 		for( int j = 0; j < n_isotopes; j++ )
@@ -83,5 +81,5 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 				binary_search( nuclide_grids[nuc_id], quarry, n_gridpoints);
 		}
 	}
-	if( DEBUG ) printf("\n");
+	printf("\n");
 }

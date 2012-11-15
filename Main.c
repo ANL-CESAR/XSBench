@@ -45,7 +45,7 @@ int main( int argc, char* argv[] )
 	);
 
 	// Allocate & fill energy grids
-	if( DEBUG ) printf("Generating Nuclide Energy Grids...\n");
+	printf("Generating Nuclide Energy Grids...\n");
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
 	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
@@ -62,13 +62,11 @@ int main( int argc, char* argv[] )
 	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
 	
 	// Get material data
-	if( INFO ) printf("Loading Mats...\n");
+	printf("Loading Mats...\n");
 	int *num_nucs = load_num_nucs();
 	int **mats = load_mats(num_nucs);
 	double **concs = load_concs(num_nucs);
 
-	if( INFO ) printf("Using %d threads.\n", nthreads);
-	
 	printf(
 	"###################################################################"
 	"#############\n");
@@ -94,7 +92,7 @@ int main( int argc, char* argv[] )
 		for( i = 0; i < lookups; i++ )
 		{
 			// Status text
-			if( DEBUG && thread == 0 && i % 10000 == 0 )
+			if( INFO && thread == 0 && i % 10000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 			// Randomly pick an energy and material for the particle
@@ -112,7 +110,7 @@ int main( int argc, char* argv[] )
 		}
 		free(macro_xs_vector);	
 	}
-	if( DEBUG ) printf("\n" );
+	printf("\n" );
 	printf("Simulation complete.\n" );
 
 	omp_end = omp_get_wtime();
@@ -127,11 +125,10 @@ int main( int argc, char* argv[] )
 	);
 
 	// Print the results
-	if( INFO ) printf("Threads:   %d\n", nthreads);
-	if( INFO ) printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
-	if( INFO ) printf("Lookups:   %d\n", lookups);
-	if( INFO ) printf("Lookups/s: %.0lf\n",
-		               (double) lookups / (omp_end-omp_start));
+	printf("Threads:   %d\n", nthreads);
+	printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
+	printf("Lookups:   %d\n", lookups);
+	printf("Lookups/s: %.0lf\n", (double) lookups / (omp_end-omp_start));
 	printf(
 	"###################################################################"
 	"#############\n"
