@@ -9,6 +9,11 @@ int main( int argc, char* argv[] )
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
+
+	#ifdef __PAPI
+	int eventset = PAPI_NULL; 
+	counter_init(&eventset);
+	#endif
 	
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
@@ -141,6 +146,10 @@ int main( int argc, char* argv[] )
 		fprintf(out, "%.0lf\n", (double) lookups / (omp_end-omp_start));
 		fclose(out);
 	}
+	
+	#ifdef __PAPI
+	counter_stop(&eventset);
+	#endif
 
 	return 0;
 }

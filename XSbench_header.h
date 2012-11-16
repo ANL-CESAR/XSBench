@@ -7,6 +7,11 @@
 #include<unistd.h>
 #include<sys/time.h>
 
+// Papi Specifier
+#include "/usr/local/include/papi.h"
+#define __PAPI
+#define NUM_PAPI_EVENTS 58
+
 // I/O Specifiers
 #define INFO 1
 #define DEBUG 1
@@ -88,3 +93,5 @@ double ** load_concs( int * num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
 float ran2( void );
+void counter_stop( int * eventset );
+void counter_init( int * eventset );
