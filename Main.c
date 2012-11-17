@@ -10,10 +10,6 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 
-	#ifdef __PAPI
-	int eventset = PAPI_NULL; 
-	counter_init(&eventset);
-	#endif
 	
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
@@ -83,6 +79,12 @@ int main( int argc, char* argv[] )
 
 	omp_start = omp_get_wtime();
 	
+	#ifdef __PAPI
+	int eventset = PAPI_NULL; 
+	int num_papi_events;
+	counter_init(&eventset, &num_papi_events);
+	#endif
+	
 	// Energy grid built. Now to enter parallel region
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
@@ -148,7 +150,7 @@ int main( int argc, char* argv[] )
 	}
 	
 	#ifdef __PAPI
-	counter_stop(&eventset);
+	counter_stop(&eventset, num_papi_events);
 	#endif
 
 	return 0;

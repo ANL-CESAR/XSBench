@@ -1,19 +1,22 @@
 #include "XSbench_header.h"
 
-void counter_init( int * eventset )
+void counter_init( int * eventset, int * num_papi_events )
 {
-	int names[NUM_PAPI_EVENTS] = 
+	printf("Initializing PAPI counters...\n");
+	int names[] = 
 	{
-		PAPI_TOT_INS,
+		/*PAPI_TOT_INS,
 		PAPI_INT_INS,
 		PAPI_FP_INS,
 		PAPI_LD_INS,
 		PAPI_SR_INS,
 		PAPI_BR_INS,
 		PAPI_VEC_INS,
+		*/
 		PAPI_RES_STL,
-		PAPI_FP_STAL,
+		//PAPI_FP_STAL,
 		PAPI_TOT_CYC,
+		/*
 		PAPI_LST_INS,
 		PAPI_SYC_INS,
 		PAPI_L1_DCH,
@@ -61,30 +64,57 @@ void counter_init( int * eventset )
 		PAPI_DP_OPS,
 		PAPI_VEC_SP,
 		PAPI_VEC_DP,
-		PAPI_REF_CYC,
+		PAPI_REF_CYC,*/
 	};
+
+	*num_papi_events = sizeof(names) / sizeof(int);
 	
 	PAPI_library_init(83886080);
 
 	PAPI_create_eventset(eventset);
 
-	PAPI_add_events( *eventset, names, NUM_PAPI_EVENTS );
+	for( int i = 0; i < *num_papi_events; i++ )
+		PAPI_add_event( *eventset, names[i] );
+
+	//PAPI_add_events( *eventset, names, NUM_PAPI_EVENTS );
 
 	PAPI_start(*eventset);
 }
 
-void counter_stop( int * eventset )
+void counter_stop( int * eventset, int num_papi_events )
 {
-	long_long values[NUM_PAPI_EVENTS] = {0};
+	int * events = malloc(num_papi_events * sizeof(int));
+	int n = num_papi_events;
+	PAPI_list_events( *eventset, events, &n );
+	PAPI_event_info_t info;
+	
+	long_long * values = malloc( num_papi_events * sizeof(long_long));
 
 	PAPI_stop(*eventset, values);
 
 	FILE * out = fopen("counters.txt", "w");
-
-	for( int i = 0; i < NUM_PAPI_EVENTS; i++ )
-	{
-		fprintf(out,"%lld\n", values[i]);
+	if( PRINT_PAPI_INFO )
+	{	
+		center_print("PAPI INFORMATION", 79);
+		printf(
+		"###################################################################"
+		"#############\n"
+		);
+		printf("Count          \tSmybol      \tDescription\n");
 	}
-	
+	for( int i = 0; i < num_papi_events; i++ )
+	{
+		PAPI_get_event_info(events[i], &info);
+		fprintf(out,"%-15lld\t%s\t%s\n",values[i],info.symbol,info.long_descr);
+		if( PRINT_PAPI_INFO )
+			printf("%-15lld\t%s\t%s\n", values[i],info.symbol,info.long_descr);
+	}
+	if( PRINT_PAPI_INFO )
+		printf(
+		"###################################################################"
+		"#############\n"
+		);
+	free(events);
+	free(values);	
 	fclose(out);
 }

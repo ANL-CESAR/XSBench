@@ -10,12 +10,13 @@
 // Papi Specifier
 #include "/usr/local/include/papi.h"
 #define __PAPI
-#define NUM_PAPI_EVENTS 58
+#define NUM_PAPI_EVENTS 2
 
 // I/O Specifiers
 #define INFO 1
 #define DEBUG 1
 #define SAVE 1
+#define PRINT_PAPI_INFO 1
 
 // For the numerical methods ran2() algorithm
 #define IM1 2147483563
@@ -93,5 +94,5 @@ double ** load_concs( int * num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
 float ran2( void );
-void counter_stop( int * eventset );
-void counter_init( int * eventset );
+void counter_stop( int * eventset, int num_papi_events );
+void counter_init( int * eventset, int * num_papi_events );
