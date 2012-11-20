@@ -61,7 +61,7 @@ By default, PAPI is disabled.
 To enable PAPI, open the XSBench_header.h file and add (or uncomment)
 the following definition to the file:
 
-> #define __PAPI
+"define __PAPI"
 
 Then, compile the code with the following command:
 
