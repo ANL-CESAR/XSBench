@@ -10,7 +10,6 @@
 // Papi Specifier
 #include "/usr/local/include/papi.h"
 #define __PAPI
-#define NUM_PAPI_EVENTS 2
 
 // I/O Specifiers
 #define INFO 1
