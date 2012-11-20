@@ -7,9 +7,13 @@
 #include<unistd.h>
 #include<sys/time.h>
 
-// Papi Specifier
+// Papi Definition (comment / uncomment to toggle PAPI)
+//#define __PAPI
+
+// Papi Header
+#ifdef __PAPI
 #include "/usr/local/include/papi.h"
-#define __PAPI
+#endif
 
 // I/O Specifiers
 #define INFO 1

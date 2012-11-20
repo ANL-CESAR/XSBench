@@ -1,4 +1,6 @@
 all:
+	gcc -fopenmp -Wall -std=c99 -O3 Materials.c Main.c GridInit.c XSutils.c CalculateXS.c -o XSBench -lm
+papi:
 	gcc -fopenmp -Wall -std=c99 -O3 Materials.c Main.c GridInit.c XSutils.c CalculateXS.c papi.c /usr/local/lib/libpapi.a -o XSBench -lm
 clean:
 	rm -rf XSBench XSBench.dSYM

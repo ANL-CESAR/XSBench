@@ -52,3 +52,21 @@ To alter the number of threads used, run the code with the desired
 number of threads as an argument:
 
 >$ ./XSBench 4
+
+PAPI Performance Counters
+------------------------------------------------------
+
+By default, PAPI is disabled.
+
+To enable PAPI, open the XSBench_header.h file and add (or uncomment)
+the following definition to the file:
+
+#define __PAPI
+
+Then, compile the code with the following command:
+
+>$ make papi
+
+Note that you may need to change the relevant library paths for papi
+to work. The library path can be specified in the makefile, and the
+header path is specified in the XSBench_header.h file.
