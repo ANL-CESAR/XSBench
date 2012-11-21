@@ -21,6 +21,9 @@
 #define SAVE 1
 #define PRINT_PAPI_INFO 1
 
+// Variable to add extra flops at each lookup from unionized grid.
+#define EXTRA_FLOPS 1
+
 // For the numerical methods ran2() algorithm
 #define IM1 2147483563
 #define IM2 2147483399
@@ -99,3 +102,4 @@ double rn(unsigned long * seed);
 float ran2( void );
 void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
+void do_flops(void);

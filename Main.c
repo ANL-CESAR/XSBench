@@ -5,7 +5,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	int n_isotopes = 68;
 	int n_gridpoints = 10000;
-	int lookups = 100000000;
+	int lookups = 10000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
@@ -36,6 +36,8 @@ int main( int argc, char* argv[] )
 	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
 	printf("XS Lookups:                   %d\n", lookups);
 	printf("Threads:                      %d\n", nthreads);
+	if( EXTRA_FLOPS > 0 )
+		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
 	printf(
 	"###################################################################"
 	"#############\n");
@@ -132,10 +134,12 @@ int main( int argc, char* argv[] )
 	);
 
 	// Print the results
-	printf("Threads:   %d\n", nthreads);
-	printf("Runtime:   %.3lf seconds\n", omp_end-omp_start);
-	printf("Lookups:   %d\n", lookups);
-	printf("Lookups/s: %.0lf\n", (double) lookups / (omp_end-omp_start));
+	printf("Threads:     %d\n", nthreads);
+	if( EXTRA_FLOPS > 0 )
+	printf("Extra Flops: %d\n", EXTRA_FLOPS);
+	printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
+	printf("Lookups:     %d\n", lookups);
+	printf("Lookups/s:   %.0lf\n", (double) lookups / (omp_end-omp_start));
 	printf(
 	"###################################################################"
 	"#############\n"

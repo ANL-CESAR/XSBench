@@ -18,22 +18,27 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	xs_h = high->total_xs;
 	xs_l = low->total_xs;
 	xs_vector[0] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
+	do_flops();
 	// Elastic XS
 	xs_h = high->elastic_xs;
 	xs_l = low->elastic_xs;
 	xs_vector[1] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
+	do_flops();
 	// Absorbtion XS
 	xs_h = high->absorbtion_xs;
 	xs_l = low->absorbtion_xs;
 	xs_vector[2] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
+	do_flops();
 	// Fission XS
 	xs_h = high->fission_xs;
 	xs_l = low->fission_xs;
 	xs_vector[3] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
+	do_flops();
 	// Nu Fission XS
 	xs_h = high->nu_fission_xs;
 	xs_l = low->nu_fission_xs;
 	xs_vector[4] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
+	do_flops();
 }
 
 /*
