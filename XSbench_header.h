@@ -22,7 +22,7 @@
 #define PRINT_PAPI_INFO 1
 
 // Variable to add extra flops at each lookup from unionized grid.
-#define EXTRA_FLOPS 1
+#define EXTRA_FLOPS 0
 
 // For the numerical methods ran2() algorithm
 #define IM1 2147483563

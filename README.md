@@ -70,3 +70,20 @@ Then, compile the code with the following command:
 Note that you may need to change the relevant library paths for papi
 to work. The library path can be specified in the makefile, and the
 header path is specified in the XSBench_header.h file.
+
+Adding Extra Flops
+------------------------------------------------------
+
+One of the areas we're investigating is the effect of adding additional
+flops per each load from the nuclide xs arrays. Adding flops has so far
+shown to increase scaling, indicating that there is in fact a benchmark
+being caused by the memory loads.
+
+By default, there are no "extra" flops in the benchmark. To add these in,
+open the XSbench_header.h file and change the EXTRA_FLOPS definition to
+the desired number of additional flops. i.e.,
+
+"#define EXTRA_FLOPS 10"
+
+Note that even just 5-10 extra flops will greatly increase the running
+time of the program.
