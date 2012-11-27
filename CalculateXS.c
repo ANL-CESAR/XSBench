@@ -36,7 +36,7 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	xs_l = low->total_xs;
 	xs_vector[0] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
 	do_flops();
-	do_loads( nuclide_grids, high, n_gridpoints );
+	do_loads( nuc, nuclide_grids, n_gridpoints );	
 	// Elastic XS
 	xs_h = high->elastic_xs;
 	xs_l = low->elastic_xs;

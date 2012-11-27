@@ -15,15 +15,29 @@ void do_flops( void )
 	}
 }
 
-// Due to the way I did my logic, there's no way of knowing where
-// "high" is exactly in its nuclide_grids array. It could be at
-// the end, or at the beginning, we have no idea. 
-void do_loads( NuclideGridPoint ** restrict nuclide_grids,
-          NuclideGridPoint * high, int n_gridpoints )
+void do_loads( int nuc,
+               NuclideGridPoint ** restrict nuclide_grids,
+		       int n_gridpoints )
 {
-	int i;
+	int i, idx;
+	unsigned long tmp = nuc;
+	double load;
 	for( i = 0; i < EXTRA_LOADS; i++ )
 	{
-		;	
+		idx = rn_int( &tmp ) % n_gridpoints;
+		load = nuclide_grids[nuc][idx].total_xs;
 	}
+}
+
+// Park & Miller Multiplicative Conguential Algorithm
+// From "Numerical Recipes" Second Edition
+// This variant is used to find integers, rather than floats.
+int rn_int(unsigned long * seed)
+{
+	unsigned long n1;
+	unsigned long a = 16807;
+	unsigned long m = 2147483647;
+	n1 = ( a * (*seed) ) % m;
+	*seed = n1;
+	return n1;
 }

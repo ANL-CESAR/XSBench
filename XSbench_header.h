@@ -23,7 +23,7 @@
 
 // Variable to add extra flops at each lookup from unionized grid.
 #define EXTRA_FLOPS 0
-#define EXTRA_LOADS 0
+#define EXTRA_LOADS 10
 
 // For the numerical methods ran2() algorithm
 /*
@@ -101,9 +101,11 @@ int ** load_mats( int * num_nucs );
 double ** load_concs( int * num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
+int rn_int(unsigned long * seed);
 float ran2( void );
 void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
-void do_loads( NuclideGridPoint ** restrict nuclide_grids,
-               NuclideGridPoint * high, int n_gridpoints );
+void do_loads( int nuc,
+               NuclideGridPoint ** restrict nuclide_grids,
+		       int n_gridpoints );	

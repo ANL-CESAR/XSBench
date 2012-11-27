@@ -7,7 +7,7 @@ clean:
 run:
 	./XSBench
 edit: 
-	vim -p Main.c GridInit.c XSutils.c CalculateXS.c Materials.c papi.c XSbench_header.h
+	vim -p Main.c GridInit.c XSutils.c CalculateXS.c Materials.c papi.c XSbench_header.h do_flops.c
 profile: do_flops.o
 	gcc -fopenmp -Wall -pg -std=c99 Materials.c Main.c GridInit.c XSutils.c CalculateXS.c papi.c do_flops.o -o XSBench -lm
 debug: do_flops.o
