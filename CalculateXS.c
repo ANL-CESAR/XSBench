@@ -7,15 +7,14 @@ IDEAS:
    Obviously, the RNG results in a non-trivial amount of extra flops.
 2. Load from some modular location ahead in memory, repeat pattern N
    times. This avoids the RNG, but still requires a few flops per load.
+   UPDATE: No. Doesn't work. Have no idea where we are in memory.
 3. Just load the next N elements off the grid. There will be huge
    cacheing efficiency here, but just the same if N is high enough
    it should put a lot of stress on memory badwidth, which is the whole
    idea of adding this lever. Problem here is that we have no idea
    where the original element was on the grid.....
 
-I suppose as of right now, I kind of like 3 best, since it doesn't
-add many flops, but does add a ton of loads (even if the effect will
-be proportionally less ( N % cache ). 
+Really, we have to use the RNG here. There's just no other option.
 */
 
 void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,

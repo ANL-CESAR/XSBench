@@ -22,7 +22,6 @@ void do_loads( NuclideGridPoint ** restrict nuclide_grids,
           NuclideGridPoint * high, int n_gridpoints )
 {
 	int i;
-	double load;
 	for( i = 0; i < EXTRA_LOADS; i++ )
 	{
 		;	

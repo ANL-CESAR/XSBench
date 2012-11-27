@@ -26,6 +26,7 @@
 #define EXTRA_LOADS 0
 
 // For the numerical methods ran2() algorithm
+/*
 #define IM1 2147483563
 #define IM2 2147483399
 #define AM (1.0/IM1)
@@ -40,7 +41,7 @@
 #define NDIV (1+IMM1/NTAB)
 #define EPS 1.2e-7
 #define RNMX (1.0-EPS)
-
+*/
 
 typedef struct{
 	double energy;
