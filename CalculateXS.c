@@ -19,6 +19,23 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	xs_l = low->total_xs;
 	xs_vector[0] = xs_h - (e_h - p_energy) * (xs_h - xs_l) / (e_h - e_l);
 	do_flops();
+	/*
+	To Do: I want to add a variable number of memory loads here.
+	How do I do this without adding way more flops than loads?
+	IDEAS:
+	1. Just do N extra loads from random locations. (Requires use of RNG).
+	   Obviously, the RNG results in a non-trivial amount of extra flops.
+	2. Load from some modular location ahead in memory, repeat pattern N
+	   times. This avoids the RNG, but still requires a few flops per load.
+	3. Just load the next N elements off the grid. There will be huge
+	   cacheing efficiency here, but just the same if N is high enough
+	   it should put a lot of stress on memory badwidth, which is the whole
+	   idea of adding this lever.
+	
+	I suppose as of right now, I kind of like 3 best, since it doesn't
+	add many flops, but does add a ton of loads (even if the effect will
+	be proportionally less ( N % cache ). 
+	*/
 	// Elastic XS
 	xs_h = high->elastic_xs;
 	xs_l = low->elastic_xs;
