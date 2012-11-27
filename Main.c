@@ -38,6 +38,8 @@ int main( int argc, char* argv[] )
 	printf("Threads:                      %d\n", nthreads);
 	if( EXTRA_FLOPS > 0 )
 		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
+	if( EXTRA_LOADS > 0 )
+		printf("Extra Loads:                  %d\n", EXTRA_LOADS);
 	printf(
 	"###################################################################"
 	"#############\n");
@@ -137,6 +139,8 @@ int main( int argc, char* argv[] )
 	printf("Threads:     %d\n", nthreads);
 	if( EXTRA_FLOPS > 0 )
 	printf("Extra Flops: %d\n", EXTRA_FLOPS);
+	if( EXTRA_LOADS > 0 )
+	printf("Extra Loads: %d\n", EXTRA_LOADS);
 	printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
 	printf("Lookups:     %d\n", lookups);
 	printf("Lookups/s:   %.0lf\n", (double) lookups / (omp_end-omp_start));
