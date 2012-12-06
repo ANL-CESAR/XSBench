@@ -87,3 +87,21 @@ the desired number of additional flops. i.e.,
 
 Note that even just 5-10 extra flops will greatly increase the running
 time of the program.
+
+Adding Extra Flops
+------------------------------------------------------
+
+One of the areas we're investigating is the effect of adding
+additional memory loads per each required load from the nuclide xs
+arrays. Adding loads has so far been rather inconclusive, as randomizing
+the loads requires a number of flops be performed to generate the random
+index number to load from. 
+
+By default, there are no "extra" loads in the benchmark. To add these in,
+open the XSbench_header.h file and change the EXTRA_LOADS definition to
+the desired number of additional flops. i.e.,
+
+"#define EXTRA_LOADS 10"
+
+Note that even just a few extra loads will greatly increase the running
+time of the program.
