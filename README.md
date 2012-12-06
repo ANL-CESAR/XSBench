@@ -99,7 +99,7 @@ index number to load from.
 
 By default, there are no "extra" loads in the benchmark. To add these in,
 open the XSbench_header.h file and change the EXTRA_LOADS definition to
-the desired number of additional flops. i.e.,
+the desired number of additional loads. i.e.,
 
 "#define EXTRA_LOADS 10"
 
