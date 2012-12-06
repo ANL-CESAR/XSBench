@@ -23,7 +23,7 @@
 
 // Variable to add extra flops at each lookup from unionized grid.
 #define EXTRA_FLOPS 0
-#define EXTRA_LOADS 5
+#define EXTRA_LOADS 0
 
 // For the numerical methods ran2() algorithm
 /*
