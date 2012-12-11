@@ -88,7 +88,7 @@ the desired number of additional flops. i.e.,
 Note that even just 5-10 extra flops will greatly increase the running
 time of the program.
 
-Adding Extra Flops
+Adding Extra Memory Loads
 ------------------------------------------------------
 
 One of the areas we're investigating is the effect of adding
