@@ -3,9 +3,9 @@
 int main( int argc, char* argv[] )
 {
 	unsigned long seed;
-	int n_isotopes = 68;
+	int n_isotopes = 334; // H-M Large change (was 68)
 	int n_gridpoints = 10000;
-	int lookups = 10000000;
+	int lookups = 50000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
