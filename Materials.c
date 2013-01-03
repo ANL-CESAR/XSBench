@@ -12,7 +12,7 @@
 int * load_num_nucs(void)
 {
 	int * num_nucs = (int*)malloc(12*sizeof(int));
-	num_nucs[0]  = 300; // HM Change (was 34)
+	num_nucs[0]  = 34; // HM Small is 34, H-M Large is 300
 	num_nucs[1]  = 5;
 	num_nucs[2]  = 4;
 	num_nucs[3]  = 4;
@@ -34,17 +34,22 @@ int ** load_mats( int * num_nucs )
 	int ** mats = (int **) malloc( 12 * sizeof(int *) );
 	for( int i = 0; i < 12; i++ )
 		mats[i] = (int *) malloc(num_nucs[i] * sizeof(int) );
-/* Small H-M 	
+
+	// Small H-M has 34 fuel nuclides
 	int mats0[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41, -1 }; //fuel
-*/	
+	
+	/*
+	// Large H-M has 300 fuel nuclides
 	int mats0[300] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41, -1 }; //fuel
 	for( int i = 0; i < 266; i++ )
-		mats0[i] = 68 + i; // H-M large gets additional nuclides to fuel only
-		
+		mats0[34+i] = 68 + i; // H-M large gets additional nuclides to fuel only
+	*/
+	
+	// These are the non-fuel materials	
 	int mats1[] =  { 63, 64, 65, 66, 67, -1 }; // cladding
 	int mats2[] =  { 24, 41, 4, 5, -1 }; // cold borated water
 	int mats3[] =  { 24, 41, 4, 5, -1 }; // hot borated water
