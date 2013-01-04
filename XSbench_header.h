@@ -43,6 +43,7 @@
 #define RNMX (1.0-EPS)
 */
 
+// Structures
 typedef struct{
 	double energy;
 	
@@ -58,6 +59,8 @@ typedef struct{
 	NuclideGridPoint ** xs_ptrs;
 } GridPoint;
 
+
+// Function Prototypes
 void logo(void);
 void center_print(const char *s, int width);
 

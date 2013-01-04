@@ -1,22 +1,6 @@
 #include "XSbench_header.h"
-/*
-To Do: I want to add a variable number of memory loads here.
-How do I do this without adding way more flops than loads?
-IDEAS:
-1. Just do N extra loads from random locations. (Requires use of RNG).
-   Obviously, the RNG results in a non-trivial amount of extra flops.
-2. Load from some modular location ahead in memory, repeat pattern N
-   times. This avoids the RNG, but still requires a few flops per load.
-   UPDATE: No. Doesn't work. Have no idea where we are in memory.
-3. Just load the next N elements off the grid. There will be huge
-   cacheing efficiency here, but just the same if N is high enough
-   it should put a lot of stress on memory badwidth, which is the whole
-   idea of adding this lever. Problem here is that we have no idea
-   where the original element was on the grid.....
 
-Really, we have to use the RNG here. There's just no other option.
-*/
-
+// Calculates the microscopic cross section for a given nuclide & energy
 void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
                            GridPoint * restrict energy_grid,
@@ -63,20 +47,7 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
 }
 
-/*
-As we make the jump from 1 -> cores, the amount of time spent in macro_xs
-jumps significantly (from 36 to 170 cpu seconds). Nearly a factor of 5x. This
-jump occurs while practically everything else stays the same (as expected).
-
-So, the question is: What's going on in macro_xs that causes poor scaling?
-It's not grid search (that's measured to stay the same). What else could
-it be?
-
-My initial thoughts was that the xs_vector allocation was expensive, but
-now I'm thinking that's not a big deal. If that were the problem, we'd be
-going slow, but scaling would be just fine.
-
-*/
+// Calculates macroscopic cross section based on a given material & energy 
 void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                            int n_gridpoints, int * restrict num_nucs,
                            double ** restrict concs,
@@ -84,7 +55,6 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                            NuclideGridPoint ** restrict nuclide_grids,
 						   int ** restrict mats,
                            double * restrict macro_xs_vector ){
-	//double * xs_vector = (double *) malloc( 5 * sizeof(double) );
 	double xs_vector[5];
 	int p_nuc;
 	int idx = 0;	
@@ -94,20 +64,13 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 	for( int k = 0; k < 5; k++ )
 		macro_xs_vector[k] = 0;
 
-	// CONVERT TO BINARY SEARCH
-	/*
-	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
-		if( energy_grid[i].energy <= p_energy )
-			idx = i;
-	*/
-
-	// binary search
+	// binary search for energy on unionized energy grid (UEG)
 	idx = grid_search( n_isotopes * n_gridpoints, p_energy,
 	                   energy_grid);	
-
-	// I think our contention problem may be here.
-	// Think about it. This is a pretty small set of information compared
-	// to the giant energy grid arrays.
+	
+	// Once we find the pointer array on the UEG, we can pull the data
+	// from the respective nuclide grids, as well as the nuclide
+	// concentration data for the material
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
 		p_nuc = mats[mat][j];
@@ -118,7 +81,6 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-	//free(xs_vector);
 	
 	for( int k = 0; k < 5; k++ )
 		macro_xs_vector[k] = macro_xs_vector[k] / num_nucs[mat];

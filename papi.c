@@ -1,5 +1,8 @@
 #include "XSbench_header.h"
 
+// Initializes papi counters. I'm still working on getting PAPI counters
+// fully integrated. As is now, I've been commenting in/out the particular
+// counters I want at any given time.
 void counter_init( int * eventset, int * num_papi_events )
 {
 	printf("Initializing PAPI counters...\n");
@@ -76,6 +79,7 @@ void counter_init( int * eventset, int * num_papi_events )
 	PAPI_start(*eventset);
 }
 
+// Stops the papi counters and prints results
 void counter_stop( int * eventset, int num_papi_events )
 {
 	int * events = malloc(num_papi_events * sizeof(int));

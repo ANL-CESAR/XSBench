@@ -3,6 +3,8 @@
 // Note that this file needs to be compiled separately with the -O0 flag
 // to prevent the compiler from optimizing away the flops. The included
 // makefile takes this into account.
+
+// Does a extra, arbitrary flops.
 void do_flops( void )
 {
 	double a = 1.33;
@@ -15,6 +17,7 @@ void do_flops( void )
 	}
 }
 
+// Does extra, random memory loads
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
 		       int n_gridpoints )

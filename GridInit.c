@@ -1,5 +1,8 @@
 #include "XSbench_header.h"
 
+// Generates randomized energy grid for each nuclide
+// Note that this is done as part of initialization (serial), so
+// rand() is used.
 void generate_grids( NuclideGridPoint ** nuclide_grids,
                      int n_isotopes, int n_gridpoints ) {
 	for( int i = 0; i < n_isotopes; i++ )
@@ -14,6 +17,7 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 		}
 }
 
+// Sorts the nuclide grids by energy (lowest -> highest)
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes)
 {
 	printf("Sorting Nuclide Energy Grids...\n");
@@ -26,6 +30,8 @@ void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes)
 		       cmp );
 }
 
+// Allocates unionized energy grid, and assigns union of energy levels
+// from nuclide grids to it.
 GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
                                   NuclideGridPoint ** nuclide_grids) {
 	printf("Generating Unionized Energy Grid...\n");
@@ -61,7 +67,10 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	return energy_grid;
 }
 
-
+// Searches each nuclide grid for the closest energy level and assigns
+// pointer from unionized grid to the correct spot in the nuclide grid.
+// This process is time consuming, as the number of binary searches
+// required is:  binary searches = n_gridpoints * n_isotopes^2
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
                     int n_isotopes, int n_gridpoints ){
 	

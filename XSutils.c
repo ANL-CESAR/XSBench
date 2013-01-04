@@ -1,5 +1,6 @@
 #include "XSbench_header.h"
-	
+
+// Allocates nuclide matrix
 NuclideGridPoint ** gpmatrix(size_t m, size_t n)
 {
 	int i,j;
@@ -15,13 +16,14 @@ NuclideGridPoint ** gpmatrix(size_t m, size_t n)
 	return M;
 }
 
+// Frees nuclide matrix
 void gpmatrix_free( NuclideGridPoint ** M )
 {
 	free( *M );
 	free( M );
 }
 
-
+// Compare function for two grid points. Used for sorting during init
 int NGP_compare( const void * a, const void * b )
 {
 	NuclideGridPoint i, j;
@@ -36,6 +38,7 @@ int NGP_compare( const void * a, const void * b )
 		return 0;
 }
 
+// Prints program logo
 void logo(void)
 {
 	printf(
@@ -56,6 +59,7 @@ void logo(void)
 	"#############\n");
 }
 
+// Prints Section titles in center of 80 char terminal
 void center_print(const char *s, int width)
 {
 	int length = strlen(s);
@@ -67,6 +71,7 @@ void center_print(const char *s, int width)
 	fputs("\n", stdout);
 }
 
+// Binary Search function for nuclide grid
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 {
 	int min = 0;
