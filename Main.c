@@ -2,35 +2,66 @@
 
 int main( int argc, char* argv[] )
 {
+	// =====================================================================
+	// Initialization & Command Line Read-In
+	// =====================================================================
+	
 	unsigned long seed;
-	int n_isotopes = 68; // H-M Large is 334, H-M Small is 68
+	int n_isotopes; // H-M Large is 334, H-M Small is 68
 	int n_gridpoints = 10000;
 	int lookups = 10000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
-
-	
+	char * HM;
+		
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
 	srand(time(NULL));
-
+	
+	// Process CLI Fields
+	// Useage:   ./XSBench <# threads> <H-M Size ("Small or "Large")>
 	if( argc == 2 )
-		nthreads = atoi(argv[1]);
+	{
+		nthreads = atoi(argv[1]);	// first arg sets # of threads
+		n_isotopes = 68;			// defaults to H-M small
+	}
+	else if( argc == 3 )
+	{
+		nthreads = atoi(argv[1]);	// first arg sets # of threads
+		// second arg species small or large H-M benchmark
+		if( strcmp( argv[2], "large") == 0 || strcmp( argv[2], "Large" ) == 0)
+			n_isotopes = 334;
+		else
+			n_isotopes = 68;
+	}
 	else
-		nthreads = max_procs;
-	
-	omp_set_num_threads(nthreads); 
+	{
+		nthreads = max_procs;		// defaults to full CPU usage
+		n_isotopes = 68;			// defaults to H-M small
+	}
 
-	logo();
+	// Sets H-M size name
+	if( n_isotopes == 68 )
+		HM = "Small";
+	else
+		HM = "Large";
+		
+	// Set number of OpenMP Threads
+	omp_set_num_threads(nthreads); 
+		
+	// =====================================================================
+	// Print-out of Input Summary
+	// =====================================================================
 	
-	// Print out input summary
+	logo();
 	center_print("INPUT SUMMARY", 79);
 	printf(
 	"###################################################################"
 	"#############\n"
 	);
 	printf("Materials:                    %d\n", 12);
+	printf("H-M Benchmark Size:           %s\n", HM);
 	printf("Total Isotopes:               %d\n", n_isotopes);
 	printf("Gridpoints (per Nuclide):     %d\n", n_gridpoints);
 	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
@@ -48,6 +79,10 @@ int main( int argc, char* argv[] )
 	"###################################################################"
 	"#############\n"
 	);
+	
+	// =====================================================================
+	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
+	// =====================================================================
 
 	// Allocate & fill energy grids
 	printf("Generating Nuclide Energy Grids...\n");
@@ -68,10 +103,14 @@ int main( int argc, char* argv[] )
 	
 	// Get material data
 	printf("Loading Mats...\n");
-	int *num_nucs = load_num_nucs();
-	int **mats = load_mats(num_nucs);
+	int *num_nucs = load_num_nucs(n_isotopes);
+	int **mats = load_mats(num_nucs, n_isotopes);
 	double **concs = load_concs(num_nucs);
 
+	// =====================================================================
+	// Cross Section (XS) Parallel Lookup Simulation Begins
+	// =====================================================================
+	
 	printf(
 	"###################################################################"
 	"#############\n");
@@ -89,7 +128,6 @@ int main( int argc, char* argv[] )
 	counter_init(&eventset, &num_papi_events);
 	#endif
 	
-	// Energy grid built. Now to enter parallel region
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
@@ -106,25 +144,29 @@ int main( int argc, char* argv[] )
 			if( INFO && thread == 0 && i % 10000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
+			
 			// Randomly pick an energy and material for the particle
-			//p_energy = (double) rand() / (double) RAND_MAX;
 			p_energy = rn(&seed);
 			mat = pick_mat(&seed); 
 		
 			// This returns the macro_xs_vector, but we're not going
-			//to do anything with it in this program, so return value
-			//is written over stored.
+			// to do anything with it in this program, so return value
+			// is written over.
 			calculate_macro_xs( p_energy, mat, n_isotopes,
 			                    n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
 		}
-		//free(macro_xs_vector);	
 	}
+	
 	printf("\n" );
 	printf("Simulation complete.\n" );
 
 	omp_end = omp_get_wtime();
+	
+	// =====================================================================
+	// Print / Save Results and Exit
+	// =====================================================================
 	
 	printf(
 	"###################################################################"

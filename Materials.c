@@ -9,10 +9,17 @@
 #include "XSbench_header.h"
 
 // num_nucs represents the number of nuclides that each material contains
-int * load_num_nucs(void)
+int * load_num_nucs(int n_isotopes)
 {
 	int * num_nucs = (int*)malloc(12*sizeof(int));
-	num_nucs[0]  = 34; // HM Small is 34, H-M Large is 300
+	
+	// Material 0 is a special case (fuel). The H-M small reactor uses
+	// 34 nuclides, while H-M larges uses 300.
+	if( n_isotopes == 68 )
+		num_nucs[0]  = 34; // HM Small is 34, H-M Large is 300
+	else
+		num_nucs[0]  = 300; // HM Small is 34, H-M Large is 300
+
 	num_nucs[1]  = 5;
 	num_nucs[2]  = 4;
 	num_nucs[3]  = 4;
@@ -29,25 +36,22 @@ int * load_num_nucs(void)
 }
 
 // Assigns an array of nuclide ID's to each material
-int ** load_mats( int * num_nucs )
+int ** load_mats( int * num_nucs, int n_isotopes )
 {
 	int ** mats = (int **) malloc( 12 * sizeof(int *) );
 	for( int i = 0; i < 12; i++ )
 		mats[i] = (int *) malloc(num_nucs[i] * sizeof(int) );
 
 	// Small H-M has 34 fuel nuclides
-	int mats0[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
+	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41, -1 }; //fuel
-	
-	/*
 	// Large H-M has 300 fuel nuclides
-	int mats0[300] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
+	int mats0_Lrg[300] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41, -1 }; //fuel
 	for( int i = 0; i < 266; i++ )
-		mats0[34+i] = 68 + i; // H-M large gets additional nuclides to fuel only
-	*/
+		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// These are the non-fuel materials	
 	int mats1[] =  { 63, 64, 65, 66, 67, -1 }; // cladding
@@ -68,8 +72,11 @@ int ** load_mats( int * num_nucs )
 	                 49, 50, 51, 11, 12, 13, 14, -1 }; // top nozzle
 	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // top of FA's
 	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // bottom FA's
-
-	memcpy( mats[0],  mats0,  num_nucs[0]  * sizeof(int) );	
+	
+	if( n_isotopes == 68 )
+		memcpy( mats[0],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
+	else
+		memcpy( mats[0],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
 	memcpy( mats[1],  mats1,  num_nucs[1]  * sizeof(int) );	
 	memcpy( mats[2],  mats2,  num_nucs[2]  * sizeof(int) );	
 	memcpy( mats[3],  mats3,  num_nucs[3]  * sizeof(int) );	

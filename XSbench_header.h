@@ -96,8 +96,8 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 
 int grid_search( int n, double quarry, GridPoint * A);
 
-int * load_num_nucs(void);
-int ** load_mats( int * num_nucs );
+int * load_num_nucs(int n_isotopes);
+int ** load_mats( int * num_nucs, int n_isotopes );
 double ** load_concs( int * num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
