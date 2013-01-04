@@ -53,6 +53,18 @@ number of threads as an argument:
 
 >$ ./XSBench 4
 
+To alter the Hoogenboom-Martin specification used (small or large),
+use the second argument to specify either "Small" or "Large". This
+corresponds to the number of nuclides present in the fuel region.
+The small version has 34 fuel nuclides, whereas the large version
+has 300 fuel nuclides. This significantly slows down the runtime
+of the program as the data structures are much larger, and more
+lookups are required whenever a lookup occurs in a fuel material.
+Note that the program defaults to "Small" if no specification is
+made. Example:
+
+>$ ./XSBench 4 Large
+
 PAPI Performance Counters
 ------------------------------------------------------
 
