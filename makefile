@@ -1,12 +1,3 @@
-program = XSBench
-
-source = \
-CalculateXS.c \
-GridInit.c \
-Main.c \
-Materials.c \
-XSutils.c
-
 #===============================================================================
 # User Options
 #===============================================================================
@@ -18,7 +9,20 @@ PROFILE  = no
 PAPI     = no
 
 #===============================================================================
-# Compiler Flags and Options
+# Program name & source code list
+#===============================================================================
+
+program = XSBench
+
+source = \
+CalculateXS.c \
+GridInit.c \
+Main.c \
+Materials.c \
+XSutils.c
+
+#===============================================================================
+# Sets Flags
 #===============================================================================
 
 # Regular gcc Compiler
@@ -70,5 +74,7 @@ clean:
 	rm -rf XSBench XSBench.dSYM do_flops.o
 edit:
 	vim -p $(source) do_flops.c papi.c
+run:
+	./XSBench
 bgqrun:
 	qsub -t 10 -n 1 -O test XSBench

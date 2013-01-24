@@ -113,12 +113,18 @@ header path is specified in the XSBench_header.h file.
 
 
 
-Running on BlueGene/Q (Vesta)
+Running on ANL BlueGene/Q (Vesta & Mira)
 ------------------------------------------------------
 
 Compilation is done using the included makefile, as follows:
 
 >$ make MACHINE=bluegene
+
+Note that the INFO macro in the XSbench_header.h file should be
+set to 0 when running on BG/Q to remove the run status portions of
+the output, i.e.:
+
+#define INFO 0
 
 A basic test run on 1 node can be achieved (assuming you have an allocation)
 using the makefile and the following command:
