@@ -1,8 +1,14 @@
-XSBench
-=======
+==============================================================================
+                   __   __ ___________                 _                        
+                   \ \ / //  ___| ___ \               | |                       
+                    \ V / \ `--.| |_/ / ___ _ __   ___| |__                     
+                    /   \  `--. \ ___ \/ _ \ '_ \ / __| '_ \                    
+                   / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
+                   \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
+==============================================================================
 Background
-------------------------------------------------------
+==============================================================================
 
 XSBench is a simple application that executes only the most
 computationally expensive steps of Monte Carlo particle transport
@@ -29,9 +35,9 @@ platform for stressing different architectures, and ultimately for
 making determinations as to where hardware bottlenecks occur as
 cores are added.
 
-
+==============================================================================
 User Guide
-------------------------------------------------------
+==============================================================================
 
 By default, XSBench will with 1 thread per hardware core. If the
 architecture supports hyperthreading, two threads will be run per
@@ -62,6 +68,7 @@ made. Example:
 >$ ./XSBench 4 Large
 
 
+
 Debugging, Optimization & Profiling
 ------------------------------------------------------
 
@@ -80,6 +87,7 @@ Optimization enables the -O3 optimzation flag.
 Debugging enables the -g flag.
 
 Profling enables the -pg flag.
+
 
 
 PAPI Performance Counters
@@ -102,6 +110,7 @@ The library path can be specified in the makefile, and the
 header path is specified in the XSBench_header.h file.
 
 
+
 Running on BlueGene/Q (Vesta)
 ------------------------------------------------------
 
@@ -113,6 +122,7 @@ A basic test run on 1 node can be achieved (assuming you have an allocation)
 using the makefile and the following command:
 
 >$ make bgqrun
+
 
 
 Adding Extra Flops
@@ -131,6 +141,7 @@ the desired number of additional flops. i.e.,
 
 Note that even just 5-10 extra flops will greatly increase the running
 time of the program.
+
 
 
 Adding Extra Memory Loads
