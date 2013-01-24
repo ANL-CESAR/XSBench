@@ -42,11 +42,7 @@ commands:
 
 >$ make
 
->$ make run
-
-To compile with profiling (-pg) enabled:
-
->$ make profile
+>$ ./XSBench
 
 To alter the number of threads used, run the code with the desired
 number of threads as an argument:
@@ -65,6 +61,27 @@ made. Example:
 
 >$ ./XSBench 4 Large
 
+
+Debugging, Optimization & Profiling
+------------------------------------------------------
+
+There are also a number of switches that can be set in the makefile.
+
+Here is a sample of the control panel at the top of the makefile:
+
+COMPILER = gnu
+OPTIMIZE = yes
+DEBUG    = no
+PROFILE  = no
+PAPI     = no
+
+Optimization enables the -O3 optimzation flag.
+
+Debugging enables the -g flag.
+
+Profling enables the -pg flag.
+
+
 PAPI Performance Counters
 ------------------------------------------------------
 
@@ -75,13 +92,28 @@ the following definition to the file:
 
 "#define __PAPI"
 
-Then, compile the code with the following command:
+Then, enable papi in the makefile:
 
->$ make papi
+PAPI     = yes
 
 Note that you may need to change the relevant library paths for papi
-to work. The library path can be specified in the makefile, and the
+to work (as these are dependent on your machine).
+The library path can be specified in the makefile, and the
 header path is specified in the XSBench_header.h file.
+
+
+Running on BlueGene/Q (Vesta)
+------------------------------------------------------
+
+Compilation is done using the included makefile, as follows:
+
+>$ make MACHINE=bluegene
+
+A basic test run on 1 node can be achieved (assuming you have an allocation)
+using the makefile and the following command:
+
+>$ make bgqrun
+
 
 Adding Extra Flops
 ------------------------------------------------------
@@ -99,6 +131,7 @@ the desired number of additional flops. i.e.,
 
 Note that even just 5-10 extra flops will greatly increase the running
 time of the program.
+
 
 Adding Extra Memory Loads
 ------------------------------------------------------

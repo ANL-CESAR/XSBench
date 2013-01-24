@@ -29,7 +29,7 @@ endif
 # BG/Q gcc Cross-Compiler
 ifeq ($(MACHINE),bluegene)
   GCC = /bgsys/drivers/toolchain/V1R1M2/gnu-linux/bin/powerpc64-bgq-linux-gcc
-endif 
+endif
 
 # Standard Flags
 GCCFLAGS := -fopenmp -Wall -std=c99 -lm
@@ -70,3 +70,5 @@ clean:
 	rm -rf XSBench XSBench.dSYM do_flops.o
 edit:
 	vim -p $(source) do_flops.c papi.c
+bgqrun:
+	qsub -t 10 -n 1 -O test XSBench
