@@ -33,7 +33,7 @@ endif
 
 # Standard Flags
 GCCFLAGS := -fopenmp -Wall -std=c99 -lm
-LDFLAGS =
+LDFLAGS = -lm
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
@@ -64,7 +64,7 @@ endif
 $(program): $(source) do_flops.o XSbench_header.h
 	$(GCC) $(GCCFLAGS) do_flops.o $(source) -o $@ $(LDFLAGS)
 do_flops.o: do_flops.c
-	$(GCC) -fopenmp -Wall -std=c99 -lm -c do_flops.c
+	$(GCC) -fopenmp -Wall -std=c99 -c do_flops.c -lm
 
 clean:
 	rm -rf XSBench XSBench.dSYM do_flops.o
