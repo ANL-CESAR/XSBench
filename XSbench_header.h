@@ -16,7 +16,7 @@
 #endif
 
 // I/O Specifiers
-#define INFO 1
+#define INFO 0
 #define DEBUG 1
 #define SAVE 1
 #define PRINT_PAPI_INFO 1
