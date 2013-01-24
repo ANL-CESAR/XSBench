@@ -39,10 +39,6 @@ cores are added.
 User Guide
 ==============================================================================
 
-By default, XSBench will with 1 thread per hardware core. If the
-architecture supports hyperthreading, two threads will be run per
-core.
-
 To compile and run XSBench with default settings, use the following
 commands:
 
@@ -50,8 +46,12 @@ commands:
 
 >$ ./XSBench
 
-To alter the number of threads used, run the code with the desired
-number of threads as an argument:
+By default, XSBench will with 1 thread per hardware core. If the
+architecture supports hyperthreading, two threads will be run per
+core.
+
+To manually alter the number of threads used, run the code with the
+desired number of threads as an argument:
 
 >$ ./XSBench 4
 
@@ -88,6 +88,8 @@ Debugging enables the -g flag.
 
 Profling enables the -pg flag.
 
+The PAPI flag is explained below.
+
 
 
 PAPI Performance Counters
@@ -122,6 +124,10 @@ A basic test run on 1 node can be achieved (assuming you have an allocation)
 using the makefile and the following command:
 
 >$ make bgqrun
+
+Further information on queuing can be found at:
+
+https://www.alcf.anl.gov/resource-guides/vesta-queuing
 
 
 
