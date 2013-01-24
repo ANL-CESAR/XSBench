@@ -11,8 +11,8 @@ Background
 ==============================================================================
 
 XSBench is a simple application that executes only the most
-computationally expensive steps of Monte Carlo particle transport
-\- the calculation of macroscopic cross sections \- in an effort to
+computationally expensive steps of Monte Carlo particle transport,
+the calculation of macroscopic cross sections, in an effort to
 expose bottlenecks within multi-core, shared memory architectures.
 
 In a particle transport simulation, every time a particle changes
