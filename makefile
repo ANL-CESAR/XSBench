@@ -15,11 +15,11 @@ PAPI     = no
 program = XSBench
 
 source = \
+Main.c \
 CalculateXS.c \
 GridInit.c \
-Main.c \
-Materials.c \
-XSutils.c
+XSutils.c \
+Materials.c
 
 #===============================================================================
 # Sets Flags
@@ -36,24 +36,25 @@ ifeq ($(MACHINE),bluegene)
 endif
 
 # Standard Flags
-GCCFLAGS := -fopenmp -Wall -std=c99 -lm
+GCC_S_FLAGS := -fopenmp -Wall -std=c99
+GCC_O_FLAGS =
 LDFLAGS = -lm
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
-  GCCFLAGS += -g
+  GCC_O_FLAGS += -g
   LDFLAGS  += -g
 endif
 
 # Profiling Flags
 ifeq ($(PROFILE),yes)
-  GCCFLAGS += -pg
+  GCC_O_FLAGS += -pg
   LDFLAGS  += -pg
 endif
 
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
-  GCCFLAGS += -O3
+  GCC_O_FLAGS += -O3
 endif
 
 # PAPI source 
@@ -66,9 +67,9 @@ endif
 #===============================================================================
 
 $(program): $(source) do_flops.o XSbench_header.h
-	$(GCC) $(GCCFLAGS) do_flops.o $(source) -o $@ $(LDFLAGS)
+	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) do_flops.o $(source) -o $@ $(LDFLAGS)
 do_flops.o: do_flops.c
-	$(GCC) -fopenmp -Wall -std=c99 -c do_flops.c -lm
+	$(GCC) $(GCC_S_FLAGS) -c do_flops.c
 
 clean:
 	rm -rf XSBench XSBench.dSYM do_flops.o
