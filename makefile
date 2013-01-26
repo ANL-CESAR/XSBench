@@ -74,7 +74,7 @@ do_flops.o: do_flops.c
 clean:
 	rm -rf XSBench XSBench.dSYM do_flops.o
 edit:
-	vim -p $(source) do_flops.c papi.c
+	vim -p $(source) do_flops.c papi.c XSbench_header.h
 run:
 	./XSBench
 bgqrun:

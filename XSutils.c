@@ -26,13 +26,14 @@ void gpmatrix_free( NuclideGridPoint ** M )
 // Compare function for two grid points. Used for sorting during init
 int NGP_compare( const void * a, const void * b )
 {
-	NuclideGridPoint i, j;
-	i = *( (NuclideGridPoint *) a);
-	j = *(( NuclideGridPoint *) b);
+	NuclideGridPoint *i, *j;
 
-	if( i.energy > j.energy )
+	i = (NuclideGridPoint *) a;
+	j = (NuclideGridPoint *) b;
+
+	if( i->energy > j->energy )
 		return 1;
-	else if ( i.energy < j.energy)
+	else if ( i->energy < j->energy)
 		return -1;
 	else
 		return 0;
@@ -72,6 +73,7 @@ void center_print(const char *s, int width)
 }
 
 // Binary Search function for nuclide grid
+// Returns ptr to energy less than the quarry that is closest to the quarry
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 {
 	int min = 0;
@@ -104,47 +106,3 @@ double rn(unsigned long * seed)
 	ret = (double) n1 / m;
 	return ret;
 }
-
-
-/*
-// From "Numerical Recipes", Second Edition
-// Press, Teukolsky, Vetterling, Flannery
-float ran2( )
-{
-	int j;
-	long k;
-	float temp;
-
-	if( *idnum <= 0 ) {
-		if( -(*idnum) < 1) *idnum=1;
-		else *idnum = -(*idnum);
-		idnum2=(*idnum);
-		for( j = NTAB + 7; j >= 0; j-- )
-		{
-			k = (*idnum)/IQ1;
-			*idnum = IA1 * (*idnum - k * IQ1 ) - k * IR1;
-			if( *idnum < 0 )
-				*idnum += IM1;
-			if ( j < NTAB )
-				iv[j] = *idnum;
-		}
-		iy=iv[0];
-	}
-	k=(*idnum)/IQ1;
-	*idnum=IA1 * (*idnum-k * IQ1) - k * IR1;
-	if( *idnum < 0 )
-		*idnum += IM1;
-	k = idnum2/IQ2;
-	idnum2 = IA2 * (idnum2-k*IQ2) - k * IR2;
-	if( idnum2 < 0 )
-		idnum2 += IM2;
-	j = iy / NDIV;
-	iy = iv[j] - idnum2;
-	iv[j] = *idnum;
-	if( iy < 1 ) iy += IMM1;
-	if( (temp=AM*iy) > RNMX)
-		return RNMX;
-	else
-		return temp;
-}
-*/

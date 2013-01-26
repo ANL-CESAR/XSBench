@@ -1,10 +1,5 @@
-// Material data is hard coded into the three functions in this file.
-// I agree, this isn't the best way to do this. It would be much
-// smarter to read from an input text file, or even better, from
-// an xml file. However, for the time being, H-M serves as a good
-// basis for development purposes.
-
-// Note that there are 12 materials present in H-M
+// Material data is hard coded into the functions in this file.
+// Note that there are 12 materials present in H-M (large or small)
 
 #include "XSbench_header.h"
 
@@ -44,39 +39,42 @@ int ** load_mats( int * num_nucs, int n_isotopes )
 
 	// Small H-M has 34 fuel nuclides
 	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
-	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
-	                 54, 55, 56, 18, 23, 41, -1 }; //fuel
+	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53, 
+	                 54, 55, 56, 18, 23, 41 }; //fuel
 	// Large H-M has 300 fuel nuclides
 	int mats0_Lrg[300] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
-	                 54, 55, 56, 18, 23, 41, -1 }; //fuel
+	                 54, 55, 56, 18, 23, 41 }; //fuel
 	for( int i = 0; i < 266; i++ )
 		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// These are the non-fuel materials	
-	int mats1[] =  { 63, 64, 65, 66, 67, -1 }; // cladding
-	int mats2[] =  { 24, 41, 4, 5, -1 }; // cold borated water
-	int mats3[] =  { 24, 41, 4, 5, -1 }; // hot borated water
+	int mats1[] =  { 63, 64, 65, 66, 67 }; // cladding
+	int mats2[] =  { 24, 41, 4, 5 }; // cold borated water
+	int mats3[] =  { 24, 41, 4, 5 }; // hot borated water
 	int mats4[] =  { 19, 20, 21, 22, 35, 36, 37, 38, 39, 25, 27, 28, 29,
 	                 30, 31, 32, 26, 49, 50, 51, 11, 12, 13, 14, 6, 16,
-	                 17, -1 }; // RPV
+	                 17 }; // RPV
 	int mats5[] =  { 24, 41, 4, 5, 19, 20, 21, 22, 35, 36, 37, 38, 39, 25,
-	                 49, 50, 51, 11, 12, 13, 14, -1 }; // lower radial reflector
+	                 49, 50, 51, 11, 12, 13, 14 }; // lower radial reflector
 	int mats6[] =  { 24, 41, 4, 5, 19, 20, 21, 22, 35, 36, 37, 38, 39, 25,
-	                 49, 50, 51, 11, 12, 13, 14, -1 }; // top reflector / plate
+	                 49, 50, 51, 11, 12, 13, 14 }; // top reflector / plate
 	int mats7[] =  { 24, 41, 4, 5, 19, 20, 21, 22, 35, 36, 37, 38, 39, 25,
-	                 49, 50, 51, 11, 12, 13, 14, -1 }; // bottom plate
+	                 49, 50, 51, 11, 12, 13, 14 }; // bottom plate
 	int mats8[] =  { 24, 41, 4, 5, 19, 20, 21, 22, 35, 36, 37, 38, 39, 25,
-	                 49, 50, 51, 11, 12, 13, 14, -1 }; // bottom nozzle
+	                 49, 50, 51, 11, 12, 13, 14 }; // bottom nozzle
 	int mats9[] =  { 24, 41, 4, 5, 19, 20, 21, 22, 35, 36, 37, 38, 39, 25,
-	                 49, 50, 51, 11, 12, 13, 14, -1 }; // top nozzle
-	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // top of FA's
-	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67, -1 }; // bottom FA's
+	                 49, 50, 51, 11, 12, 13, 14 }; // top nozzle
+	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67 }; // top of FA's
+	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67 }; // bottom FA's
 	
+	// H-M large v small dependency
 	if( n_isotopes == 68 )
 		memcpy( mats[0],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
 	else
 		memcpy( mats[0],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
+	
+	// Copy other materials
 	memcpy( mats[1],  mats1,  num_nucs[1]  * sizeof(int) );	
 	memcpy( mats[2],  mats2,  num_nucs[2]  * sizeof(int) );	
 	memcpy( mats[3],  mats3,  num_nucs[3]  * sizeof(int) );	
@@ -88,6 +86,14 @@ int ** load_mats( int * num_nucs, int n_isotopes )
 	memcpy( mats[9],  mats9,  num_nucs[9]  * sizeof(int) );	
 	memcpy( mats[10], mats10, num_nucs[10] * sizeof(int) );	
 	memcpy( mats[11], mats11, num_nucs[11] * sizeof(int) );	
+	
+	// test
+	/*
+	for( int i = 0; i < 12; i++ )
+		for( int j = 0; j < num_nucs[i]; j++ )
+			printf("material %d - Nuclide %d: %d\n",
+			       i, j, mats[i][j]);
+	*/
 
 	return mats;
 }
@@ -96,11 +102,21 @@ int ** load_mats( int * num_nucs, int n_isotopes )
 double ** load_concs( int * num_nucs )
 {
 	double ** concs = (double **)malloc( 12 * sizeof( double *) );
+	
 	for( int i = 0; i < 12; i++ )
 		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
+	
 	for( int i = 0; i < 12; i++ )
 		for( int j = 0; j < num_nucs[i]; j++ )
 			concs[i][j] = (double) rand() / (double) RAND_MAX;
+
+	// test
+	/*
+	for( int i = 0; i < 12; i++ )
+		for( int j = 0; j < num_nucs[i]; j++ )
+			printf("concs[%d][%d] = %lf\n", i, j, concs[i][j] );
+	*/
+
 	return concs;
 }
 

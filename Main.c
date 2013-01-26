@@ -91,7 +91,7 @@ int main( int argc, char* argv[] )
 	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
 	
 	// Sort grids by energy
-	sort_nuclide_grids( nuclide_grids, n_isotopes );
+	sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
 
 	// Prepare Unionized Energy Grid Framework
 	GridPoint * energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,

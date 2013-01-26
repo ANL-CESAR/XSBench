@@ -25,24 +25,6 @@
 #define EXTRA_FLOPS 0
 #define EXTRA_LOADS 0
 
-// For the numerical methods ran2() algorithm
-/*
-#define IM1 2147483563
-#define IM2 2147483399
-#define AM (1.0/IM1)
-#define IMM1 (IM1-1)
-#define IA1 40014
-#define IA2 40692
-#define IQ1 53668
-#define IQ2 52774
-#define IR1 12211
-#define IR2 3791
-#define NTAB 32
-#define NDIV (1+IMM1/NTAB)
-#define EPS 1.2e-7
-#define RNMX (1.0-EPS)
-*/
-
 // Structures
 typedef struct{
 	double energy;
@@ -61,19 +43,20 @@ typedef struct{
 
 
 // Function Prototypes
-void logo(void);
-void center_print(const char *s, int width);
+void logo(void); // OK by inspection
+void center_print(const char *s, int width); // OK by inspection
 
-NuclideGridPoint ** gpmatrix(size_t m, size_t n);
+NuclideGridPoint ** gpmatrix(size_t m, size_t n); // OK by inspection
 
-void gpmatrix_free( NuclideGridPoint ** M );
+void gpmatrix_free( NuclideGridPoint ** M ); // OK by inspection
 
-int NGP_compare( const void * a, const void * b );
+int NGP_compare( const void * a, const void * b ); // OK by inspection and printf
 
-void generate_grids( NuclideGridPoint ** nuclide_grids,
+void generate_grids( NuclideGridPoint ** nuclide_grids, // OK by inspection
                      int n_isotopes, int n_gridpoints );
 
-void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes);
+void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
+                         int n_gridpoints );
 
 GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
                                   NuclideGridPoint ** nuclide_grids);
@@ -105,7 +88,6 @@ double ** load_concs( int * num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
 int rn_int(unsigned long * seed);
-float ran2( void );
 void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
