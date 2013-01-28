@@ -82,7 +82,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
 		double quarry = energy_grid[i].energy;
-		if( INFO && omp_get_thread_num() == 0 && i % 500 == 0 )
+		if( INFO && omp_get_thread_num() == 0 && i % 200 == 0 )
 			printf("\rAligning Unionized Grid...(%.0lf%% complete)",
 			       100.0 * (double) i / (n_isotopes*n_gridpoints /
 				                         omp_get_num_threads())     );
