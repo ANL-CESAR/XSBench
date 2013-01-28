@@ -18,27 +18,27 @@ int main( int argc, char* argv[] )
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
 	srand(time(NULL));
-	
+
 	// Process CLI Fields
 	// Useage:   ./XSBench <# threads> <H-M Size ("Small or "Large")>
 	if( argc == 2 )
 	{
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
-		n_isotopes = 68;			// defaults to H-M small
+		n_isotopes = 355;			// defaults to H-M small
 	}
 	else if( argc == 3 )
 	{
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
 		// second arg species small or large H-M benchmark
-		if( strcmp( argv[2], "large") == 0 || strcmp( argv[2], "Large" ) == 0)
-			n_isotopes = 355;
-		else
+		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
 			n_isotopes = 68;
+		else
+			n_isotopes = 355;
 	}
 	else
 	{
 		nthreads = max_procs;		// defaults to full CPU usage
-		n_isotopes = 68;			// defaults to H-M small
+		n_isotopes = 355;			// defaults to H-M small
 	}
 
 	// Sets H-M size name

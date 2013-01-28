@@ -59,13 +59,13 @@ To alter the Hoogenboom-Martin specification used (small or large),
 use the second argument to specify either "Small" or "Large". This
 corresponds to the number of nuclides present in the fuel region.
 The small version has 34 fuel nuclides, whereas the large version
-has 300 fuel nuclides. This significantly slows down the runtime
+has 321 fuel nuclides. This significantly slows down the runtime
 of the program as the data structures are much larger, and more
 lookups are required whenever a lookup occurs in a fuel material.
-Note that the program defaults to "Small" if no specification is
+Note that the program defaults to "Large" if no specification is
 made. Example:
 
->$ ./XSBench 4 Large
+>$ ./XSBench 4 Small
 
 
 
@@ -122,7 +122,7 @@ Compilation is done using the included makefile, as follows:
 
 Note that the INFO macro in the XSbench_header.h file should be
 set to 0 when running on BG/Q to remove the run status portions of
-the output, i.e.:
+the output, which cuts down on unnecessary file I/O, i.e.:
 
 #define INFO 0
 
