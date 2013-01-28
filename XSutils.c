@@ -80,6 +80,13 @@ NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 	int max = n-1;
 	int mid;
 	
+	// checks to ensure we're not reading off the end of the grid
+	if( A[0].energy > quarry )
+		return &A[0];
+	else if( A[n-1].energy < quarry )
+		return &A[n-2];
+	
+	// Begins binary search	
 	while( max >= min )
 	{
 		mid = min + floor( (max-min) / 2.0);

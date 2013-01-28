@@ -100,7 +100,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	/*
 	for( int i=0; i < n_isotopes * n_gridpoints; i++ )
 		for( int j = 0; j < n_isotopes; j++ )
-			printf("E = %.3lf\tNuclide %d->%p->%.3lf\n",
+			printf("E = %.4lf\tNuclide %d->%p->%.4lf\n",
 			       energy_grid[i].energy,
                    j,
 				   energy_grid[i].xs_ptrs[j],
