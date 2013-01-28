@@ -145,6 +145,9 @@ flops per each load from the nuclide xs arrays. Adding flops has so far
 shown to increase scaling, indicating that there is in fact a benchmark
 being caused by the memory loads.
 
+To enable this feature, go to the XSBench_header.h file and uncomment
+out the "#define ADD_EXTRAS" line.
+
 By default, there are no "extra" flops in the benchmark. To add these in,
 open the XSbench_header.h file and change the EXTRA_FLOPS definition to
 the desired number of additional flops. i.e.,
@@ -164,6 +167,9 @@ additional memory loads per each required load from the nuclide xs
 arrays. Adding loads has so far been rather inconclusive, as randomizing
 the loads requires a number of flops be performed to generate the random
 index number to load from. 
+
+To enable this feature, go to the XSBench_header.h file and uncomment
+out the "#define ADD_EXTRAS" line.
 
 By default, there are no "extra" loads in the benchmark. To add these in,
 open the XSbench_header.h file and change the EXTRA_LOADS definition to

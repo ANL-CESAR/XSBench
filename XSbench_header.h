@@ -22,6 +22,7 @@
 #define PRINT_PAPI_INFO 1
 
 // Variable to add extra flops at each lookup from unionized grid.
+//#define ADD_EXTRAS
 #define EXTRA_FLOPS 0
 #define EXTRA_LOADS 0
 
