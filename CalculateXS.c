@@ -112,7 +112,6 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 		printf("Energy: %lf, Material: %d, XSVector[%d]: %lf\n",
 		       p_energy, mat, k, macro_xs_vector[k]);
 	*/
-	
 }
 
 // binary search for energy on unionized energy grid
