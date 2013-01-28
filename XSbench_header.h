@@ -15,16 +15,16 @@
 #include "/usr/local/include/papi.h"
 #endif
 
+// Variable to add extra flops at each lookup from unionized grid.
+//#define ADD_EXTRAS
+#define EXTRA_FLOPS 0
+#define EXTRA_LOADS 0
+
 // I/O Specifiers
 #define INFO 1
 #define DEBUG 1
 #define SAVE 1
 #define PRINT_PAPI_INFO 1
-
-// Variable to add extra flops at each lookup from unionized grid.
-//#define ADD_EXTRAS
-#define EXTRA_FLOPS 0
-#define EXTRA_LOADS 0
 
 // Structures
 typedef struct{
