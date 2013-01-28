@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
 	int n_gridpoints = 5000;
-	int lookups = 50000000;
+	int lookups = 5000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
