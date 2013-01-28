@@ -6,6 +6,7 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
                            int idx, double * restrict xs_vector ){
+	
 	// pull ptr from energy grid
 	NuclideGridPoint * high = energy_grid[idx].xs_ptrs[nuc];
 	NuclideGridPoint * low = high - 1;
@@ -101,15 +102,19 @@ int grid_search( int n, double quarry, GridPoint * A)
 	int max = n-1;
 	int mid = 0;
 	
-	while( max >= min )
+	//printf("\nQuarry: %lf\n", quarry);
+		
+	while( max > min + 1 )
 	{
 		mid = min + floor( (max-min) / 2.0);
 		if( A[mid].energy < quarry )
-			min = mid+1;
+			min = mid;
 		else if( A[mid].energy > quarry )
-			max = mid-1;
+			max = mid;
 		else
 			return mid;
 	}
+	
+	//printf("Returning mid: %lf (index %d of %d)\n", A[mid].energy, mid, n);
 	return mid;
 }

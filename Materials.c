@@ -11,9 +11,9 @@ int * load_num_nucs(int n_isotopes)
 	// Material 0 is a special case (fuel). The H-M small reactor uses
 	// 34 nuclides, while H-M larges uses 300.
 	if( n_isotopes == 68 )
-		num_nucs[0]  = 34; // HM Small is 34, H-M Large is 300
+		num_nucs[0]  = 34; // HM Small is 34, H-M Large is 321
 	else
-		num_nucs[0]  = 300; // HM Small is 34, H-M Large is 300
+		num_nucs[0]  = 321; // HM Small is 34, H-M Large is 321
 
 	num_nucs[1]  = 5;
 	num_nucs[2]  = 4;
@@ -42,10 +42,10 @@ int ** load_mats( int * num_nucs, int n_isotopes )
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53, 
 	                 54, 55, 56, 18, 23, 41 }; //fuel
 	// Large H-M has 300 fuel nuclides
-	int mats0_Lrg[300] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
+	int mats0_Lrg[321] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41 }; //fuel
-	for( int i = 0; i < 266; i++ )
+	for( int i = 0; i < 321-34; i++ )
 		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// These are the non-fuel materials	

@@ -7,7 +7,7 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	
 	unsigned long seed;
-	int n_isotopes; // H-M Large is 334, H-M Small is 68
+	int n_isotopes; // H-M Large is 355, H-M Small is 68
 	int n_gridpoints = 10000;
 	int lookups = 50000000;
 	int i, thread, nthreads, mat;
@@ -31,7 +31,7 @@ int main( int argc, char* argv[] )
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
 		// second arg species small or large H-M benchmark
 		if( strcmp( argv[2], "large") == 0 || strcmp( argv[2], "Large" ) == 0)
-			n_isotopes = 334;
+			n_isotopes = 355;
 		else
 			n_isotopes = 68;
 	}
