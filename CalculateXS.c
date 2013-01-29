@@ -1,7 +1,7 @@
 #include "XSbench_header.h"
 
 // Calculates the microscopic cross section for a given nuclide & energy
-void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
+void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
@@ -15,45 +15,54 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
 	NuclideGridPoint * high = low + 1;
 	
 	// calculate the re-useable interpolation factor
-	f = (high->energy - energy_grid[idx].energy) / (high->energy - low->energy);
+	f = (high->energy - p_energy) / (high->energy - low->energy);
 
 	// Total XS
 	xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
+	
 	#ifdef ADD_EXTRAS
 	do_flops();
 	do_loads( nuc, nuclide_grids, n_gridpoints );	
 	#endif
+	
 	// Elastic XS
 	xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
+	
 	#ifdef ADD_EXTRAS
-	do_flops();
-	do_loads( (nuc+1) % n_isotopes, nuclide_grids, n_gridpoints );	
+		do_flops();
+		do_loads( (nuc+1) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
+	
 	// Absorbtion XS
 	xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
+	
 	#ifdef ADD_EXTRAS
-	do_flops();
-	do_loads( (nuc+2) % n_isotopes, nuclide_grids, n_gridpoints );	
+		do_flops();
+		do_loads( (nuc+2) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
+	
 	// Fission XS
 	xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
+	
 	#ifdef ADD_EXTRAS
-	do_flops();
-	do_loads( (nuc+3) % n_isotopes, nuclide_grids, n_gridpoints );	
+		do_flops();
+		do_loads( (nuc+3) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
+	
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
+	
 	#ifdef ADD_EXTRAS
-	do_flops();
-	do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
+		do_flops();
+		do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	
 	//test
 	/*
-	printf("Lookup: Energy = %lf, nuc = %d\n", e, nuc);
-	printf("e_h = %lf e_l = %lf\n", e_h, e_l);
-	printf("xs_h = %lf xs_l = %lf\n", xs_h, xs_l);
-	printf("total_xs = %lf\n", xs_vector[0]);
+	printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
+	printf("e_h = %lf e_l = %lf\n", high->energy , low->energy);
+	printf("xs_h = %lf xs_l = %lf\n", high->elastic_xs, low->elastic_xs);
+	printf("total_xs = %lf\n", xs_vector[1]);
 	*/
 }
 

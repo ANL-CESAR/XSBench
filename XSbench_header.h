@@ -44,16 +44,16 @@ typedef struct{
 
 
 // Function Prototypes
-void logo(void); // OK by inspection
-void center_print(const char *s, int width); // OK by inspection
+void logo(void);
+void center_print(const char *s, int width);
 
-NuclideGridPoint ** gpmatrix(size_t m, size_t n); // OK by inspection
+NuclideGridPoint ** gpmatrix(size_t m, size_t n);
 
-void gpmatrix_free( NuclideGridPoint ** M ); // OK by inspection
+void gpmatrix_free( NuclideGridPoint ** M );
 
-int NGP_compare( const void * a, const void * b ); // OK by inspection and printf
+int NGP_compare( const void * a, const void * b );
 
-void generate_grids( NuclideGridPoint ** nuclide_grids, // OK by inspection
+void generate_grids( NuclideGridPoint ** nuclide_grids,
                      int n_isotopes, int n_gridpoints );
 
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
@@ -67,7 +67,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 
 NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n );
 
-void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
+void calculate_macro_xs(   double p_energy, int mat, int n_isotopes,
                            int n_gridpoints, int * restrict num_nucs,
                            double ** restrict concs,
 						   GridPoint * restrict energy_grid,
@@ -75,7 +75,7 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 						   int ** restrict mats,
                            double * restrict macro_xs_vector );
 
-void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
+void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
                            int n_gridpoints,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids, int idx,
