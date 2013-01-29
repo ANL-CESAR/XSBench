@@ -54,7 +54,7 @@ void logo(void)
 	"###################################################################"
 	"#############\n");
 	center_print("Developed at Argonne National Laboratory", 79);
-	center_print("Version: 0", 79);
+	center_print("Version: 1", 79);
 	printf(
 	"###################################################################"
 	"#############\n");

@@ -7,52 +7,42 @@ void calculate_micro_xs( int p_energy, int nuc, int n_isotopes,
                            NuclideGridPoint ** restrict nuclide_grids,
                            int idx, double * restrict xs_vector ){
 	
+	// Variables
+	double f;
+	
 	// pull ptr from energy grid
 	NuclideGridPoint * low = energy_grid[idx].xs_ptrs[nuc];
 	NuclideGridPoint * high = low + 1;
 	
-	// assignments
-	double e_h, e_l, xs_h, xs_l, e;
-	e = energy_grid[idx].energy;
-	e_h= high->energy;
-	e_l = low->energy;
+	// calculate the re-useable interpolation factor
+	f = (high->energy - energy_grid[idx].energy) / (high->energy - low->energy);
 
 	// Total XS
-	xs_h = high->total_xs;
-	xs_l = low->total_xs;
-	xs_vector[0] = xs_h - (e_h - e) * (xs_h - xs_l) / (e_h - e_l);
+	xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
 	#ifdef ADD_EXTRAS
 	do_flops();
 	do_loads( nuc, nuclide_grids, n_gridpoints );	
 	#endif
 	// Elastic XS
-	xs_h = high->elastic_xs;
-	xs_l = low->elastic_xs;
-	xs_vector[1] = xs_h - (e_h - e) * (xs_h - xs_l) / (e_h - e_l);
+	xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
 	#ifdef ADD_EXTRAS
 	do_flops();
 	do_loads( (nuc+1) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	// Absorbtion XS
-	xs_h = high->absorbtion_xs;
-	xs_l = low->absorbtion_xs;
-	xs_vector[2] = xs_h - (e_h - e) * (xs_h - xs_l) / (e_h - e_l);
+	xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
 	#ifdef ADD_EXTRAS
 	do_flops();
 	do_loads( (nuc+2) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	// Fission XS
-	xs_h = high->fission_xs;
-	xs_l = low->fission_xs;
-	xs_vector[3] = xs_h - (e_h - e) * (xs_h - xs_l) / (e_h - e_l);
+	xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
 	#ifdef ADD_EXTRAS
 	do_flops();
 	do_loads( (nuc+3) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	// Nu Fission XS
-	xs_h = high->nu_fission_xs;
-	xs_l = low->nu_fission_xs;
-	xs_vector[4] = xs_h - (e_h - e) * (xs_h - xs_l) / (e_h - e_l);
+	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
 	#ifdef ADD_EXTRAS
 	do_flops();
 	do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
