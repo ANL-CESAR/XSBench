@@ -136,7 +136,7 @@ int main( int argc, char* argv[] )
 	{	
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
-		seed = thread+1;
+		seed = (thread+1)*19+17;
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
 		{
