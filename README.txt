@@ -142,7 +142,7 @@ Adding Extra Flops
 
 One of the areas we're investigating is the effect of adding additional
 flops per each load from the nuclide xs arrays. Adding flops has so far
-shown to increase scaling, indicating that there is in fact a benchmark
+shown to increase scaling, indicating that there is in fact a bottleneck
 being caused by the memory loads.
 
 To enable this feature, go to the XSBench_header.h file and uncomment
