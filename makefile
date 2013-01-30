@@ -7,6 +7,7 @@ OPTIMIZE = yes
 DEBUG    = no
 PROFILE  = no
 PAPI     = no
+VEC_INFO = no
 
 #===============================================================================
 # Program name & source code list
@@ -55,6 +56,11 @@ endif
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
   GCC_O_FLAGS += -O3
+endif
+
+# Compiler Vectorization (needs -O3 flag) information
+ifeq ($(VEC_INFO),yes)
+  GCC_O_FLAGS += -ftree-vectorizer-verbose=6
 endif
 
 # PAPI source 
