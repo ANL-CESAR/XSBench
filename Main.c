@@ -1,6 +1,7 @@
 #include "XSbench_header.h"
 #include <limits.h>
 
+
 int main( int argc, char* argv[] )
 {
 	// =====================================================================
@@ -8,9 +9,9 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	
 	unsigned long seed;
-	int memtotal;
+	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
-	int n_gridpoints = 500;
+	int n_gridpoints = 5000;
 	int lookups = 15000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
@@ -73,10 +74,16 @@ int main( int argc, char* argv[] )
 	omp_set_num_threads(nthreads); 
 		
 	// calculate estimate for memory useage
-	memtotal = n_isotopes * ( n_gridpoints * sizeof( NuclideGridPoint ) ) +
-	           n_isotopes * n_gridpoints * ( sizeof( GridPoint ) + n_isotopes * sizeof( NuclideGridPoint * ));
-
+	size_t single_nuclide_grid = n_gridpoints * sizeof( NuclideGridPoint );
+	size_t all_nuclide_grids = n_isotopes * single_nuclide_grid;
+	size_t size_GridPoint =sizeof(GridPoint)+n_isotopes*sizeof(NuclideGridPoint *);
+	size_t size_UEG = n_isotopes*n_gridpoints * size_GridPoint;
+	memtotal = all_nuclide_grids + size_UEG;
+	
+	all_nuclide_grids = all_nuclide_grids  / 1048576;
+	size_UEG = size_UEG / 1048576;
 	memtotal = memtotal / 1048576;
+
 	// =====================================================================
 	// Print-out of Input Summary
 	// =====================================================================
@@ -94,7 +101,9 @@ int main( int argc, char* argv[] )
 	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
 	printf("XS Lookups:                   %d\n", lookups);
 	printf("Threads:                      %d\n", nthreads);
-	printf("Est. Memory Usage (MB):       %d\n", memtotal);
+	printf("Nuclide Grid Memory:          %zu\n", all_nuclide_grids);
+	printf("UEG Memory:                   %zu\n", size_UEG);
+	printf("Est. Memory Usage (MB):       %zu\n", memtotal);
 	if( EXTRA_FLOPS > 0 )
 		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
 	if( EXTRA_LOADS > 0 )
@@ -116,6 +125,7 @@ int main( int argc, char* argv[] )
 	printf("Generating Nuclide Energy Grids...\n");
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
+	
 	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
 	
 	// Sort grids by energy

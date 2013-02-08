@@ -28,7 +28,7 @@
 
 // turn on define to run on BGQ
 #ifndef __bgq__
-#define __bgq__
+//#define __bgq__
 #endif
 
 

@@ -43,11 +43,11 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	
 	GridPoint * energy_grid = (GridPoint *)malloc( n_unionized_grid_points
 	                                               * sizeof( GridPoint ) );
-	
 	printf("Copying and Sorting all nuclide grids...\n");
 	
 	NuclideGridPoint ** n_grid_sorted = gpmatrix( n_isotopes, n_gridpoints );
 	
+	  	
 	memcpy( n_grid_sorted[0], nuclide_grids[0], n_isotopes*n_gridpoints*
 	                                      sizeof( NuclideGridPoint ) );
 	
@@ -59,11 +59,12 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	for( int i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].energy = n_grid_sorted[0][i].energy;
 	
+
 	gpmatrix_free(n_grid_sorted);
 	
 	for( int i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].xs_ptrs = (NuclideGridPoint **)
-		                         malloc( n_isotopes*sizeof(NuclideGridPoint*));
+		                         malloc( n_isotopes * sizeof( NuclideGridPoint * ) );
 	
 	return energy_grid;
 }
