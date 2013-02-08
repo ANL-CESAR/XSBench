@@ -1,4 +1,5 @@
 #include "XSbench_header.h"
+#include <limits.h>
 
 int main( int argc, char* argv[] )
 {
@@ -7,14 +8,25 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	
 	unsigned long seed;
+	int memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
-	int n_gridpoints = 5000;
-	int lookups = 50000000;
+	int n_gridpoints = 500;
+	int lookups = 15000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 	char * HM;
-		
+	char * run_tag = "N/A";
+	
+	#ifdef __bgq__
+	if( get_bgq_core() != 0 )
+	{
+		//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+		return 0;
+	}
+	#endif
+	//printf("My CPU # is %d... Running test...\n", get_bgq_core());
+
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
 	srand(time(NULL));
@@ -28,6 +40,16 @@ int main( int argc, char* argv[] )
 	}
 	else if( argc == 3 )
 	{
+		nthreads = atoi(argv[1]);	// first arg sets # of threads
+		// second arg species small or large H-M benchmark
+		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
+			n_isotopes = 68;
+		else
+			n_isotopes = 355;
+	}
+	else if( argc == 4 )
+	{
+		run_tag = argv[3];
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
 		// second arg species small or large H-M benchmark
 		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
@@ -50,6 +72,11 @@ int main( int argc, char* argv[] )
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
 		
+	// calculate estimate for memory useage
+	memtotal = n_isotopes * ( n_gridpoints * sizeof( NuclideGridPoint ) ) +
+	           n_isotopes * n_gridpoints * ( sizeof( GridPoint ) + n_isotopes * sizeof( NuclideGridPoint * ));
+
+	memtotal = memtotal / 1048576;
 	// =====================================================================
 	// Print-out of Input Summary
 	// =====================================================================
@@ -67,6 +94,7 @@ int main( int argc, char* argv[] )
 	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
 	printf("XS Lookups:                   %d\n", lookups);
 	printf("Threads:                      %d\n", nthreads);
+	printf("Est. Memory Usage (MB):       %d\n", memtotal);
 	if( EXTRA_FLOPS > 0 )
 		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
 	if( EXTRA_LOADS > 0 )
@@ -195,7 +223,7 @@ int main( int argc, char* argv[] )
 	if( SAVE )
 	{
 		FILE * out = fopen( "results.txt", "a" );
-		fprintf(out, "%.0lf\n", (double) lookups / (omp_end-omp_start));
+		fprintf(out, "%s\t%d\t%.0lf\n", run_tag, nthreads, (double) lookups / (omp_end-omp_start));
 		fclose(out);
 	}
 	

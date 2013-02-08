@@ -21,10 +21,22 @@
 #define EXTRA_LOADS 0
 
 // I/O Specifiers
-#define INFO 1
+#define INFO 0
 #define DEBUG 1
 #define SAVE 1
 #define PRINT_PAPI_INFO 1
+
+// turn on define to run on BGQ
+#ifndef __bgq__
+#define __bgq__
+#endif
+
+
+/*=======================================*/
+/* routine to return the BGQ core number */
+/*=======================================*/
+int get_bgq_core(void);
+
 
 // Structures
 typedef struct{

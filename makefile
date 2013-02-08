@@ -33,11 +33,11 @@ endif
 
 # BG/Q gcc Cross-Compiler
 ifeq ($(MACHINE),bluegene)
-  GCC = /bgsys/drivers/toolchain/V1R1M2/gnu-linux/bin/powerpc64-bgq-linux-gcc
+  GCC = mpicc #/bgsys/drivers/toolchain/V1R1M2/gnu-linux/bin/powerpc64-bgq-linux-gcc
 endif
 
 # Standard Flags
-GCC_S_FLAGS := -fopenmp -Wall -std=c99
+GCC_S_FLAGS := -fopenmp -Wall -std=gnu99
 GCC_O_FLAGS =
 LDFLAGS = -lm
 
