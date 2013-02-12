@@ -1,6 +1,4 @@
 #include "XSbench_header.h"
-#include <limits.h>
-
 
 int main( int argc, char* argv[] )
 {
@@ -11,7 +9,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
-	int n_gridpoints = 5000;
+	int n_gridpoints = 900;
 	int lookups = 15000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
@@ -42,7 +40,7 @@ int main( int argc, char* argv[] )
 	}
 	else if( argc == 4 )
 	{
-		bgq_mode = atoi(argv[3]);  // 
+		bgq_mode = atoi(argv[3]);  // BG/Q mode (16,8,4,2,1) 
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
 		// second arg species small or large H-M benchmark
 		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
@@ -61,7 +59,8 @@ int main( int argc, char* argv[] )
 		HM = "Small";
 	else
 		HM = "Large";
-	
+
+/*	
 	// Deals with BG/Q mode setting.
 	// c16 = 16 ranks - we only want core  0
 	// c8  = 8  ranks - we only want cores 0-1
@@ -74,37 +73,37 @@ int main( int argc, char* argv[] )
 		case 16:
 			if( get_bgq_core() != 0 )
 			{
-				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
 				return 0;
 			}
 			break;
 		case 8:
 			if( get_bgq_core() > 1 )
 			{
-				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
 				return 0;
 			}
 			break;
 		case 4:
 			if( get_bgq_core() > 3 )
 			{
-				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
 				return 0;
 			}
 			break;
 		case 2:
 			if( get_bgq_core() > 7 )
 			{
-				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
 				return 0;
 			}
 			break;
 		default:
 			break;
 	}
+	printf("My CPU # is %d... Running test...\n", get_bgq_core());
 	#endif
-	//printf("My CPU # is %d... Running test...\n", get_bgq_core());
-		
+*/		
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
 		
@@ -268,7 +267,7 @@ int main( int argc, char* argv[] )
 	if( SAVE )
 	{
 		FILE * out = fopen( "results.txt", "a" );
-		fprintf(out, "c%s\t%d\t%.0lf\n", bgq_mode, nthreads, (double) lookups / (omp_end-omp_start));
+		fprintf(out, "c%d\t%d\t%.0lf\n", bgq_mode, nthreads, (double) lookups / (omp_end-omp_start));
 		fclose(out);
 	}
 	

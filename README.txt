@@ -36,7 +36,7 @@ making determinations as to where hardware bottlenecks occur as
 cores are added.
 
 ==============================================================================
-User Guide
+Quick Start
 ==============================================================================
 
 To compile and run XSBench with default settings, use the following
@@ -68,9 +68,9 @@ made. Example:
 >$ ./XSBench 4 Small
 
 
-
+==============================================================================
 Debugging, Optimization & Profiling
-------------------------------------------------------
+==============================================================================
 
 There are also a number of switches that can be set in the makefile.
 
@@ -91,9 +91,9 @@ Profling enables the -pg flag.
 The PAPI flag is explained below.
 
 
-
+==============================================================================
 PAPI Performance Counters
-------------------------------------------------------
+==============================================================================
 
 By default, PAPI is disabled.
 
@@ -113,18 +113,33 @@ header path is specified in the XSBench_header.h file.
 
 
 
+==============================================================================
 Running on ANL BlueGene/Q (Vesta & Mira)
-------------------------------------------------------
+==============================================================================
 
 Compilation is done using the included makefile, as follows:
 
 >$ make MACHINE=bluegene
+
 
 Note that the INFO macro in the XSbench_header.h file should be
 set to 0 when running on BG/Q to remove the run status portions of
 the output, which cuts down on unnecessary file I/O, i.e.:
 
 #define INFO 0
+
+
+Also, note that you may need to add the following line to
+your .soft file in order to use the mpicc compiler wrapper:
+
++mpiwrapper-gcc
+
+Then, be sure to use the "resoft" command to update your software. 
+
+When running in c16 mode, the maximum number of gridpoints per nuclide
+is 900 (when running in "Large" mode). More points will cause the 1GB 
+memory limit to be broken.
+
 
 A basic test run on 1 node can be achieved (assuming you have an allocation)
 using the makefile and the following command:
@@ -137,8 +152,9 @@ https://www.alcf.anl.gov/resource-guides/vesta-queuing
 
 
 
+==============================================================================
 Adding Extra Flops
-------------------------------------------------------
+==============================================================================
 
 One of the areas we're investigating is the effect of adding additional
 flops per each load from the nuclide xs arrays. Adding flops has so far
@@ -159,8 +175,9 @@ time of the program.
 
 
 
+==============================================================================
 Adding Extra Memory Loads
-------------------------------------------------------
+==============================================================================
 
 One of the areas we're investigating is the effect of adding
 additional memory loads per each required load from the nuclide xs

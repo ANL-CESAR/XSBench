@@ -1,8 +1,10 @@
 #include "XSbench_header.h"
 
+/*
 #ifdef __bgq__
 #include </bgsys/drivers/ppcfloor/spi/include/kernel/location.h>
 #endif
+*/
 
 // Allocates nuclide matrix
 NuclideGridPoint ** gpmatrix(size_t m, size_t n)
@@ -118,6 +120,7 @@ double rn(unsigned long * seed)
 	return ret;
 }
 
+/*
 int get_bgq_core(void)
 {
 #ifdef __bgq__
@@ -126,4 +129,4 @@ int get_bgq_core(void)
 #else
 	return -1;
 #endif
-}
+}*/
