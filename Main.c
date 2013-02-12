@@ -17,16 +17,8 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 	char * HM;
-	char * run_tag = "N/A";
+	int bgq_mode = 0;
 	
-	#ifdef __bgq__
-	if( get_bgq_core() != 0 )
-	{
-		//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
-		return 0;
-	}
-	#endif
-	//printf("My CPU # is %d... Running test...\n", get_bgq_core());
 
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
@@ -50,7 +42,7 @@ int main( int argc, char* argv[] )
 	}
 	else if( argc == 4 )
 	{
-		run_tag = argv[3];
+		bgq_mode = atoi(argv[3]);  // 
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
 		// second arg species small or large H-M benchmark
 		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
@@ -69,6 +61,49 @@ int main( int argc, char* argv[] )
 		HM = "Small";
 	else
 		HM = "Large";
+	
+	// Deals with BG/Q mode setting.
+	// c16 = 16 ranks - we only want core  0
+	// c8  = 8  ranks - we only want cores 0-1
+	// c4 =  4  ranks - we only want cores 0-3
+	// c2 =  2  ranks - we only want cores 0-7
+	// c1 =  1  rank  - we want all cores  0-15
+	#ifdef __bgq__
+	switch(bgq_mode)
+	{	
+		case 16:
+			if( get_bgq_core() != 0 )
+			{
+				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				return 0;
+			}
+			break;
+		case 8:
+			if( get_bgq_core() > 1 )
+			{
+				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				return 0;
+			}
+			break;
+		case 4:
+			if( get_bgq_core() > 3 )
+			{
+				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				return 0;
+			}
+			break;
+		case 2:
+			if( get_bgq_core() > 7 )
+			{
+				//printf("My CPU # is %d... sleeping...\n", get_bgq_core());
+				return 0;
+			}
+			break;
+		default:
+			break;
+	}
+	#endif
+	//printf("My CPU # is %d... Running test...\n", get_bgq_core());
 		
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
@@ -233,7 +268,7 @@ int main( int argc, char* argv[] )
 	if( SAVE )
 	{
 		FILE * out = fopen( "results.txt", "a" );
-		fprintf(out, "%s\t%d\t%.0lf\n", run_tag, nthreads, (double) lookups / (omp_end-omp_start));
+		fprintf(out, "c%s\t%d\t%.0lf\n", bgq_mode, nthreads, (double) lookups / (omp_end-omp_start));
 		fclose(out);
 	}
 	
