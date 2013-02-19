@@ -21,7 +21,7 @@
 #define EXTRA_LOADS 0
 
 // I/O Specifiers
-#define INFO 0
+#define INFO 1
 #define DEBUG 1
 #define SAVE 1
 #define PRINT_PAPI_INFO 1
