@@ -49,7 +49,7 @@ typedef struct{
 
 typedef struct{
 	double energy;
-	NuclideGridPoint ** xs_ptrs;
+	int * xs_ptrs;
 } GridPoint;
 
 
@@ -75,7 +75,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
                     int n_isotopes, int n_gridpoints );
 
-NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n );
+int binary_search( NuclideGridPoint * A, double quarry, int n );
 
 void calculate_macro_xs(   double p_energy, int mat, int n_isotopes,
                            int n_gridpoints, int * restrict num_nucs,

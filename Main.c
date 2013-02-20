@@ -110,7 +110,7 @@ int main( int argc, char* argv[] )
 	// calculate estimate for memory useage
 	size_t single_nuclide_grid = n_gridpoints * sizeof( NuclideGridPoint );
 	size_t all_nuclide_grids = n_isotopes * single_nuclide_grid;
-	size_t size_GridPoint =sizeof(GridPoint)+n_isotopes*sizeof(NuclideGridPoint *);
+	size_t size_GridPoint =sizeof(GridPoint)+n_isotopes*sizeof(int);
 	size_t size_UEG = n_isotopes*n_gridpoints * size_GridPoint;
 	memtotal = all_nuclide_grids + size_UEG;
 	

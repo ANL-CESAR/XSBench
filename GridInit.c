@@ -63,8 +63,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	gpmatrix_free(n_grid_sorted);
 	
 	for( int i = 0; i < n_unionized_grid_points; i++ )
-		energy_grid[i].xs_ptrs = (NuclideGridPoint **)
-		                         malloc( n_isotopes * sizeof( NuclideGridPoint * ) );
+		energy_grid[i].xs_ptrs = (int *) malloc( n_isotopes * sizeof(int) );
 	
 	return energy_grid;
 }

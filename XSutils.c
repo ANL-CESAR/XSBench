@@ -80,7 +80,7 @@ void center_print(const char *s, int width)
 
 // Binary Search function for nuclide grid
 // Returns ptr to energy less than the quarry that is closest to the quarry
-NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
+int binary_search( NuclideGridPoint * A, double quarry, int n )
 {
 	int min = 0;
 	int max = n-1;
@@ -88,9 +88,9 @@ NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 	
 	// checks to ensure we're not reading off the end of the grid
 	if( A[0].energy > quarry )
-		return &A[0];
+		return 0;
 	else if( A[n-1].energy < quarry )
-		return &A[n-2];
+		return n-2;
 	
 	// Begins binary search	
 	while( max >= min )
@@ -101,9 +101,9 @@ NuclideGridPoint * binary_search( NuclideGridPoint * A, double quarry, int n )
 		else if( A[mid].energy > quarry )
 			max = mid-1;
 		else
-			return &A[mid];
+			return mid;
 	}
-	return &A[max];
+	return max;
 }
 
 // Park & Miller Multiplicative Conguential Algorithm

@@ -11,7 +11,7 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	double f;
 	
 	// pull ptr from energy grid
-	NuclideGridPoint * low = energy_grid[idx].xs_ptrs[nuc];
+	NuclideGridPoint * low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
 	NuclideGridPoint * high = low + 1;
 	
 	// calculate the re-useable interpolation factor
@@ -58,12 +58,16 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	#endif
 	
 	//test
-	/*
-	printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
-	printf("e_h = %lf e_l = %lf\n", high->energy , low->energy);
-	printf("xs_h = %lf xs_l = %lf\n", high->elastic_xs, low->elastic_xs);
-	printf("total_xs = %lf\n", xs_vector[1]);
+	/*	
+	if( omp_get_thread_num() == 0 )
+	{
+		printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
+		printf("e_h = %lf e_l = %lf\n", high->energy , low->energy);
+		printf("xs_h = %lf xs_l = %lf\n", high->elastic_xs, low->elastic_xs);
+		printf("total_xs = %lf\n\n", xs_vector[1]);
+	}
 	*/
+	
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
