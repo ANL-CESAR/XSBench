@@ -1,11 +1,5 @@
 #include "XSbench_header.h"
 
-/*
-#ifdef __bgq__
-#include </bgsys/drivers/ppcfloor/spi/include/kernel/location.h>
-#endif
-*/
-
 // Allocates nuclide matrix
 NuclideGridPoint ** gpmatrix(size_t m, size_t n)
 {
@@ -48,9 +42,8 @@ int NGP_compare( const void * a, const void * b )
 // Prints program logo
 void logo(void)
 {
+	border_print();
 	printf(
-	"###################################################################"
-	"#############\n"
 	"                   __   __ ___________                 _                        \n"
 	"                   \\ \\ / //  ___| ___ \\               | |                       \n"
 	"                    \\ V / \\ `--.| |_/ / ___ _ __   ___| |__                     \n"
@@ -61,9 +54,7 @@ void logo(void)
 	"#############\n");
 	center_print("Developed at Argonne National Laboratory", 79);
 	center_print("Version: 3", 79);
-	printf(
-	"###################################################################"
-	"#############\n");
+	border_print();
 }
 
 // Prints Section titles in center of 80 char terminal
@@ -76,6 +67,13 @@ void center_print(const char *s, int width)
 	}
 	fputs(s, stdout);
 	fputs("\n", stdout);
+}
+
+void border_print(void)
+{
+	printf(
+	"###################################################################"
+	"#############\n");
 }
 
 // Binary Search function for nuclide grid
@@ -119,14 +117,3 @@ double rn(unsigned long * seed)
 	ret = (double) n1 / m;
 	return ret;
 }
-
-/*
-int get_bgq_core(void)
-{
-#ifdef __bgq__
-	int core = Kernel_ProcessorCoreID();
-	return core;
-#else
-	return -1;
-#endif
-}*/

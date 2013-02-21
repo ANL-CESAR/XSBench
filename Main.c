@@ -23,7 +23,7 @@ int main( int argc, char* argv[] )
 	srand(time(NULL));
 
 	// Process CLI Fields
-	// Useage:   ./XSBench <# threads> <H-M Size ("Small or "Large")>
+	// Useage:   ./XSBench <# threads> <H-M Size ("Small or "Large")> <BGQ mode>
 	if( argc == 2 )
 	{
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
@@ -60,60 +60,18 @@ int main( int argc, char* argv[] )
 	else
 		HM = "Large";
 
-/*	
-	// Deals with BG/Q mode setting.
-	// c16 = 16 ranks - we only want core  0
-	// c8  = 8  ranks - we only want cores 0-1
-	// c4 =  4  ranks - we only want cores 0-3
-	// c2 =  2  ranks - we only want cores 0-7
-	// c1 =  1  rank  - we want all cores  0-15
-	#ifdef __bgq__
-	switch(bgq_mode)
-	{	
-		case 16:
-			if( get_bgq_core() != 0 )
-			{
-				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
-				return 0;
-			}
-			break;
-		case 8:
-			if( get_bgq_core() > 1 )
-			{
-				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
-				return 0;
-			}
-			break;
-		case 4:
-			if( get_bgq_core() > 3 )
-			{
-				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
-				return 0;
-			}
-			break;
-		case 2:
-			if( get_bgq_core() > 7 )
-			{
-				printf("My CPU # is %d... sleeping...\n", get_bgq_core());
-				return 0;
-			}
-			break;
-		default:
-			break;
-	}
-	printf("My CPU # is %d... Running test...\n", get_bgq_core());
-	#endif
-*/		
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
 		
-	// calculate estimate for memory useage
+	// =====================================================================
+	// Calculate Estimate of Memory Useage
+	// =====================================================================
+
 	size_t single_nuclide_grid = n_gridpoints * sizeof( NuclideGridPoint );
 	size_t all_nuclide_grids = n_isotopes * single_nuclide_grid;
 	size_t size_GridPoint =sizeof(GridPoint)+n_isotopes*sizeof(int);
 	size_t size_UEG = n_isotopes*n_gridpoints * size_GridPoint;
 	memtotal = all_nuclide_grids + size_UEG;
-	
 	all_nuclide_grids = all_nuclide_grids  / 1048576;
 	size_UEG = size_UEG / 1048576;
 	memtotal = memtotal / 1048576;
@@ -124,10 +82,7 @@ int main( int argc, char* argv[] )
 	
 	logo();
 	center_print("INPUT SUMMARY", 79);
-	printf(
-	"###################################################################"
-	"#############\n"
-	);
+	border_print();
 	printf("Materials:                    %d\n", 12);
 	printf("H-M Benchmark Size:           %s\n", HM);
 	printf("Total Isotopes:               %d\n", n_isotopes);
@@ -135,21 +90,14 @@ int main( int argc, char* argv[] )
 	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
 	printf("XS Lookups:                   %d\n", lookups);
 	printf("Threads:                      %d\n", nthreads);
-	printf("Nuclide Grid Memory:          %zu\n", all_nuclide_grids);
-	printf("UEG Memory:                   %zu\n", size_UEG);
 	printf("Est. Memory Usage (MB):       %zu\n", memtotal);
 	if( EXTRA_FLOPS > 0 )
 		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
 	if( EXTRA_LOADS > 0 )
 		printf("Extra Loads:                  %d\n", EXTRA_LOADS);
-	printf(
-	"###################################################################"
-	"#############\n");
+	border_print();
 	center_print("INITIALIZATION", 79);
-	printf(
-	"###################################################################"
-	"#############\n"
-	);
+	border_print();
 	
 	// =====================================================================
 	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -183,14 +131,9 @@ int main( int argc, char* argv[] )
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
 	
-	printf(
-	"###################################################################"
-	"#############\n");
+	border_print();
 	center_print("SIMULATION", 79);
-	printf(
-	"###################################################################"
-	"#############\n"
-	);
+	border_print();
 
 	omp_start = omp_get_wtime();
 	
@@ -200,6 +143,7 @@ int main( int argc, char* argv[] )
 	counter_init(&eventset, &num_papi_events);
 	#endif
 	
+	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
@@ -240,14 +184,9 @@ int main( int argc, char* argv[] )
 	// Print / Save Results and Exit
 	// =====================================================================
 	
-	printf(
-	"###################################################################"
-	"#############\n");
+	border_print();
 	center_print("RESULTS", 79);
-	printf(
-	"###################################################################"
-	"#############\n"
-	);
+	border_print();
 
 	// Print the results
 	printf("Threads:     %d\n", nthreads);
@@ -258,16 +197,14 @@ int main( int argc, char* argv[] )
 	printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
 	printf("Lookups:     %d\n", lookups);
 	printf("Lookups/s:   %.0lf\n", (double) lookups / (omp_end-omp_start));
-	printf(
-	"###################################################################"
-	"#############\n"
-	);
+	border_print();
 
 	// For bechmarking, output lookup/s data to file
 	if( SAVE )
 	{
 		FILE * out = fopen( "results.txt", "a" );
-		fprintf(out, "c%d\t%d\t%.0lf\n", bgq_mode, nthreads, (double) lookups / (omp_end-omp_start));
+		fprintf(out, "c%d\t%d\t%.0lf\n", bgq_mode, nthreads,
+		       (double) lookups / (omp_end-omp_start));
 		fclose(out);
 	}
 	

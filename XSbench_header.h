@@ -26,16 +26,6 @@
 #define SAVE 1
 #define PRINT_PAPI_INFO 1
 
-/*
-// turn on define to run on BGQ
-#ifndef __bgq__
-//#define __bgq__
-#endif
-
-
-int get_bgq_core(void);
-*/
-
 // Structures
 typedef struct{
 	double energy;
@@ -56,6 +46,7 @@ typedef struct{
 // Function Prototypes
 void logo(void);
 void center_print(const char *s, int width);
+void border_print(void);
 
 NuclideGridPoint ** gpmatrix(size_t m, size_t n);
 

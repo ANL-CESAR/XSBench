@@ -95,10 +95,7 @@ void counter_stop( int * eventset, int num_papi_events )
 	if( PRINT_PAPI_INFO )
 	{	
 		center_print("PAPI INFORMATION", 79);
-		printf(
-		"###################################################################"
-		"#############\n"
-		);
+		border_print();
 		printf("Count          \tSmybol      \tDescription\n");
 	}
 	for( int i = 0; i < num_papi_events; i++ )
@@ -110,10 +107,7 @@ void counter_stop( int * eventset, int num_papi_events )
 	}
 	fprintf(out,"\n");
 	if( PRINT_PAPI_INFO )
-		printf(
-		"###################################################################"
-		"#############\n"
-		);
+		border_print();
 	free(events);
 	free(values);	
 	fclose(out);
