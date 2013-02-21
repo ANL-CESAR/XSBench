@@ -50,8 +50,8 @@ void logo(void)
 	"                    /   \\  `--. \\ ___ \\/ _ \\ '_ \\ / __| '_ \\                    \n"
 	"                   / /^\\ \\/\\__/ / |_/ /  __/ | | | (__| | | |                   \n"
 	"                   \\/   \\/\\____/\\____/ \\___|_| |_|\\___|_| |_|                   \n\n"
-	"###################################################################"
-	"#############\n");
+    );
+	border_print();
 	center_print("Developed at Argonne National Laboratory", 79);
 	center_print("Version: 3", 79);
 	border_print();
@@ -72,8 +72,30 @@ void center_print(const char *s, int width)
 void border_print(void)
 {
 	printf(
-	"###################################################################"
-	"#############\n");
+	"==================================================================="
+	"=============\n");
+}
+
+// Prints comma separated integers - for ease of reading
+void fancy_int( int a )
+{
+    if( a < 1000 )
+        printf("%d\n",a);
+
+    else if( a >= 1000 && a < 1000000 )
+        printf("%d,%03d\n", a / 1000, a % 1000);
+
+    else if( a >= 1000000 && a < 1000000000 )
+        printf("%d,%03d,%03d\n", a / 1000000, (a % 1000000) / 1000, a % 1000 );
+
+    else if( a >= 1000000000 && a < 1000000000000 )
+        printf("%d,%03d,%03d,%03d\n",
+               a / 1000000000,
+               (a % 1000000000) / 1000000,
+               (a % 1000000) / 1000,
+               a % 1000 );
+    else
+        printf("%d\n",a);
 }
 
 // Binary Search function for nuclide grid

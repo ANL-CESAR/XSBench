@@ -71,10 +71,12 @@ int main( int argc, char* argv[] )
 	size_t all_nuclide_grids = n_isotopes * single_nuclide_grid;
 	size_t size_GridPoint =sizeof(GridPoint)+n_isotopes*sizeof(int);
 	size_t size_UEG = n_isotopes*n_gridpoints * size_GridPoint;
+	int mem_tot;
 	memtotal = all_nuclide_grids + size_UEG;
 	all_nuclide_grids = all_nuclide_grids  / 1048576;
 	size_UEG = size_UEG / 1048576;
 	memtotal = memtotal / 1048576;
+	mem_tot = memtotal;
 
 	// =====================================================================
 	// Print-out of Input Summary
@@ -86,11 +88,11 @@ int main( int argc, char* argv[] )
 	printf("Materials:                    %d\n", 12);
 	printf("H-M Benchmark Size:           %s\n", HM);
 	printf("Total Isotopes:               %d\n", n_isotopes);
-	printf("Gridpoints (per Nuclide):     %d\n", n_gridpoints);
-	printf("Unionized Energy Gridpoints:  %d\n", n_isotopes*n_gridpoints);
-	printf("XS Lookups:                   %d\n", lookups);
+	printf("Gridpoints (per Nuclide):     "); fancy_int(n_gridpoints);
+	printf("Unionized Energy Gridpoints:  ");fancy_int(n_isotopes*n_gridpoints);
+	printf("XS Lookups:                   "); fancy_int(lookups);
 	printf("Threads:                      %d\n", nthreads);
-	printf("Est. Memory Usage (MB):       %zu\n", memtotal);
+	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 	if( EXTRA_FLOPS > 0 )
 		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
 	if( EXTRA_LOADS > 0 )
@@ -195,8 +197,9 @@ int main( int argc, char* argv[] )
 	if( EXTRA_LOADS > 0 )
 	printf("Extra Loads: %d\n", EXTRA_LOADS);
 	printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
-	printf("Lookups:     %d\n", lookups);
-	printf("Lookups/s:   %.0lf\n", (double) lookups / (omp_end-omp_start));
+	printf("Lookups:     "); fancy_int(lookups);
+	printf("Lookups/s:   ");
+	fancy_int((int) ((double) lookups / (omp_end-omp_start)));
 	border_print();
 
 	// For bechmarking, output lookup/s data to file
