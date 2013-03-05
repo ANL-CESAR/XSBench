@@ -17,13 +17,19 @@ int main( int argc, char* argv[] )
 	char * HM;
 	int bgq_mode = 0;
 	
-
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
 	srand(time(NULL));
 
 	// Process CLI Fields
-	// Useage:   ./XSBench <# threads> <H-M Size ("Small or "Large")> <BGQ mode>
+	// Usage:   ./XSBench <# threads> <H-M Size ("Small or "Large")> <BGQ mode>
+	// # threads - The number of threads you wish to run
+	// H-M Size -  The problem size (small = 68 nuclides, large = 355 nuclides)
+	// BGQ Mode -  Number of ranks - no real effect, save for stamping the
+	//             results.txt printout
+	// Note - No arguments are required - default parameters will be used if
+	//        no arguments are given.
+
 	if( argc == 2 )
 	{
 		nthreads = atoi(argv[1]);	// first arg sets # of threads
@@ -64,7 +70,7 @@ int main( int argc, char* argv[] )
 	omp_set_num_threads(nthreads); 
 		
 	// =====================================================================
-	// Calculate Estimate of Memory Useage
+	// Calculate Estimate of Memory Usage
 	// =====================================================================
 
 	size_t single_nuclide_grid = n_gridpoints * sizeof( NuclideGridPoint );
