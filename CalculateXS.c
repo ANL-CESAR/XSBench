@@ -117,33 +117,27 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 	*/
 }
 
-// binary search for energy on unionized energy grid
+
+// (fixed) binary search for energy on unionized energy grid
 // returns lower index
 int grid_search( int n, double quarry, GridPoint * A)
 {
-	int min = 0;
-	int max = n-1;
-	int mid = 0;
+	int lowerLimit = 0;
+	int upperLimit = n-1;
+	int examinationPoint;
+	int length = upperLimit - lowerLimit;
 
-	// checks to make sure we don't read off the end of the grid	
-	if( quarry < A[0].energy )
-		return 0;
-	else if( quarry > A[n-1].energy )
-		return n-2;
-	
-	//printf("\nQuarry: %lf\n", quarry);
-		
-	while( max > min + 1 )
+	while( length > 1 )
 	{
-		mid = min + floor( (max-min) / 2.0);
-		if( A[mid].energy < quarry )
-			min = mid;
-		else if( A[mid].energy > quarry )
-			max = mid;
+		examinationPoint = lowerLimit + ( length / 2 );
+		
+		if( A[examinationPoint].energy > quarry )
+			upperLimit = examinationPoint;
 		else
-			return mid;
+			lowerLimit = examinationPoint;
+		
+		length = upperLimit - lowerLimit;
 	}
 	
-	//printf("Returning mid: %lf (index %d of %d)\n", A[mid].energy, mid, n);
-	return mid;
+	return lowerLimit;
 }
