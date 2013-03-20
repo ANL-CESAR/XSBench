@@ -1,3 +1,6 @@
+#ifndef __XSBENCH_HEADER_H__
+#define __XSBENCH_HEADER_H__
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
@@ -97,3 +100,5 @@ void do_flops(void);
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
 		       int n_gridpoints );	
+
+#endif
