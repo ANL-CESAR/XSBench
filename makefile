@@ -22,6 +22,7 @@ GridInit.c \
 XSutils.c \
 Materials.c
 
+obj = $(source:.c=.o)
 #===============================================================================
 # Sets Flags
 #===============================================================================
@@ -72,13 +73,18 @@ endif
 # Targets to Build
 #===============================================================================
 
-$(program): $(source) do_flops.o XSbench_header.h
-	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) do_flops.o $(source) -o $@ $(LDFLAGS)
+$(program): $(obj) do_flops.o XSbench_header.h
+	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) do_flops.o $(obj) -o $@ $(LDFLAGS)
+
+%.o: %.c
+	$(GCC) $(GCC_S_FLAGS) $(GSS_O_FLAGS) -c $< -o $@
+
 do_flops.o: do_flops.c
 	$(GCC) $(GCC_S_FLAGS) -c do_flops.c
 
 clean:
-	rm -rf XSBench XSBench.dSYM do_flops.o
+	rm -rf XSBench XSBench.dSYM $(obj) do_flops.o
+
 edit:
 	vim -p $(source) do_flops.c papi.c XSbench_header.h
 run:
