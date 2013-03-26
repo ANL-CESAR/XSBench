@@ -53,7 +53,7 @@ void logo(void)
     );
 	border_print();
 	center_print("Developed at Argonne National Laboratory", 79);
-	center_print("Version: 3", 79);
+	center_print("Version: 4", 79);
 	border_print();
 }
 
