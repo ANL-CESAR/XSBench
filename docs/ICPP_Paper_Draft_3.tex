@@ -1,0 +1,217 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Analysis of Hardware Threads on Monte Carlo Nuclear Transport Codes in Multi-Core, Shared Memory Systems}
+
+\author{\IEEEauthorblockN{John Tramm, Andrew Siegel}
+\IEEEauthorblockA{Center for Exascale Simulation of Advanced Reactors\\
+Argonne National Laboratory\\
+Argonne, IL USA \\
+\{jtramm, siegela\}@mcs.anl.gov}
+%\and
+%\IEEEauthorblockN{Andrew Siegel}
+%\IEEEauthorblockA{Argonne National Laboratory\\
+%Argonne, IL, USA\\
+%Email: siegela@mcs.anl.gov}
+}
+
+\maketitle
+
+\begin{abstract}
+
+A kernel has been developed that mimics the most computationally expensive steps of a robust nuclear reactor core Monte Carlo particle transport algorithm -- the calculation of macroscopic cross sections. The kernel is used to study the benefit of using hardware threads within multi-core, shared memory architectures.
+\end{abstract}
+
+\IEEEpeerreviewmaketitle
+
+\section{Introduction}
+
+\subsection{Background}
+
+Hardware multithreading, also known as simultaneous multithreading or hyper-threading, is an architectural feature that enables performance improvements at low power cost, making it a potentially attractive option for next generation high-performance computing platforms. However, the performance benefits from hardware threading can vary significantly across applications \cite{Saini}. It is our experience that traditional (deterministic) reactor core particle transport calculations, for example, based on the solution of large, sparse linear systems, have shown only modest performance gains when run with hardware threads. While optimized coding strategies might result in increased performance gains for deterministic approaches, an alternative strategy might also be explored -- specifically, changing the mathematical representation of the model to something potentially more compatible with hardware threading. One such choice is the so-called Monte Carlo (MC) approach. As we explain below, on the surface there is good reason to think that MC methods may see significant speedups using hardware threads. The overall benefits and shortcomings of MC vs. deterministic methods for reactor simulation is a long, deep, and ongoing debate in the reactor physics and transport communities \cite{Siegel}. It is safe to say, though, that more work is needed to understand potential strategies to mitigate the main drawback of the MC approach -- very long time to solution. In this brief analysis we speculate on the compatibility of MC methods with hardware threading and run a series of tests designed to give preliminary answers about relative performance benefits.
+
+\subsection{Potential Benefits of Hardware Multithreading on MC Neutron Transport}
+
+Hardware threading provides extra infrastructure that can hold data and instructions from a thread while the CPU waits for outstanding read requests to return from main memory, all while another thread executes operations efficiently on that CPU. This can help mask the latency between the CPU and main memory. This effect is ideal for applications that experience large numbers of cache misses and therefore prompt a high volume of read requests. This added performance comes at the cost of only a small increase in die space and without significantly increasing the amount of power consumed.
+
+MC neutron transport algorithms are well suited for potential performance gains from hardware threads. MC algorithms rely on high frequency memory loads from random locations in memory resulting in an exceptionally low degree of spatial and temporal locality of memory access. The absence of any predictable pattern in loads therefore confounds CPU pre-fetching logic. Without effective pre-fetching cache misses become common, and significant numbers of clock cycles are wasted as the CPU waits for data to arrive from main memory. Thus, performance of the MC algorithm is dictated by the limitations of main memory latency -- a problem that hardware threads are designed to alleviate.
+
+\subsection{Scope}
+
+There has been significant research into the performance and scaling of MC particle transport algorithms, as run on many-node, distributed memory, high performance computing systems \cite{Romano:OpenMC}\cite{Romano:Scaling}. One such effort, the OpenMC transport code \cite{Romano:OpenMC}, has investigated scalability on distributed memory architectures, such as Blue Gene/P. An additional study has been performed to investigate the algorithm's scaling properties on shared memory architectures \cite{Tramm}. However, we are not aware of any work investigating the impact of hardware threads on MC neutron transport algorithms.
+
+%[AS: below seems out of place and second sentence mostly repeats first, so I removed it for time %being]
+%The MC particle transport algorithm is both an important and in many ways unique algorithm to consider when evaluating future hardware a%rchitectures and features. This is due to the fact that the MC algorithm is remarkably different from many traditional high performance computing %algorithms due to its stochastic nature, and thus stands to benefit from and stress given hardware feature in very different ways.
+
+In this analysis, we aim to investigate and quantify the performance benefits of hardware threads on MC neutron transport algorithms. We do so by abstracting a key computational kernel, called XSBench, that models the most computationally intensive part of a typical MC transport algorithm \cite{Tramm}. The end result is that the essential computational conditions and tasks of fully featured MC neutron transport codes are retained in the kernel, without the additional complexity of the full application. This provides a much simpler and more transparent platform for determining performance benefits resulting from a given hardware feature, such as hardware multithreading. This evaluation is done as part of the ongoing co-design process at the Center for Exascale Reactor Simulation (CESAR) at Argonne National Laboratory. 
+
+\section{Algorithm}
+
+\subsection{Reactor Model}
+
+When carrying out reactor core analysis, the geometry and material properties of a postulated nuclear reactor must be specified in order to define the variables and scope of the simulation model. For the purposes of this analysis, we use a well known community reactor benchmark known as the Hoogenboom-Martin model \cite{Hoogenboom}. This model is a simplified analog to a more complete, ``real-world'' reactor problem, and provides a standardized basis for discussions on performance within the reactor simulation community. XSBench recreates the computational conditions present when fully featured MC neutron transport codes (such as OpenMC) simulate the Hoogenboom-Martin reactor model, preserving a similar data structure, a similar level of randomness of access, and a similar distribution of flops and memory loads.
+
+\subsection{Neutron Cross Sections}
+
+The purpose of an MC particle transport reactor simulation is to gain useful data about the distribution and generation rates of neutrons within a nuclear reactor. In order to achieve this goal, a large number of neutron  lifetimes are simulated by tracking the path and interactions of a neutron through the reactor from its birth in a fission event to its escape or absorption, the latter possibly resulting in another fission event.
+
+Each neutron in the simulation is described by three primary factors: its spatial location within a reactor's geometry, its speed, and its direction. At each stage of the transport calculation, a determination must be made as to what the particle will do next. For example, some possible outcomes include uninterrupted continuation of free flight, collision with another atom, or fission with a fissile material. The determination of which event occurs is based on a random sampling of a statistical distribution that is determined by empirical material data stored in main memory. This data, called {\em neutron cross section data}, represents the probability that a neutron of a particular speed (energy) will undergo some particular interaction when it is inside a given type of material. To account for neutrons across a wide energy spectrum and materials of many different types, the structure that holds this cross section data must be very large. In the case of the simplified Hoogenboom-Martin benchmark roughly 5.6 GB\footnote{We estimate that for a robust depletion calculation in excess of 100 GB of cross section data would be required.} of data is required.
+
+\subsection{Data Structure}
+
+A nuclide is a type of atom described by a specific number of neutrons and protons. A given element can have many different nuclides, such as Uranium-235 or Uranium-238. A material in the reactor model is composed of a mixture of nuclides. For instance, the ``reactor fuel'' material might consist of several hundred different nuclides, while the ``pressure vessel side wall'' material might only contain a dozen or so. In total, there are 12 different materials and 355 different nuclides present in the modeled reactor. 
+
+For each nuclide, an array of nuclide grid points are stored as data in main memory. Each nuclide grid point has an energy level, as well as five various cross sections (corresponding to five different particle interaction types) for that energy level. The arrays are ordered from lowest to highest energy levels. Each nuclide has a different ``grid spacing,'' i.e., the number, distribution, and granularity of energy levels varies between nuclides. One nuclide may have hundreds of thousands of grid points clustered around lower energy levels, while another nuclide may only have a few hundred grid points distributed across the full energy spectrum. This obviates straightforward approaches to uniformly organizing and accessing the data.
+
+In order to increase efficiency of access, the algorithm utilizes another data structure, called the \emph{unionized energy grid}, as described by Lepp\"{a}nen \cite{Leppanen} and Romano \cite{Romano:OpenMC}. The unionized grid facilitates fast lookups of cross section data from the nuclide grids. This structure is an array of grid points, consisting of an energy level and a set of pointers to the closest corresponding energy level on each of the different nuclide grids. 
+
+\begin{table}[h]
+\caption{XSBench Data Structure Summary}
+\label{tab:XS}
+\begin{center}
+\begin{tabular}{ | c | c | }
+    \hline
+    Nuclides Tracked & 355\\ \hline 
+    Total \# of Energy Gridpoints &  4,012,565\\ \hline
+    Cross Section Interaction Types & 5 \\ \hline
+    Total Size of Cross Section Data Structures & 5.6 GB \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{Access Patterns}
+
+In a full MC neutron transport application, the data structure is accessed each time a macroscopic cross section needs to be calculated. This happens anytime a particle changes energy (via a collision) or crosses a material boundary within the reactor. These macroscopic cross section calculations are extremely common in the MC transport algorithm, and the inputs to them are effectively random. For the sake of simplicity, XSBench was written ignoring the particle tracking aspect of the MC neutron transport algorithm and instead isolates the macroscopic cross section lookup kernel. This provides a large reduction in program complexity while retaining similarly random input conditions for the macroscopic cross section lookups via the use of a random number generator.
+
+In XSBench, each macroscopic cross section lookup consists of two randomly sampled inputs: the neutron energy and the material. Given these two inputs, a binary (log n) search is done on the unionized energy grid for the given energy. Once the correct entry is found on the unionized energy grid, the material input is used to perform lookups from the nuclide grids present in the material. Use of the unionized energy grid means that binary searches do not need to be performed on each individual nuclide grid. For each nuclide present in the material, the two bounding nuclide grid points are found using the pointers from the unionized energy grid and interpolated to give the exact microscopic cross section at that point.
+
+All calculated microscopic cross sections are then accumulated (weighted by their atomic density in the given material), which results in the macroscopic cross section for the material. The calculation of macroscopic cross sections is depicted in Algorithm~\ref{alg:code}.
+
+\begin{algorithm}
+\caption{Macroscopic Cross Section Lookup}
+\label{alg:code}
+\begin{algorithmic}[1]
+
+\State{$R(m_p,E_p)$}
+\Comment{randomly sample inputs}
+\State{\em{Locate $E_p$ on Unionized Grid}}
+\Comment{binary search}
+\For{$n \in m_p$}
+	\Comment{for each nuclide in input material}
+	\State{$\sigma_a \leftarrow n,E_p$}
+	\Comment{lookup bounding micro xs's}
+	\State{$\sigma_b \leftarrow n,E_p+1$}
+	\State{$\sigma \leftarrow \sigma_a,\sigma_b$}
+	\Comment{interpolate}
+	\State{$\Sigma \leftarrow \Sigma + \rho_n\cdot\sigma$}
+	\Comment{accumulate macro xs}
+\EndFor
+ 
+\end{algorithmic}
+\end{algorithm}
+
+In theory, one could ``pre-compute'' all macroscopic cross sections on the unionized energy grid for each material. This would allow the algorithm to run much faster, requiring far fewer memory loads and far fewer floating point operations per macroscopic cross section lookup. However, this would assume a static distribution of nuclides within a material. In practice, MC transport algorithms will need to track the burn-up of fuels, as well as heterogeneous temperature distributions within the reactor itself. This means that concentrations are dynamic, rather than static, therefore necessitating the use of the more versatile data model deployed in XSBench.
+
+We have verified that XSBench faithfully mimics the data access patterns of the full MC application under a broad range of conditions. The runtime of full-scale MC transport applications, such as OpenMC, is 85\% composed of macroscopic cross section look ups. Within this process, XSBench is virtually indistinguishable, as the same type and size of data structure is used, with a similarly random access pattern and a similar number of floating point operations occurring between memory loads. Thus, performance analyses done with XSBench will provide results applicable to the full MC neutron transport algorithm, while being easier to interpret.
+
+\section{Method}
+
+In order to test and quantify the effectiveness of hardware threads in improving the performance of our extracted kernel, we ran XSBench on two different systems. The first system was a single node of the IBM BlueGene/Q supercomputer \emph{Mira} at Argonne National Laboratory. Each node of this system has 16 cpu cores, each with 4 hardware threads. The second system we tested was a single node intel Xeon E5620 system containing 8 cores (dual quad-core processors), each with 2 hardware threads. 
+
+Each system (BlueGene/Q and Xeon) was tested with between 1 and its maximum number of supported threads (64 for BG/Q, 16 for the intel Xeon machine). A set number of macroscopic cross section calculations were performed for each run, and the speed of completion, in terms of cross section lookups per second, was recorded.
+
+\section{Results}
+
+\begin{figure*}[p]
+\includegraphics[scale=0.70]{graph.pdf}
+\caption{Scaling on BlueGene/Q}
+\label{fig:BGQ}
+\end{figure*}
+
+\begin{figure*}[p]
+\includegraphics[scale=0.70]{graph2.pdf}
+\caption{Scaling on Xeon}
+\label{fig:Xeon}
+\end{figure*}
+
+The benefit of hardware threads on BlueGene/Q is evident in Figure \ref{fig:BGQ} and Table \ref{tab:BGQ}. Hardware threads are responsible for a 131\% increase in performance. The data suggests that our hypothesis is correct; the MC transport algorithm does indeed benefit at a level greater than traditional high performance computing codes\footnote{High performance computing applications tend to show a 0-45\% performance increase from hardware threading \cite{Saini}.}. We also found that as additional hardware threads are added to a core, the marginal increase in performance diminishes. For instance, the percent performance increase per thread per core is reduced from 77\% on 2 threads per core to 44\% on 4 threads per core.
+
+\begin{table}[h]
+\caption{IBM BlueGene/Q Results}
+\label{tab:BGQ}
+\begin{center}
+\begin{tabular}{ |c| c  | c | c|}
+    \hline
+    \bf{Processes} & \bf{Threads per Core} & \bf{\% Increase} & \bf{\% Increase per HW Thread} \\ \hline 
+    \hline
+    16 & 1 & - & - \\ \hline
+    32 & 2 & 77 & 77 \\ \hline
+    48 & 3 & 119 & 59 \\ \hline
+    64 & 4 & 131 & 44 \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The benefit of hardware threads on the intel Xeon node is evident in Figure~\ref{fig:Xeon} and Table \ref{tab:Xeon}. Similar to BlueGene/Q, hardware threads show a clear benefit as they are responsible for a 70\% increase in performance. This performance improvement further supports our hypothesis that the MC transport algorithm is well tailored for significant gains from hardware threads.
+
+\begin{table}[h]
+\caption{Intel Xeon Results}
+\label{tab:Xeon}
+\begin{center}
+\begin{tabular}{ |c| c  | c | c|}
+    \hline
+        \bf{Processes} & \bf{Threads per Core} & \bf{\% Increase} & \bf{\% Increase per HW Thread} \\ \hline
+        \hline 
+    8 & 1 & - & - \\ \hline
+    16 & 2 & 70 & 70 \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+Thus, hardware threads are beneficial on both of the systems we tested -- showing performance gains greater than seen in traditional high performance computing codes. We also found that the MC algorithm experiences rapidly diminishing performance returns as hardware threads are added to an architecture. It is also clear that benefits from hardware threading never approach the ideal for the MC particle transport algorithm. That is, the addition of a hardware thread never comes close to replicating the ideal performance of an additional full core.
+
+Another interesting result from our experiment was further confirmation of the cause of bottlenecking in the MC particle transport algorithm on current generation systems. Since the addition of hardware threads caused significant increases in performance, it is clear that the algorithm is not limited by memory bandwidth and is instead likely limited by memory latency. If the algorithm were limited by bandwidth, addition of extra hardware threads would show no performance increase, as the additional memory load requests streaming off the hardware threads would have to contend with an already saturated pipeline. However, the observed performance is consistent with a scenario in which memory latency limits the speed of the calculation. The addition of hardware threads allows for an increase in the total number of memory loads being generated, each with a static latency associated with it. As a higher volume of these can exist at the same time (due to the hardware threads), the calculation completes at an increased rate.
+
+\section{Conclusion}
+
+In this analysis, we aimed to investigate and quantify the performance benefits of hardware threads on MC particle transport reactor simulation applications. To accomplish this, we developed a kernel, XSBench, and ran it on a number of systems to quantify the benefit of hardware threads. We found that hardware threads were responsible for a 70-131\% increase in performance. This is in contrast to the more modest 0-45\% performance gains seen in mainstream, traditional high performance computing applications \cite{Saini}.
+
+Thus, it is clear that hardware threads are a particularly valuable asset in obtaining good performance with MC neutron transport based reactor simulation applications. As technology moves towards exascale, the field of reactor simulation may see a pivot from deterministic to Monte Carlo, and this analysis shows that increased use of hardware threads will need to be a part of future hardware designs.
+
+In future work, we plan to develop useful metrics based on performance counters in XSBench in order to determine precisely where and how hardware performance bottlenecks in the kernel are caused. Similarly, we will investigate exactly why there are diminishing returns when adding multiple hardware threads to each CPU. Furthermore, there are additional capabilities that do not yet exist in full-scale MC neutron transport algorithms, such as on-the-fly doppler broadening to account for the material temperature dependence of cross sections, that we plan on adding to XSBench for experimentation with various hardware architectures and features.
+
+\section*{Acknowledgments}
+
+This work was supported by the Office of Advanced Scientific Computing Research, Office of Science, U.S. Department of Energy, under Contract DE- AC02-06CH11357. The submitted manuscript has been created by the University of Chicago as Operator of Argonne National Laboratory (“Argonne”) under Contract DE-AC02-06CH11357 with the U.S. Department of Energy. The U.S. Government retains for itself, and others acting on its behalf, a paid-up, nonexclusive, irrevocable worldwide license in said article to reproduce, prepare derivative works, distribute copies to the public, and perform publicly and display publicly, by or on behalf of the Government.
+
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{1}
+
+\bibitem{Hoogenboom}J.E. Hoogenboom, W.R. Martin, B. Petrovic, ``The Monte Carlo performance benchmark test – aims, specifications and first results,'' International Conference on Mathematics and Computational Methods Applied to Nuclear Science and Engineering, Rio de Janeiro, Brazil (2011).
+
+\bibitem{Leppanen}Jaakko Lepp\"{a}nen, ``Two practical methods for unionized energy grid construction in continuous-energy Monte Carlo neutron transport calculation,'' Annals of Nuclear Energy, Volume 36, Issue 7, July 2009, Pages 878-885.
+
+\bibitem{Romano:OpenMC}Paul K. Romano, Benoit Forget, ``The OpenMC Monte Carlo particle transport code,'' Annals of Nuclear Energy, Volume 51, January 2013, Pages 274-281.
+
+\bibitem{Romano:Scaling}Paul K. Romano, Benoit Forget, Forrest Brown, ``Towards Scalable Parallelism in Monte Carlo Particle Transport Codes Using Remote Memory Access,'' Progress in Nuclear Science and Technology, Volume 2, October 2011, Pages 670-675.
+
+\bibitem{Saini}S. Saini, H. Jin, R. Hood, D. Barker, P. Mehrotra, R. Biswas, The impact of hyper-threading on processor resource utilization in production applications, 18th International Conference on High Performance Computing (HiPC), Bangalore, India, Dec. 2011.
+
+\bibitem{Siegel} Andrew Siegel, Kord Smith, Paul Romano, Ben Forget, Kyle Felker, ``Multi-core performance studies of a Monte Carlo neutron transport code,'' International Journal of High Performance Computing Applications. (Under Review)
+
+\bibitem{Tramm} John Tramm, Andrew Siegel, ``Memory Bottlenecks and Memory Contention in Multi-Core Monte Carlo Transport Codes,'' Joint International Conference on Supercomputing in Nuclear Applications and Monte Carlo, 2013. (Submitted, Pending Acceptance \& Review. Not yet Published.)
+
+\end{thebibliography}
+
+\end{document}
+
+%\subsection{Subsection Heading Here}
+%Subsection text here.
+%\subsubsection{Subsubsection Heading Here}
+%Subsubsection text here.
+
