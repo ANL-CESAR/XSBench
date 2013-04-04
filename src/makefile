@@ -77,7 +77,7 @@ $(program): $(obj) do_flops.o XSbench_header.h
 	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) do_flops.o $(obj) -o $@ $(LDFLAGS)
 
 %.o: %.c
-	$(GCC) $(GCC_S_FLAGS) $(GSS_O_FLAGS) -c $< -o $@
+	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) -c $< -o $@
 
 do_flops.o: do_flops.c
 	$(GCC) $(GCC_S_FLAGS) -c do_flops.c
