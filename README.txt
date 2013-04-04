@@ -6,6 +6,8 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
+                                   Version 4
+
 ==============================================================================
 Background
 ==============================================================================
@@ -34,6 +36,9 @@ in a fully featured code. This provides a much simpler and clearer
 platform for stressing different architectures, and ultimately for
 making determinations as to where hardware bottlenecks occur as
 cores are added.
+
+Contact Information:
+
 
 ==============================================================================
 Quick Start

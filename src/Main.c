@@ -6,6 +6,7 @@ int main( int argc, char* argv[] )
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
+	int version = 5;
 	unsigned long seed;
 	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
@@ -88,7 +89,7 @@ int main( int argc, char* argv[] )
 	// Print-out of Input Summary
 	// =====================================================================
 	
-	logo();
+	logo(version);
 	center_print("INPUT SUMMARY", 79);
 	border_print();
 	printf("Materials:                    %d\n", 12);

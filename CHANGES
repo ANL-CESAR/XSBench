@@ -1,0 +1,13 @@
+=====================================================================
+NEW IN VERSION 5
+=====================================================================
+
+- Moved source code files to src/ directory.
+
+- Added ChangeLog
+
+- Updated README.txt file to enhance documentation
+
+- Reworked docs/ documentation files.
+
+=====================================================================

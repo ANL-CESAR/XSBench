@@ -40,7 +40,7 @@ int NGP_compare( const void * a, const void * b )
 }
 
 // Prints program logo
-void logo(void)
+void logo(int version)
 {
 	border_print();
 	printf(
@@ -53,7 +53,9 @@ void logo(void)
     );
 	border_print();
 	center_print("Developed at Argonne National Laboratory", 79);
-	center_print("Version: 4", 79);
+	char v[100];
+	sprintf(v, "Version: %d", version);
+	center_print(v, 79);
 	border_print();
 }
 
