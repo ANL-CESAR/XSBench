@@ -22,18 +22,11 @@ Development Lead: John Tramm <jtramm@mcs.anl.gov>
 What is XSBench?
 ==============================================================================
 
-A full explanation of the theory and purpose of XSBench is provided in
-docs/XSBench_Theory.pdf. A summary is given below:
+XSBench is a mini-app representing a key computational kernel of the 
+Monte Carlo neutron transport application, OpenMC.
 
-XSBench is a simple application that executes only the most computationally
-expensive steps of Monte Carlo particle transport, the calculation of
-macroscopic cross sections. The essential computational conditions and
-tasks of fully featured Monte Carlo transport codes are retained in
-XSBench, without the additional complexity and overhead inherent in a
-fully featured code such as OpenMC. This provides a much simpler and
-clearer platform for stressing different architectures, and ultimately
-for making determinations as to where hardware bottlenecks occur as cores
-are added to shared memory systems.
+A full explanation of the theory and purpose of XSBench is provided in
+docs/XSBench_Theory.pdf.
 
 ==============================================================================
 Quick Start Guide
