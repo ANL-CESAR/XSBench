@@ -23,7 +23,7 @@ What is XSBench?
 ==============================================================================
 
 XSBench is a mini-app representing a key computational kernel of the 
-Monte Carlo neutron transport application, OpenMC.
+Monte Carlo neutronics application OpenMC.
 
 A full explanation of the theory and purpose of XSBench is provided in
 docs/XSBench_Theory.pdf.
