@@ -23,6 +23,7 @@ XSutils.c \
 Materials.c
 
 obj = $(source:.c=.o)
+
 #===============================================================================
 # Sets Flags
 #===============================================================================
@@ -34,12 +35,16 @@ endif
 
 # BG/Q gcc Cross-Compiler
 ifeq ($(MACHINE),bluegene)
-  GCC = mpicc #/bgsys/drivers/toolchain/V1R1M2/gnu-linux/bin/powerpc64-bgq-linux-gcc
+  GCC = mpicc
 endif
 
 # Standard Flags
 GCC_S_FLAGS := -fopenmp -Wall -std=gnu99
+
+# Optional/Extra Flags
 GCC_O_FLAGS =
+
+# Linker Flags
 LDFLAGS = -lm
 
 # Debug Flags
@@ -87,7 +92,9 @@ clean:
 
 edit:
 	vim -p $(source) do_flops.c papi.c XSbench_header.h
+
 run:
 	./XSBench
+
 bgqrun:
 	qsub -t 10 -n 1 -O test XSBench

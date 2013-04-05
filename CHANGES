@@ -2,12 +2,19 @@
 NEW IN VERSION 5
 =====================================================================
 
-- Moved source code files to src/ directory.
-
 - Added ChangeLog
+
+- A few changes to the makefile to make compilation more transparent.
+
+- Definition guards to the header file to prevent multiple inclusions.
+
+- Moved source code files to src/ directory.
 
 - Updated README.txt file to enhance documentation
 
-- Reworked docs/ documentation files.
+- Added significant documentation with regards to theory
+  in the docs/XSBench_Theory.pdf file. The README.txt file is now
+  more of a quick-start & users guide, whereas the XSBench_Theory.pdf
+  guide covers the details and theory behind the code.
 
 =====================================================================
