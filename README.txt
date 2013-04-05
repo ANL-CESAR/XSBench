@@ -25,79 +25,84 @@ What is XSBench?
 A full explanation of the theory and purpose of XSBench is provided in
 docs/XSBench_Theory.pdf. A summary is given below:
 
-XSBench is a simple application that executes only the most
-computationally expensive steps of Monte Carlo particle transport,
-the calculation of macroscopic cross sections, in an effort to
-expose bottlenecks within multi-core, shared memory architectures.
+XSBench is a simple application that executes only the most computationally
+expensive steps of Monte Carlo particle transport, the calculation of
+macroscopic cross sections, in an effort to expose bottlenecks within
+multi-core, shared memory architectures.
 
-In a particle transport simulation, every time a particle changes
-energy or crosses a material boundary, a new macroscopic cross
-section must be calculated. The time spent looking up and calculating
-the required cross section information often accounts for well over
-half of the total active runtime of the simulation. XSBench uses a
-unionized energy grid to facilitate cross section lookups for
-randomized particle energies. There are a similar number of energy
-grid points, material types, and nuclides as are used in the
-Hoogenboom-Martin benchmark. The probability of particles residing
-in any given material is weighted based on that material's commonality
-inside the Hoogenboom-Martin benchmark geometry.
+In a particle transport simulation, every time a particle changes energy
+or crosses a material boundary, a new macroscopic cross section must be
+calculated. The time spent looking up and calculating the required cross
+section information often accounts for well over half of the total active
+runtime of the simulation. XSBench uses a unionized energy grid to
+facilitate cross section lookups for randomized particle energies. There
+are a similar number of energy grid points, material types, and nuclides
+as are used in the Hoogenboom-Martin benchmark. The probability of
+particles residing in any given material is weighted based on that
+material's commonality inside the Hoogenboom-Martin benchmark geometry.
 
-The end result is that the essential computational conditions and
-tasks of fully featured Monte Carlo transport codes are retained
-in XSBench, without the additional complexity and overhead inherent
-in a fully featured code. This provides a much simpler and clearer
-platform for stressing different architectures, and ultimately for
-making determinations as to where hardware bottlenecks occur as
-cores are added.
+The end result is that the essential computational conditions and tasks
+of fully featured Monte Carlo transport codes are retained in XSBench,
+without the additional complexity and overhead inherent in a fully
+featured code such as OpenMC. This provides a much simpler and clearer
+platform for stressing different architectures, and ultimately for making
+determinations as to where hardware bottlenecks occur as cores are added.
 
 ==============================================================================
 Quick Start Guide
 ==============================================================================
 
-Download of the XSBench tar file is available from the CESAR website at
-the following URL:
+Download----------------------------------------------------------------------
 
-https://cesar.mcs.anl.gov/content/software/mocfe
+	Download of the XSBench tar file is available from the CESAR website at
+	the following URL:
 
-Once downloaded, you can decompress XSBench using the following command
-on a GNU linux or Mac OSX system:
+	https://cesar.mcs.anl.gov/content/software/mocfe
 
->$ tar -xvf XSBench-5.tar
+	Once downloaded, you can decompress XSBench using the following command
+	on a linux or Mac OSX system:
 
-This will decompress the tar file into a directory called XSBench-5.
+	>$ tar -xvf XSBench-5.tar
 
-To begin use of the XSBench code, you will have to navigate to the src
-directory:
+	This will decompress the tar file into a directory called XSBench-5.
 
->$ cd XSBench-5/src
+	To begin use of the XSBench code, you will have to navigate to the src
+	directory:
 
-To compile and run XSBench with default settings, use the following
-commands:
+	>$ cd XSBench-5/src
 
->$ make
+Compilation-------------------------------------------------------------------
 
->$ ./XSBench
+	To compile XSBench with default settings, use the following command:
 
-By default, XSBench will with 1 thread per hardware core. If the
-architecture supports hyperthreading, multiple threads will be run per
-core.
+	>$ make
 
-To manually alter the number of threads used, run the code with the
-desired number of threads as an argument:
+Running XSBench---------------------------------------------------------------
 
->$ ./XSBench 4
+	To run XSBench with default settings, use the following command:
 
-To alter the Hoogenboom-Martin specification used (small or large),
-use the second argument to specify either "Small" or "Large". This
-corresponds to the number of nuclides present in the fuel region.
-The small version has 34 fuel nuclides, whereas the large version
-has 321 fuel nuclides. This significantly slows down the runtime
-of the program as the data structures are much larger, and more
-lookups are required whenever a lookup occurs in a fuel material.
-Note that the program defaults to "Large" if no specification is
-made. Example:
+	>$ ./XSBench
 
->$ ./XSBench 4 Small
+	By default, XSBench will with 1 thread per hardware core. If the
+	architecture supports hyperthreading, multiple threads will be run per
+	core.
+
+	To manually alter the number of threads used, run the code with the
+	desired number of threads as an argument:
+
+	>$ ./XSBench 4
+
+	To alter the Hoogenboom-Martin specification used (small or large),
+	use the second argument to specify either "Small" or "Large". This
+	corresponds to the number of nuclides present in the fuel region.
+	The small version has 34 fuel nuclides, whereas the large version
+	has 321 fuel nuclides. This significantly slows down the runtime
+	of the program as the data structures are much larger, and more
+	lookups are required whenever a lookup occurs in a fuel material.
+	Note that the program defaults to "Large" if no specification is
+	made. Example:
+
+	>$ ./XSBench 4 Small
 
 ==============================================================================
 Debugging, Optimization & Profiling
