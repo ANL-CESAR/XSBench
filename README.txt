@@ -14,7 +14,6 @@ Contact Information
 
 Organization:     Center for Exascale Simulation of Advanced Reactors (CESAR)
                   Argonne National Laboratory
-                  Argonne, IL, USA
 
 Development Lead: John Tramm <jtramm@mcs.anl.gov>
 
@@ -22,7 +21,7 @@ Development Lead: John Tramm <jtramm@mcs.anl.gov>
 What is XSBench?
 ==============================================================================
 
-XSBench is a mini-app representing a key computational kernel of the 
+XSBench is a mini-app representing a key computational kernel of the
 Monte Carlo neutronics application OpenMC.
 
 A full explanation of the theory and purpose of XSBench is provided in
@@ -54,7 +53,8 @@ Download----------------------------------------------------------------------
 
 Compilation-------------------------------------------------------------------
 
-	To compile XSBench with default settings, use the following command:
+	To compile XSBench with default settings, use the following
+	command:
 
 	>$ make
 
@@ -65,23 +65,23 @@ Running XSBench---------------------------------------------------------------
 	>$ ./XSBench
 
 	By default, XSBench will with 1 thread per hardware core. If the
-	architecture supports hyperthreading, multiple threads will be run per
-	core.
+	architecture supports hyperthreading, multiple threads will be
+	run per core.
 
-	To manually alter the number of threads used, run the code with the
-	desired number of threads as an argument:
+	To manually alter the number of threads used, run the code with
+	the desired number of threads as an argument:
 
 	>$ ./XSBench 4
 
-	To alter the Hoogenboom-Martin specification used (small or large),
-	use the second argument to specify either "Small" or "Large". This
-	corresponds to the number of nuclides present in the fuel region.
-	The small version has 34 fuel nuclides, whereas the large version
-	has 321 fuel nuclides. This significantly slows down the runtime
-	of the program as the data structures are much larger, and more
-	lookups are required whenever a lookup occurs in a fuel material.
-	Note that the program defaults to "Large" if no specification is
-	made. Example:
+	To alter the Hoogenboom-Martin specification used (small or
+	large), use the second argument to specify either "Small" or
+	"Large". This corresponds to the number of nuclides present in
+	the fuel region.  The small version has 34 fuel nuclides, whereas
+	the large version has 321 fuel nuclides. This significantly slows
+	down the runtime of the program as the data structures are much
+	larger, and more lookups are required whenever a lookup occurs
+	in a fuel material.  Note that the program defaults to "Large"
+	if no specification is made. Example:
 
 	>$ ./XSBench 4 Small
 
@@ -109,18 +109,19 @@ Profling enables the -pg flag.
 The PAPI flag is explained below.
 
 VEC_INFO enables some additional information regarding the success or
-failure of the compiler's use of vectorization techniques during compilation.
+failure of the compiler's use of vectorization techniques during
+compilation.
 
 ==============================================================================
 PAPI Performance Counters
 ==============================================================================
 
-PAPI performance counters is a performance counting library that can offer
-information regarding the frequency of specific events (such as memory loads,
-cache misses, branch prediction failures, etc) that occur when the code
-is executed. XSBench supports use of these performance counters, although
-it is left to the user to select the particular performance counters and
-locations to instrument.
+PAPI performance counters is a performance counting library that can
+offer information regarding the frequency of specific events (such as
+memory loads, cache misses, branch prediction failures, etc) that occur
+when the code is executed. XSBench supports use of these performance
+counters, although it is left to the user to select the particular
+performance counters and locations to instrument.
 
 By default, PAPI is disabled.
 
@@ -131,12 +132,12 @@ the following definition to the file:
 
 Then, enable papi in the makefile:
 
-PAPI     = yes
+PAPI = yes
 
-Note that you may need to change the relevant library paths for papi
-to work (as these are dependent on your machine).
-The library path can be specified in the makefile, and the
-header path is specified in the XSBench_header.h file.
+Note that you may need to change the relevant library paths for papi to
+work (as these are dependent on your machine).  The library path can be
+specified in the makefile, and the header path is specified in the
+XSBench_header.h file.
 
 ==============================================================================
 Running on ANL BlueGene/Q (Vesta & Mira)
@@ -146,23 +147,23 @@ Compilation is done using the included makefile, as follows:
 
 >$ make MACHINE=bluegene
 
-Note that the INFO macro in the XSbench_header.h file should be
-set to 0 when running on BG/Q to remove the run status portions of
-the output, which cuts down on unnecessary file I/O, i.e.:
+Note that the INFO macro in the XSbench_header.h file should be set to
+0 when running on BG/Q to remove the run status portions of the output,
+which cuts down on unnecessary file I/O, i.e.:
 
 #define INFO 0
 
-Also, note that you may need to add the following line to
-your .soft file in order to use the mpicc compiler wrapper:
+Also, note that you may need to add the following line to your .soft
+file in order to use the mpicc compiler wrapper:
 
 +mpiwrapper-gcc
 
 Then, be sure to use the "resoft" command to update your software, i.e.,:
 
->$ resoft 
+>$ resoft
 
 When running in c16 mode, the maximum number of gridpoints per nuclide
-is 900 (when running in "Large" mode). More points will cause the 1GB 
+is 900 (when running in "Large" mode). More points will cause the 1GB
 memory limit to be broken.
 
 A basic test run on 1 node can be achieved (assuming you have an allocation)
@@ -186,9 +187,9 @@ being caused by the memory loads.
 To enable this feature, go to the XSBench_header.h file and uncomment
 out the "#define ADD_EXTRAS" line.
 
-By default, there are no "extra" flops in the benchmark. To add these in,
-open the XSbench_header.h file and change the EXTRA_FLOPS definition to
-the desired number of additional flops. i.e.,
+By default, there are no "extra" flops in the benchmark. To add these
+in, open the XSbench_header.h file and change the EXTRA_FLOPS definition
+to the desired number of additional flops. i.e.,
 
 "#define EXTRA_FLOPS 10"
 
@@ -199,18 +200,18 @@ time of the program.
 Adding Extra Memory Loads
 ==============================================================================
 
-One of the areas we're investigating is the effect of adding
-additional memory loads per each required load from the nuclide xs
-arrays. Adding loads has so far been rather inconclusive, as randomizing
-the loads requires a number of flops be performed to generate the random
-index number to load from. 
+One of the areas we're investigating is the effect of adding additional
+memory loads per each required load from the nuclide xs arrays. Adding
+loads has so far been rather inconclusive, as randomizing the loads
+requires a number of flops be performed to generate the random index
+number to load from.
 
 To enable this feature, go to the XSBench_header.h file and uncomment
 out the "#define ADD_EXTRAS" line.
 
-By default, there are no "extra" loads in the benchmark. To add these in,
-open the XSbench_header.h file and change the EXTRA_LOADS definition to
-the desired number of additional loads. i.e.,
+By default, there are no "extra" loads in the benchmark. To add these
+in, open the XSbench_header.h file and change the EXTRA_LOADS definition
+to the desired number of additional loads. i.e.,
 
 "#define EXTRA_LOADS 10"
 
