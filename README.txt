@@ -34,12 +34,7 @@ In a particle transport simulation, every time a particle changes energy
 or crosses a material boundary, a new macroscopic cross section must be
 calculated. The time spent looking up and calculating the required cross
 section information often accounts for nearly 85% of the total active
-runtime of the simulation. XSBench uses a unionized energy grid to
-facilitate cross section lookups for randomized particle energies. There
-are a similar number of energy grid points, material types, and nuclides
-as are used in the Hoogenboom-Martin benchmark. The probability of
-particles residing in any given material is weighted based on that
-material's commonality inside the Hoogenboom-Martin benchmark geometry.
+runtime of the simulation. 
 
 The end result is that the essential computational conditions and tasks
 of fully featured Monte Carlo transport codes are retained in XSBench,
