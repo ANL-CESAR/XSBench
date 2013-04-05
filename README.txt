@@ -34,20 +34,21 @@ Quick Start Guide
 
 Download----------------------------------------------------------------------
 
-	Download of the XSBench tar file is available from the CESAR website at
-	the following URL:
+	Download of the XSBench tar file is available from the CESAR
+	website at the following URL:
 
 	https://cesar.mcs.anl.gov/content/software/mocfe
 
-	Once downloaded, you can decompress XSBench using the following command
-	on a linux or Mac OSX system:
+	Once downloaded, you can decompress XSBench using the following
+	command on a linux or Mac OSX system:
 
 	>$ tar -xvf XSBench-5.tar
 
-	This will decompress the tar file into a directory called XSBench-5.
+	This will decompress the tar file into a directory called
+	XSBench-5.
 
-	To begin use of the XSBench code, you will have to navigate to the src
-	directory:
+	To begin use of the XSBench code, you will have to navigate to
+	the src directory:
 
 	>$ cd XSBench-5/src
 
