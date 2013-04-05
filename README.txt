@@ -33,7 +33,7 @@ multi-core, shared memory architectures.
 In a particle transport simulation, every time a particle changes energy
 or crosses a material boundary, a new macroscopic cross section must be
 calculated. The time spent looking up and calculating the required cross
-section information often accounts for well over half of the total active
+section information often accounts for nearly 85% of the total active
 runtime of the simulation. XSBench uses a unionized energy grid to
 facilitate cross section lookups for randomized particle energies. There
 are a similar number of energy grid points, material types, and nuclides
