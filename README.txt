@@ -27,21 +27,13 @@ docs/XSBench_Theory.pdf. A summary is given below:
 
 XSBench is a simple application that executes only the most computationally
 expensive steps of Monte Carlo particle transport, the calculation of
-macroscopic cross sections, in an effort to expose bottlenecks within
-multi-core, shared memory architectures.
-
-In a particle transport simulation, every time a particle changes energy
-or crosses a material boundary, a new macroscopic cross section must be
-calculated. The time spent looking up and calculating the required cross
-section information often accounts for nearly 85% of the total active
-runtime of the simulation. 
-
-The end result is that the essential computational conditions and tasks
-of fully featured Monte Carlo transport codes are retained in XSBench,
-without the additional complexity and overhead inherent in a fully
-featured code such as OpenMC. This provides a much simpler and clearer
-platform for stressing different architectures, and ultimately for making
-determinations as to where hardware bottlenecks occur as cores are added.
+macroscopic cross sections. The essential computational conditions and
+tasks of fully featured Monte Carlo transport codes are retained in
+XSBench, without the additional complexity and overhead inherent in a
+fully featured code such as OpenMC. This provides a much simpler and
+clearer platform for stressing different architectures, and ultimately
+for making determinations as to where hardware bottlenecks occur as cores
+are added to shared memory systems.
 
 ==============================================================================
 Quick Start Guide
