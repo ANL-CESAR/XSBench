@@ -6,11 +6,24 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 4
+                                   Version 5
 
 ==============================================================================
-Background
+Contact Information
 ==============================================================================
+
+Organization:     Center for Exascale Simulation of Advanced Reactors (CESAR)
+                  Argonne National Laboratory
+				  Argonne, IL, USA
+Development Lead: John Tramm
+Support Email:    jtramm@mcs.anl.gov
+
+==============================================================================
+What is XSBench?
+==============================================================================
+
+A full explanation of the theory and purpose of XSBench is provided in
+docs/XSBench_Theory.pdf. A summary is given below:
 
 XSBench is a simple application that executes only the most
 computationally expensive steps of Monte Carlo particle transport,
@@ -37,12 +50,26 @@ platform for stressing different architectures, and ultimately for
 making determinations as to where hardware bottlenecks occur as
 cores are added.
 
-Contact Information:
-
-
 ==============================================================================
-Quick Start
+Quick Start Guide
 ==============================================================================
+
+Download of the XSBench tar file is available from the CESAR website at
+the following URL:
+
+https://cesar.mcs.anl.gov/content/software/mocfe
+
+Once downloaded, you can decompress XSBench using the following command
+on a GNU linux or Mac OSX system:
+
+>$ tar -xvf XSBench-5.tar
+
+This will decompress the tar file into a directory called XSBench-5.
+
+To begin use of the XSBench code, you will have to navigate to the src
+directory:
+
+>$ cd XSBench-5/src
 
 To compile and run XSBench with default settings, use the following
 commands:
@@ -52,7 +79,7 @@ commands:
 >$ ./XSBench
 
 By default, XSBench will with 1 thread per hardware core. If the
-architecture supports hyperthreading, two threads will be run per
+architecture supports hyperthreading, multiple threads will be run per
 core.
 
 To manually alter the number of threads used, run the code with the
@@ -72,7 +99,6 @@ made. Example:
 
 >$ ./XSBench 4 Small
 
-
 ==============================================================================
 Debugging, Optimization & Profiling
 ==============================================================================
@@ -86,6 +112,7 @@ OPTIMIZE = yes
 DEBUG    = no
 PROFILE  = no
 PAPI     = no
+VEC_INFO = no
 
 Optimization enables the -O3 optimzation flag.
 
@@ -95,10 +122,19 @@ Profling enables the -pg flag.
 
 The PAPI flag is explained below.
 
+VEC_INFO enables some additional information regarding the success or
+failure of the compiler's use of vectorization techniques during compilation.
 
 ==============================================================================
 PAPI Performance Counters
 ==============================================================================
+
+PAPI performance counters is a performance counting library that can offer
+information regarding the frequency of specific events (such as memory loads,
+cache misses, branch prediction failures, etc) that occur when the code
+is executed. XSBench supports use of these performance counters, although
+it is left to the user to select the particular performance counters and
+locations to instrument.
 
 By default, PAPI is disabled.
 
@@ -116,8 +152,6 @@ to work (as these are dependent on your machine).
 The library path can be specified in the makefile, and the
 header path is specified in the XSBench_header.h file.
 
-
-
 ==============================================================================
 Running on ANL BlueGene/Q (Vesta & Mira)
 ==============================================================================
@@ -126,25 +160,24 @@ Compilation is done using the included makefile, as follows:
 
 >$ make MACHINE=bluegene
 
-
 Note that the INFO macro in the XSbench_header.h file should be
 set to 0 when running on BG/Q to remove the run status portions of
 the output, which cuts down on unnecessary file I/O, i.e.:
 
 #define INFO 0
 
-
 Also, note that you may need to add the following line to
 your .soft file in order to use the mpicc compiler wrapper:
 
 +mpiwrapper-gcc
 
-Then, be sure to use the "resoft" command to update your software. 
+Then, be sure to use the "resoft" command to update your software, i.e.,:
+
+>$ resoft 
 
 When running in c16 mode, the maximum number of gridpoints per nuclide
 is 900 (when running in "Large" mode). More points will cause the 1GB 
 memory limit to be broken.
-
 
 A basic test run on 1 node can be achieved (assuming you have an allocation)
 using the makefile and the following command:
@@ -154,8 +187,6 @@ using the makefile and the following command:
 Further information on queuing can be found at:
 
 https://www.alcf.anl.gov/resource-guides/vesta-queuing
-
-
 
 ==============================================================================
 Adding Extra Flops
@@ -178,8 +209,6 @@ the desired number of additional flops. i.e.,
 Note that even just 5-10 extra flops will greatly increase the running
 time of the program.
 
-
-
 ==============================================================================
 Adding Extra Memory Loads
 ==============================================================================
@@ -201,3 +230,5 @@ the desired number of additional loads. i.e.,
 
 Note that even just a few extra loads will greatly increase the running
 time of the program.
+
+==============================================================================
