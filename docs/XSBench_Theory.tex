@@ -3,27 +3,51 @@
 \usepackage{algorithmicx}
 \usepackage{algpseudocode}
 \usepackage{graphicx}
+\usepackage{amsmath}
 
 \begin{document}
 
-\title{The XSBench Mini-App}
+\title{The XSBench Mini-App - A Discussion of Theory}
 
-\author{John Tramm}
-
+\author{John Tramm\\jtramm@mcs.anl.gov}
 
 \maketitle
 
 \begin{abstract}
 
-A kernel has been developed that mimics the most computationally expensive steps of a robust nuclear reactor core Monte Carlo particle transport algorithm -- the calculation of macroscopic cross sections.
+A kernel has been developed that mimics the most computationally expensive steps of a robust nuclear reactor core Monte Carlo particle transport algorithm -- the calculation of macroscopic cross sections. This document explains the theoretical basis of the kernel and outlines the current topics of research the kernel facilitates.
 
 \end{abstract}
+
+\section{Introduction}
+
+\subsection{The Reactor Simulation Problem}
+
+The computerized simulation of nuclear reactors is a well established field, with origins dating back to the early years of digital computing. Traditional reactor simulation techniques aim to solve the diffusion equation for a given material geometry and starting (source term) neutron distribution within the reactor. This is done in a deterministic fashion using well developed numerical methods. However, deterministic methods suffer from a number of problems; namely, a significant number of approximations and simplifications must be made which results in non-trivial margins of error when compared to real-world results.
+
+An alternative method, Monte Carlo (MC) simulation, simulates the path of a particle (neutron) as it travels through the reactor core. As many particle histories are simulated, a picture of the full distribution of neutrons within the reactor core is developed. Furthermore, the methodologies utilized by MC simulation require very few assumptions, resulting in incredibly accurate results. The downside to this method, however, is that a huge number of neutron histories must be run in order to achieve an acceptably low variance in the results. Specifically, the correlation between runtime and variance is governed by the central limit theorem, which states that the variance of the sample mean is inversely proportional to the number of particle histories realized, i.e., :
+
+\begin{align*}
+\sigma^2\propto\frac{1}{N}
+\end{align*}
+
+\subsection{OpenMC}
+
+OpenMC is a Monte Carlo particle transport simulation code focused on neutron criticality calculations. It is capable of simulating 3D models based on constructive solid geometry with second-order surfaces. The particle interaction data is based on ACE format cross sections, also used in the MCNP and Serpent Monte Carlo codes.
+
+OpenMC was originally developed by members of the Computational Reactor Physics Group at the Massachusetts Institute of Technology starting in 2011. Various universities, laboratories, and other organizations (including CESAR) now contribute to the development of OpenMC.
+
+\subsection{XSBench}
+
+The XSBench proxy app models the most computationally intensive part of a typical MC transport algorithm - the calculation of macroscopic neutron cross sections - a kernel which accounts for around 85\% of the total runtime of OpenMC. The essential computational conditions and tasks of fully featured MC neutron transport codes are retained in the mini-app, without the additional complexity of the full application. This provides a much simpler and more transparent platform for determining performance benefits resulting from a given hardware feature or software optimization.
+
+XSBench is under ongoing development by members of the Center for the Exascale Simulation of Advanced Reactors (CESAR) group at Argonne National Laboratory. Development began in 2012.
 
 \section{Algorithm}
 
 \subsection{Reactor Model}
 
-When carrying out reactor core analysis, the geometry and material properties of a postulated nuclear reactor must be specified in order to define the variables and scope of the simulation model. For the purposes of this analysis, we use a well known community reactor benchmark known as the Hoogenboom-Martin model \cite{Hoogenboom}. This model is a simplified analog to a more complete, ``real-world'' reactor problem, and provides a standardized basis for discussions on performance within the reactor simulation community. XSBench recreates the computational conditions present when fully featured MC neutron transport codes (such as OpenMC) simulate the Hoogenboom-Martin reactor model, preserving a similar data structure, a similar level of randomness of access, and a similar distribution of flops and memory loads.
+When carrying out reactor core analysis, the geometry and material properties of a postulated nuclear reactor must be specified in order to define the variables and scope of the simulation model. For the purposes of XSBench, we use a well known community reactor benchmark known as the Hoogenboom-Martin model \cite{Hoogenboom}. This model is a simplified analog to a more complete, ``real-world'' reactor problem, and provides a standardized basis for discussions on performance within the reactor simulation community. XSBench recreates the computational conditions present when fully featured MC neutron transport codes (such as OpenMC) simulate the Hoogenboom-Martin reactor model, preserving a similar data structure, a similar level of randomness of access, and a similar distribution of flops and memory loads.
 
 \subsection{Neutron Cross Sections}
 
@@ -88,29 +112,46 @@ In theory, one could ``pre-compute'' all macroscopic cross sections on the union
 
 We have verified that XSBench faithfully mimics the data access patterns of the full MC application under a broad range of conditions. The runtime of full-scale MC transport applications, such as OpenMC, is 85\% composed of macroscopic cross section look ups. Within this process, XSBench is virtually indistinguishable, as the same type and size of data structure is used, with a similarly random access pattern and a similar number of floating point operations occurring between memory loads. Thus, performance analyses done with XSBench will provide results applicable to the full MC neutron transport algorithm, while being easier to interpret.
 
-\section{Performance}
+\section{Early Results}
 
-XSBench has been tested on a single node of the IBM BlueGene/Q supercomputer \emph{Mira} at Argonne National Laboratory, as well as  a single node intel Xeon E5620 system containing 8 cores (dual quad-core processors), each with 2 hardware threads. 
+We have successfully run XSBench on a wide variety of shared-memory architectures. Below is a list of systems XSBench has been deployed on:
 
-Each system (BlueGene/Q and Xeon) was tested with between 1 and its maximum number of supported threads (64 for BG/Q, 16 for the intel Xeon machine). A set number of macroscopic cross section calculations were performed for each run, and the speed of completion, in terms of cross section lookups per second, was recorded. The results can be seen in Figures \ref{fig:BGQ} and \ref{fig:Xeon}.
+\begin{enumerate}
+\item IBM BlueGene/Q \emph{Mira} - 16 cores
+\item Intel Xeon E5620 - 8 cores
+\item Intel i7-3615QM - 4 cores
+\item Intel i7-2600k - 4 cores
+\end{enumerate}
 
-\begin{figure*}[h]
-\includegraphics[scale=0.46]{figures/graph.pdf}
-\caption{Scaling on BlueGene/Q}
-\label{fig:BGQ}
-\end{figure*}
+Strong scaling results vary significantly between systems. However, generally speaking, we have seen approximately 76\% scaling on the Intel systems, and approximately 95\% scaling on BlueGene/Q, where scaling is defined as the ratio of realized performance using all cores on the node to the performance of a single core multiplied by the number of cores on the node, i.e.:
 
-\begin{figure*}[h]
-\includegraphics[scale=0.46]{figures/graph2.pdf}
-\caption{Scaling on Xeon}
-\label{fig:Xeon}
-\end{figure*}
+\begin{align*}
+Scaling = \frac{P_n}{P_1 \times n}
+\end{align*}
 
-Another interesting result from our experiment was further confirmation of the cause of bottlenecking in the MC particle transport algorithm on current generation systems. Since the addition of hardware threads caused significant increases in performance, it is clear that the algorithm is not limited by memory bandwidth and is instead likely limited by memory latency. If the algorithm were limited by bandwidth, addition of extra hardware threads would show no performance increase, as the additional memory load requests streaming off the hardware threads would have to contend with an already saturated pipeline. However, the observed performance is consistent with a scenario in which memory latency limits the speed of the calculation. The addition of hardware threads allows for an increase in the total number of memory loads being generated, each with a static latency associated with it. As a higher volume of these can exist at the same time (due to the hardware threads), the calculation completes at an increased rate.
+Where $P_n$ is the performance on all $n$ cores, and $P_1$ is the performance on a single core.
+
+\section{Topics of Investigation}
+
+\subsection{Problem Statement}
+
+We are looking to shed light on why, precisely, we are losing performance as cores are added to a node. We know that we are not memory bandwidth constricted, however, we suspect that we are generally limited by memory latency/contention issues. We want to know which exact subsystems are responsible for this. For instance, what is it about the architectures of BG/Q vs intel Sandy Bridge that result in such drastic differences in scaling? Why is BG/Q at 96\% efficiency at 1 thread per core, whereas the intel chip is at 76\% efficiency at 1 thread per core? We really want to know exactly where these losses are coming from, so that we can make an intelligent prediction as to how this type of code will scale when there are hundreds of cores per node. Furthermore, we want to know if there are any changes we can make, either algorithmically or in terms of data structures, that could potentially get around the current hardware bottlenecks.
+
+We would be perfectly happy with 76\% or 96\% scaling if that was as bad as things would ever get in the future. However, given the shape of the scaling curves (downwards), we want to be certain about what exactly is causing degradation in the first place, and whether or not these causes will result in continually diminishing returns as we add cores to a node in future systems.
+
+\subsection{Avenues of Research}
+
+We have experimented already in several areas. We have added dummy flops in between memory loads, and found that this tends to improve scaling. We think this effect can be explained by the extra flops masking the latency to main memory. This helps to isolate memory latency as a probably bottleneck.
+
+We have also experimented with making each of the memory loads much larger, in terms of number of bytes per load. This did not have any significant effect on scaling. We believe that this demonstrates that the algorithm is not (currently) memory bandwidth dependent, because the extra bandwidth required to transmit the larger memory loads should immediately cause scaling degradation if there is not enough available bandwidth. Since there was no degradation, there must be extra bandwidth still available.
+
+Additionally, we have experimented with hardware threads and CPU vector directives (such as intel SSE or IBM QPX) as possible avenues for improvement. We found (as your runs also confirmed) that hardware threads are beneficial to the performance of the algorithm - even more so than most other types of HPC codes. We are close to getting results from the vector directives approach.
+
+We have also been attempting to construct a compelling narrative from the data that explains what exact hardware subsystems currently bottleneck the code and result in the scaling degradation observed. We have used PAPI to generate performance counter data, but have so far been unable to coax the data into any coherent form capable of shedding light on our situation. I.e., raw counter data isn't of much use unless we have a way to make sense out of it.
 
 \section{Future Work}
 
-In future work, we plan to develop useful metrics based on performance counters in XSBench in order to determine precisely where and how hardware performance bottlenecks in the kernel are caused. Similarly, we will investigate exactly why there are diminishing returns when adding multiple hardware threads to each CPU. Furthermore, there are additional capabilities that do not yet exist in full-scale MC neutron transport algorithms, such as on-the-fly doppler broadening to account for the material temperature dependence of cross sections, that we plan on adding to XSBench for experimentation with various hardware architectures and features.
+There are additional capabilities that do not yet exist in full-scale MC neutron transport algorithms, such as on-the-fly doppler broadening to account for the material temperature dependence of cross sections, that we plan on adding to XSBench for experimentation with various hardware architectures and features. Furthermore, we want to investigate cross section data compression techniques, specifically by reducing the data into resonance regions, in the hopes of quantifying the trade offs (in terms of decreased DRAM memory footprint/traffic vs. the increase in CPU flop requirements) of such compression techniques.
 
 \section*{Acknowledgments}
 
