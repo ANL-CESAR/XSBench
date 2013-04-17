@@ -173,7 +173,10 @@ int main( int argc, char* argv[] )
 			// Randomly pick an energy and material for the particle
 			p_energy = rn(&seed);
 			mat = pick_mat(&seed); 
-		
+			
+			// debugging
+			//printf("E = %lf mat = %d\n", p_energy, mat);
+				
 			// This returns the macro_xs_vector, but we're not going
 			// to do anything with it in this program, so return value
 			// is written over.

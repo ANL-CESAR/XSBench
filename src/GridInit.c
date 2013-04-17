@@ -29,6 +29,16 @@ void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
 	for( int i = 0; i < n_isotopes; i++ )
 		qsort( nuclide_grids[i], n_gridpoints, sizeof(NuclideGridPoint),
 		       cmp );
+	
+	// error debug check
+	/*
+	for( int i = 0; i < n_isotopes; i++ )
+	{
+		printf("NUCLIDE %d ==============================\n", i);
+		for( int j = 0; j < n_gridpoints; j++ )
+			printf("E%d = %lf\n", j, nuclide_grids[i][j].energy);
+	}
+	*/
 }
 
 // Allocates unionized energy grid, and assigns union of energy levels
@@ -62,9 +72,18 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 
 	gpmatrix_free(n_grid_sorted);
 	
-	for( int i = 0; i < n_unionized_grid_points; i++ )
-		energy_grid[i].xs_ptrs = (int *) malloc( n_isotopes * sizeof(int) );
+	int * full = (int *) malloc( n_isotopes * n_unionized_grid_points
+	                             * sizeof(int) );
 	
+	for( int i = 0; i < n_unionized_grid_points; i++ )
+		energy_grid[i].xs_ptrs = &full[n_isotopes * i];
+	
+	// debug error checking
+	/*
+	for( int i = 0; i < n_unionized_grid_points; i++ )
+		printf("E%d = %lf\n", i, energy_grid[i].energy);
+	*/
+
 	return energy_grid;
 }
 
