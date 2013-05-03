@@ -9,10 +9,16 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	
 	// Variables
 	double f;
+	NuclideGridPoint * low, * high;
+
+	// pull ptr from energy grid and check to ensure that
+	// we're not reading off the end of the nuclide's grid
+	if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
+		low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc] - 1];
+	else
+		low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
 	
-	// pull ptr from energy grid
-	NuclideGridPoint * low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
-	NuclideGridPoint * high = low + 1;
+	high = low + 1;
 	
 	// calculate the re-useable interpolation factor
 	f = (high->energy - p_energy) / (high->energy - low->energy);

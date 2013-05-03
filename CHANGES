@@ -1,4 +1,17 @@
 =====================================================================
+NEW IN VERSION 6
+=====================================================================
+
+- Fixed small bug in calculate_micro_xs() function. Occasionally,
+  the index returned would be the last nuclidegridpoint for that
+  nuclide, causing the "high" energy point to be off the end of the
+  grid (likely into the next nuclide's energy grid). Added a check
+  to correct for when this occurs.
+
+  Note that this bug did not affect performance - only made the
+  calculation of XS's more "correct".
+
+=====================================================================
 NEW IN VERSION 5
 =====================================================================
 

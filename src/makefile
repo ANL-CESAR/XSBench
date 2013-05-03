@@ -5,7 +5,7 @@
 COMPILER = gnu
 OPTIMIZE = yes
 DEBUG    = no
-PROFILE  = no
+PROFILE  = yes
 PAPI     = no
 VEC_INFO = no
 

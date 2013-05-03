@@ -6,7 +6,7 @@ int main( int argc, char* argv[] )
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
-	int version = 5;
+	int version = 6;
 	unsigned long seed;
 	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
