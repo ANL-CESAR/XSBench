@@ -39,7 +39,7 @@ ifeq ($(MACHINE),bluegene)
 endif
 
 # Standard Flags
-GCC_S_FLAGS := -fopenmp -Wall -std=gnu99
+GCC_S_FLAGS := -fopenmp -std=gnu99
 
 # Optional/Extra Flags
 GCC_O_FLAGS =
