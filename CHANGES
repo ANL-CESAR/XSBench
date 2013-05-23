@@ -1,4 +1,13 @@
 =====================================================================
+NEW IN VERSION 7
+=====================================================================
+
+- Added MPI support. Multithreaded run executes on all ranks.
+  Problem size or data is not subdivided - the exact same problem
+  is solved in parallel by all ranks. 
+
+
+=====================================================================
 NEW IN VERSION 6
 =====================================================================
 

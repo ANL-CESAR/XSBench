@@ -1,12 +1,16 @@
 #include "XSbench_header.h"
 
+#ifdef MPI
+#include<mpi.h>
+#endif
+
 int main( int argc, char* argv[] )
 {
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
-	int version = 6;
+	int version = 7;
 	unsigned long seed;
 	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
@@ -17,6 +21,15 @@ int main( int argc, char* argv[] )
 	int max_procs = omp_get_num_procs();
 	char * HM;
 	int bgq_mode = 0;
+	int mype = 0;
+
+	#ifdef MPI
+	int nprocs;
+	MPI_Status stat;
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
+	#endif
 	
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
@@ -89,37 +102,46 @@ int main( int argc, char* argv[] )
 	// Print-out of Input Summary
 	// =====================================================================
 	
-	logo(version);
-	center_print("INPUT SUMMARY", 79);
-	border_print();
-	printf("Materials:                    %d\n", 12);
-	printf("H-M Benchmark Size:           %s\n", HM);
-	printf("Total Isotopes:               %d\n", n_isotopes);
-	printf("Gridpoints (per Nuclide):     "); fancy_int(n_gridpoints);
-	printf("Unionized Energy Gridpoints:  ");fancy_int(n_isotopes*n_gridpoints);
-	printf("XS Lookups:                   "); fancy_int(lookups);
-	printf("Threads:                      %d\n", nthreads);
-	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
-	if( EXTRA_FLOPS > 0 )
-		printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
-	if( EXTRA_LOADS > 0 )
-		printf("Extra Loads:                  %d\n", EXTRA_LOADS);
-	border_print();
-	center_print("INITIALIZATION", 79);
-	border_print();
-	
+	if( mype == 0 )
+	{
+		logo(version);
+		center_print("INPUT SUMMARY", 79);
+		border_print();
+		printf("Materials:                    %d\n", 12);
+		printf("H-M Benchmark Size:           %s\n", HM);
+		printf("Total Isotopes:               %d\n", n_isotopes);
+		printf("Gridpoints (per Nuclide):     ");
+		fancy_int(n_gridpoints);
+		printf("Unionized Energy Gridpoints:  ");
+		fancy_int(n_isotopes*n_gridpoints);
+		printf("XS Lookups:                   "); fancy_int(lookups);
+		printf("Threads:                      %d\n", nthreads);
+		#ifdef MPI
+		printf("MPI ranks:                    %d\n", nprocs);
+		#endif
+		printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
+		if( EXTRA_FLOPS > 0 )
+			printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
+		if( EXTRA_LOADS > 0 )
+			printf("Extra Loads:                  %d\n", EXTRA_LOADS);
+		border_print();
+		center_print("INITIALIZATION", 79);
+		border_print();
+	}
+
 	// =====================================================================
 	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
 	// =====================================================================
 
 	// Allocate & fill energy grids
-	printf("Generating Nuclide Energy Grids...\n");
+	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
 	
 	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
 	
 	// Sort grids by energy
+	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
 	sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
 
 	// Prepare Unionized Energy Grid Framework
@@ -131,7 +153,7 @@ int main( int argc, char* argv[] )
 	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
 	
 	// Get material data
-	printf("Loading Mats...\n");
+	if( mype == 0 ) printf("Loading Mats...\n");
 	int *num_nucs = load_num_nucs(n_isotopes);
 	int **mats = load_mats(num_nucs, n_isotopes);
 	double **concs = load_concs(num_nucs);
@@ -140,9 +162,12 @@ int main( int argc, char* argv[] )
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
 	
-	border_print();
-	center_print("SIMULATION", 79);
-	border_print();
+	if( mype == 0 )
+	{
+		border_print();
+		center_print("SIMULATION", 79);
+		border_print();
+	}
 
 	omp_start = omp_get_wtime();
 	
@@ -157,7 +182,7 @@ int main( int argc, char* argv[] )
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
-	mats, concs, num_nucs)
+	mats, concs, num_nucs, mype)
 	{	
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
@@ -166,7 +191,7 @@ int main( int argc, char* argv[] )
 		for( i = 0; i < lookups; i++ )
 		{
 			// Status text
-			if( INFO && thread == 0 && i % 1000 == 0 )
+			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
 						i / ( lookups / (double) nthreads ) * 100.0);
 			
@@ -186,9 +211,12 @@ int main( int argc, char* argv[] )
                                 macro_xs_vector );
 		}
 	}
-	
-	printf("\n" );
-	printf("Simulation complete.\n" );
+
+	if( mype == 0)	
+	{	
+		printf("\n" );
+		printf("Simulation complete.\n" );
+	}
 
 	omp_end = omp_get_wtime();
 	
@@ -196,33 +224,46 @@ int main( int argc, char* argv[] )
 	// Print / Save Results and Exit
 	// =====================================================================
 	
-	border_print();
-	center_print("RESULTS", 79);
-	border_print();
-
-	// Print the results
-	printf("Threads:     %d\n", nthreads);
-	if( EXTRA_FLOPS > 0 )
-	printf("Extra Flops: %d\n", EXTRA_FLOPS);
-	if( EXTRA_LOADS > 0 )
-	printf("Extra Loads: %d\n", EXTRA_LOADS);
-	printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
-	printf("Lookups:     "); fancy_int(lookups);
-	printf("Lookups/s:   ");
-	fancy_int((int) ((double) lookups / (omp_end-omp_start)));
-	border_print();
-
-	// For bechmarking, output lookup/s data to file
-	if( SAVE )
+	if( mype == 0 )
 	{
-		FILE * out = fopen( "results.txt", "a" );
-		fprintf(out, "c%d\t%d\t%.0lf\n", bgq_mode, nthreads,
-		       (double) lookups / (omp_end-omp_start));
-		fclose(out);
-	}
-	
+		border_print();
+		center_print("RESULTS", 79);
+		border_print();
+
+		// Print the results
+		printf("Threads:     %d\n", nthreads);
+		#ifdef MPI
+		printf("MPI ranks:   %d\n", nprocs);
+		#endif
+		if( EXTRA_FLOPS > 0 )
+		printf("Extra Flops: %d\n", EXTRA_FLOPS);
+		if( EXTRA_LOADS > 0 )
+		printf("Extra Loads: %d\n", EXTRA_LOADS);
+		#ifdef MPI
+		printf("(Following stats are from MPI rank 0)\n");
+		#endif
+		printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
+		printf("Lookups:     "); fancy_int(lookups);
+		printf("Lookups/s:   ");
+		fancy_int((int) ((double) lookups / (omp_end-omp_start)));
+		border_print();
+
+		// For bechmarking, output lookup/s data to file
+		if( SAVE )
+		{
+			FILE * out = fopen( "results.txt", "a" );
+			fprintf(out, "c%d\t%d\t%.0lf\n", bgq_mode, nthreads,
+				   (double) lookups / (omp_end-omp_start));
+			fclose(out);
+		}
+	}	
+
 	#ifdef __PAPI
 	counter_stop(&eventset, num_papi_events);
+	#endif
+
+	#ifdef MPI
+	MPI_Finalize();
 	#endif
 
 	return 0;

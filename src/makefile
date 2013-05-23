@@ -6,6 +6,7 @@ COMPILER = gnu
 OPTIMIZE = yes
 DEBUG    = no
 PROFILE  = no
+MPI      = no
 PAPI     = no
 VEC_INFO = no
 
@@ -72,6 +73,12 @@ endif
 # PAPI source 
 ifeq ($(PAPI),yes)
   source += papi.c
+endif
+
+# MPI
+ifeq ($(MPI),yes)
+  GCC = mpicc
+  GCC_S_FLAGS += -DMPI
 endif
 
 #===============================================================================
