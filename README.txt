@@ -92,9 +92,9 @@ Running XSBench---------------------------------------------------------------
 	There is also an additional size option, "XL", which does not
 	directly correspond to any particular physical model. It is similar
 	to the H-M "large" option, except the number of gridpoints per nuclide
-	has beeen increased by a factor of 50x. This creates an extremely large
-	UEG data structure (roughly 277 GB) which is unlikey to fit on a single
-	node, but is useful for experimentation purposes. Example:
+	has been increased by a factor of 50x. This creates an extremely large
+	energy grid data structure (roughly 277 GB), which is unlikely to fit
+	on a single node, but is useful for experimentation purposes. Example:
 
 	>$ ./XSbench 4 XL
 
@@ -114,11 +114,11 @@ MPI      = no
 PAPI     = no
 VEC_INFO = no
 
-Optimization enables the -O3 optimzation flag.
+Optimization enables the -O3 optimization flag.
 
 Debugging enables the -g flag.
 
-Profling enables the -pg flag.
+Profiling enables the -pg flag.
 
 MPI enables MPI support in the code.
 
@@ -134,8 +134,8 @@ MPI Support
 
 While XSBench is primarily used to investigate "on node parallelism" issues,
 some systems provide power & performance statistics batched in multi-node
-configurations. To accomodate this, XSBench provides an MPI mode in which
-runs the code on all MPI ranks simulataneously. There is no decomposition
+configurations. To accommodate this, XSBench provides an MPI mode in which
+runs the code on all MPI ranks simultaneously. There is no decomposition
 across ranks of any kind, and all ranks accomplish the same work. There is
 only one point of MPI communication (a reduce) at the end, which aggregates
 the timing statistics and averages them across MPi ranks before printing them
