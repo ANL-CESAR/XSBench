@@ -10,6 +10,13 @@ NEW IN VERSION 7
   To enable MPi mode, simply change the MPI flag in the makefile
   to "MPI = yes". Make sure mpicc is available on your system.
 
+- Added in "XL" size option for a giant 277 GB energy grid. This
+  is unlikely to fit on a single node, but is useful for
+  experimentation purposes.
+
+- Removed "BGQ mode" CLI argument option, as it wasn't being used
+  by anything in the code anymore.
+
 =====================================================================
 NEW IN VERSION 6
 =====================================================================

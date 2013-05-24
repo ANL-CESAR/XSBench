@@ -20,7 +20,6 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
 	char * HM;
-	int bgq_mode = 0;
 	int mype = 0;
 
 	#ifdef MPI
@@ -36,11 +35,10 @@ int main( int argc, char* argv[] )
 	srand(time(NULL));
 
 	// Process CLI Fields
-	// Usage:   ./XSBench <# threads> <H-M Size ("Small or "Large")> <BGQ mode>
+	// Usage:   ./XSBench <# threads> <H-M Size ("Small", "Large", or "XL")>
 	// # threads - The number of threads you wish to run
 	// H-M Size -  The problem size (small = 68 nuclides, large = 355 nuclides)
-	// BGQ Mode -  Number of ranks - no real effect, save for stamping the
-	//             results.txt printout
+	//             The "XL" option is == large, with 50x more gridpoints
 	// Note - No arguments are required - default parameters will be used if
 	//        no arguments are given.
 
@@ -57,16 +55,10 @@ int main( int argc, char* argv[] )
 			n_isotopes = 68;
 		else
 			n_isotopes = 355;
-	}
-	else if( argc == 4 )
-	{
-		bgq_mode = atoi(argv[3]);  // BG/Q mode (16,8,4,2,1) 
-		nthreads = atoi(argv[1]);	// first arg sets # of threads
-		// second arg species small or large H-M benchmark
-		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
-			n_isotopes = 68;
-		else
-			n_isotopes = 355;
+
+		// The XL model 
+		if( strcmp( argv[2], "XL") == 0 )
+			n_gridpoints *= 50;
 	}
 	else
 	{
@@ -77,8 +69,10 @@ int main( int argc, char* argv[] )
 	// Sets H-M size name
 	if( n_isotopes == 68 )
 		HM = "Small";
-	else
+	else if ( n_gridpoints == 11303 )
 		HM = "Large";
+	else
+		HM = "XL";
 
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
@@ -109,7 +103,7 @@ int main( int argc, char* argv[] )
 		border_print();
 		printf("Materials:                    %d\n", 12);
 		printf("H-M Benchmark Size:           %s\n", HM);
-		printf("Total Isotopes:               %d\n", n_isotopes);
+		printf("Total Nuclides:               %d\n", n_isotopes);
 		printf("Gridpoints (per Nuclide):     ");
 		fancy_int(n_gridpoints);
 		printf("Unionized Energy Gridpoints:  ");
@@ -121,7 +115,7 @@ int main( int argc, char* argv[] )
 		printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
 		#else
 		printf("Threads:                      %d\n", nthreads);
-		printf("Est. Memory Usage (MB):        "); fancy_int(mem_tot);
+		printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 		#endif
 		if( EXTRA_FLOPS > 0 )
 			printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
@@ -272,8 +266,7 @@ int main( int argc, char* argv[] )
 		if( SAVE )
 		{
 			FILE * out = fopen( "results.txt", "a" );
-			fprintf(out, "c%d\t%d\t%.0lf\n", bgq_mode, nthreads,
-				   (double) lookups / (omp_end-omp_start));
+			fprintf(out, "%d\t%d\n", nthreads, lookups_per_sec);
 			fclose(out);
 		}
 	}	

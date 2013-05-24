@@ -83,7 +83,20 @@ Running XSBench---------------------------------------------------------------
 	in a fuel material.  Note that the program defaults to "Large"
 	if no specification is made. Example:
 
-	>$ ./XSBench 4 Small
+	>$ ./XSBench 12 Small
+
+	-or-
+
+	>$ ./XSBench 8 Large
+
+	There is also an additional size option, "XL", which does not
+	directly correspond to any particular physical model. It is similar
+	to the H-M "large" option, except the number of gridpoints per nuclide
+	has beeen increased by a factor of 50x. This creates an extremely large
+	UEG data structure (roughly 277 GB) which is unlikey to fit on a single
+	node, but is useful for experimentation purposes. Example:
+
+	>$ ./XSbench 4 XL
 
 ==============================================================================
 Debugging, Optimization & Profiling
