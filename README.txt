@@ -159,11 +159,11 @@ MPI Support
 
 While XSBench is primarily used to investigate "on node parallelism" issues,
 some systems provide power & performance statistics batched in multi-node
-configurations. To accommodate this, XSBench provides an MPI mode in which
+configurations. To accommodate this, XSBench provides an MPI mode which
 runs the code on all MPI ranks simultaneously. There is no decomposition
 across ranks of any kind, and all ranks accomplish the same work. There is
 only one point of MPI communication (a reduce) at the end, which aggregates
-the timing statistics and averages them across MPi ranks before printing them
+the timing statistics and averages them across MPI ranks before printing them
 out.
 
 MPI support can be enabled with the makefile flag "MPI". If you are not using
