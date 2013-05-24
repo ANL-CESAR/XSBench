@@ -97,6 +97,7 @@ COMPILER = gnu
 OPTIMIZE = yes
 DEBUG    = no
 PROFILE  = no
+MPI      = no
 PAPI     = no
 VEC_INFO = no
 
@@ -106,11 +107,30 @@ Debugging enables the -g flag.
 
 Profling enables the -pg flag.
 
+MPI enables MPI support in the code.
+
 The PAPI flag is explained below.
 
 VEC_INFO enables some additional information regarding the success or
 failure of the compiler's use of vectorization techniques during
 compilation.
+
+==============================================================================
+MPI Support
+==============================================================================
+
+While XSBench is primarily used to investigate "on node parallelism" issues,
+some systems provide power & performance statistics batched in multi-node
+configurations. To accomodate this, XSBench provides an MPI mode in which
+runs the code on all MPI ranks simulataneously. There is no decomposition
+across ranks of any kind, and all ranks accomplish the same work. There is
+only one point of MPI communication (a reduce) at the end, which aggregates
+the timing statistics and averages them across MPi ranks before printing them
+out.
+
+MPI support can be enabled with the makefile flag "MPI". If you are not using
+the mpicc wrapper on your system, you may need to alter the makefile to
+make use of your desired compiler.
 
 ==============================================================================
 PAPI Performance Counters

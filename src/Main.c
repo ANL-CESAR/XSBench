@@ -115,11 +115,14 @@ int main( int argc, char* argv[] )
 		printf("Unionized Energy Gridpoints:  ");
 		fancy_int(n_isotopes*n_gridpoints);
 		printf("XS Lookups:                   "); fancy_int(lookups);
-		printf("Threads:                      %d\n", nthreads);
 		#ifdef MPI
-		printf("MPI ranks:                    %d\n", nprocs);
+		printf("MPI Ranks:                    %d\n", nprocs);
+		printf("OMP Threads per MPI Rank:     %d\n", nthreads);
+		printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
+		#else
+		printf("Threads:                      %d\n", nthreads);
+		printf("Est. Memory Usage (MB):        "); fancy_int(mem_tot);
 		#endif
-		printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 		if( EXTRA_FLOPS > 0 )
 			printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
 		if( EXTRA_LOADS > 0 )
@@ -224,6 +227,19 @@ int main( int argc, char* argv[] )
 	// Print / Save Results and Exit
 	// =====================================================================
 	
+	// Calculate Lookups per sec
+	int lookups_per_sec = (int) ((double) lookups / (omp_end-omp_start));
+	
+	// If running in MPI, reduce timing statistics and calculate average
+	#ifdef MPI
+	int total_lookups = 0;
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Reduce(&lookups_per_sec, &total_lookups, 1, MPI_INT,
+	           MPI_SUM, 0, MPI_COMM_WORLD);
+	//total_lookups = total_lookups / nprocs;
+	#endif
+	
+	// Print output
 	if( mype == 0 )
 	{
 		border_print();
@@ -240,12 +256,16 @@ int main( int argc, char* argv[] )
 		if( EXTRA_LOADS > 0 )
 		printf("Extra Loads: %d\n", EXTRA_LOADS);
 		#ifdef MPI
-		printf("(Following stats are from MPI rank 0)\n");
-		#endif
+		printf("Total Lookups/s:            ");
+		fancy_int(total_lookups);
+		printf("Avg Lookups/s per MPI rank: ");
+		fancy_int(total_lookups / nprocs);
+		#else
 		printf("Runtime:     %.3lf seconds\n", omp_end-omp_start);
 		printf("Lookups:     "); fancy_int(lookups);
 		printf("Lookups/s:   ");
-		fancy_int((int) ((double) lookups / (omp_end-omp_start)));
+		fancy_int(lookups_per_sec);
+		#endif
 		border_print();
 
 		// For bechmarking, output lookup/s data to file

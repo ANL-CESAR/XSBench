@@ -4,8 +4,11 @@ NEW IN VERSION 7
 
 - Added MPI support. Multithreaded run executes on all ranks.
   Problem size or data is not subdivided - the exact same problem
-  is solved in parallel by all ranks. 
-
+  is solved in parallel by all ranks. Only MPI communication is
+  a single reduce at the end to aggregate timing data. 
+  
+  To enable MPi mode, simply change the MPI flag in the makefile
+  to "MPI = yes". Make sure mpicc is available on your system.
 
 =====================================================================
 NEW IN VERSION 6
