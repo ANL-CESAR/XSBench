@@ -33,23 +33,48 @@ Quick Start Guide
 
 Download----------------------------------------------------------------------
 
-	Download of the XSBench tar file is available from the CESAR
-	website at the following URL:
+	For the most up-to-date version of XSBench, we recommend that you
+	download from our git repository. This can be accomplished via
+	cloning the repository from the command line, or by downloading a zip
+	from our github page. Alternatively, you can download a tar file from
+	the CESAR website directly.
 
-	https://cesar.mcs.anl.gov/content/software/mocfe
+	Git Pull:
+		
+		Use the following command to clone XSBench to your machine:
 
-	Once downloaded, you can decompress XSBench using the following
-	command on a linux or Mac OSX system:
+		>$ git clone git://github.com/jtramm/XSBench.git
 
-	>$ tar -xvf XSBench-5.tar
+		Once cloned, you can update the code to the newest version
+		using the following command (when in the XSBench directory):
 
-	This will decompress the tar file into a directory called
-	XSBench-5.
+		>$ git pull
+	
+	Git Zip Download:
 
-	To begin use of the XSBench code, you will have to navigate to
-	the src directory:
+		Simply use the "zip download" option on our webpage at:
 
-	>$ cd XSBench-5/src
+		https://github.com/jtramm/XSBench
+	
+	CESAR Tar Download:
+
+		A tar of the XSBench source code is available
+		on the CESAR website at the following URL:
+		
+		https://cesar.mcs.anl.gov/content/software/neutronics
+
+		Once downloaded, you can decompress XSBench using the following
+		command on a linux or Mac OSX system:
+
+		>$ tar -xvf XSBench-5.tar
+
+		This will decompress the tar file into a directory called
+		XSBench-5.
+
+		To begin use of the XSBench code, you will have to navigate to
+		the src directory:
+
+		>$ cd XSBench-5/src
 
 Compilation-------------------------------------------------------------------
 
