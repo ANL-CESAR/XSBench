@@ -39,7 +39,7 @@ Download----------------------------------------------------------------------
 	from our github page. Alternatively, you can download a tar file from
 	the CESAR website directly.
 
-	Git Pull:
+	Git Repository Clone:
 		
 		Use the following command to clone XSBench to your machine:
 
