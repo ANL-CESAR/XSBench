@@ -14,7 +14,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
-	int n_gridpoints = 11303;
+	int n_gridpoints;
 	int lookups = 15000000;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
@@ -35,44 +35,11 @@ int main( int argc, char* argv[] )
 	srand(time(NULL));
 
 	// Process CLI Fields
-	// Usage:   ./XSBench <# threads> <H-M Size ("Small", "Large", or "XL")>
-	// # threads - The number of threads you wish to run
-	// H-M Size -  The problem size (small = 68 nuclides, large = 355 nuclides)
-	//             The "XL" option is == large, with 50x more gridpoints
-	// Note - No arguments are required - default parameters will be used if
-	//        no arguments are given.
-
-	if( argc == 2 )
-	{
-		nthreads = atoi(argv[1]);	// first arg sets # of threads
-		n_isotopes = 355;			// defaults to H-M Large
-	}
-	else if( argc == 3 )
-	{
-		nthreads = atoi(argv[1]);	// first arg sets # of threads
-		// second arg species small or large H-M benchmark
-		if( strcmp( argv[2], "small") == 0 || strcmp( argv[2], "Small" ) == 0)
-			n_isotopes = 68;
-		else
-			n_isotopes = 355;
-
-		// The XL model 
-		if( strcmp( argv[2], "XL") == 0 )
-			n_gridpoints *= 50;
-	}
-	else
-	{
-		nthreads = max_procs;		// defaults to full CPU usage
-		n_isotopes = 355;			// defaults to H-M Large
-	}
-
-	// Sets H-M size name
-	if( n_isotopes == 68 )
-		HM = "Small";
-	else if ( n_gridpoints == 11303 )
-		HM = "Large";
-	else
-		HM = "XL";
+	Inputs input = read_CLI( argc, argv );
+	nthreads = input.nthreads;
+	n_isotopes = input.n_isotopes;
+	n_gridpoints = input.n_gridpoints;
+	HM = input.HM;
 
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 

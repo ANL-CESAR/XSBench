@@ -141,3 +141,106 @@ double rn(unsigned long * seed)
 	ret = (double) n1 / m;
 	return ret;
 }
+
+Inputs read_CLI( int argc, char * argv[] )
+{
+	Inputs input;
+	
+	// defaults to max threads on the system	
+	input.nthreads = omp_get_num_procs();
+	
+	// defaults to 355 (corresponding to H-M Large benchmark)
+	input.n_isotopes = 355;
+	
+	// defaults to 11303 (corresponding to H-M Large benchmark)
+	input.n_gridpoints = 11303;
+	
+	// defaults to H-M Large benchmark
+	input.HM = (char *) malloc( 6 * sizeof(char) );
+	input.HM[0] = 'L' ; 
+	input.HM[1] = 'a' ; 
+	input.HM[2] = 'r' ; 
+	input.HM[3] = 'g' ; 
+	input.HM[4] = 'e' ; 
+	input.HM[5] = '\0';
+	
+	// Check if user sets these
+	int user_g = 0;
+	
+	// Collect Raw Input
+	for( int i = 1; i < argc; i++ )
+	{
+		char * arg = argv[i];
+
+		// nthreads (-n)
+		if( strcmp(arg, "-n") == 0 )
+		{
+			if( ++i < argc )
+				input.nthreads = atoi(argv[i]);
+			else
+				print_CLI_error();
+		}
+		// n_gridpoints (-g)
+		else if( strcmp(arg, "-g") == 0 )
+		{	
+			if( ++i < argc )
+			{
+				user_g = 1;
+				input.n_gridpoints = atoi(argv[i]);
+			}
+			else
+				print_CLI_error();
+		}
+		// HM (-s)
+		else if( strcmp(arg, "-s") == 0 )
+		{	
+			if( ++i < argc )
+				input.HM = argv[i];
+			else
+				print_CLI_error();
+		}
+		else
+			print_CLI_error();
+	}
+
+	// Validate Input
+	
+	// Validate nthreads
+	if( input.nthreads < 1 )
+		print_CLI_error();
+	
+	// Validate n_isotopes
+	if( input.n_isotopes < 1 )
+		print_CLI_error();
+	
+	// Validate n_gridpoints
+	if( input.n_gridpoints < 1 )
+		print_CLI_error();
+	
+	// Validate HM size
+	if( strcasecmp(input.HM, "small") != 0 &&
+		strcasecmp(input.HM, "large") != 0 &&
+		strcasecmp(input.HM, "xl")    != 0 )
+		print_CLI_error();
+	
+	// Set HM size specific parameters
+	if( strcasecmp(input.HM, "small") == 0 )
+		input.n_isotopes = 68;
+	if( strcasecmp(input.HM, "xl") == 0 )
+		if( user_g == 0 )
+			input.n_gridpoints *= 50;
+
+	// Return input struct
+	return input;
+}
+
+void print_CLI_error(void)
+{
+	printf("Usage: ./XSBench <options>\n");
+	printf("Options include:\n");
+	printf("  -n <threads>     Number of OpenMP threads to run\n");
+	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL)\n");
+	printf("  -g <gridpoints>  Number of gridpoints per nuclide\n");
+	printf("Default is equivalent to: -s large\n");
+	exit(4);
+}

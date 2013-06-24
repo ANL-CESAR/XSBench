@@ -1,4 +1,18 @@
 =====================================================================
+NEW IN VERSION 8
+=====================================================================
+
+- Simplified command line interface (CLI) read in process. XSBench
+now supports a more traditional CLI, as follows:
+
+Usage: ./XSBench <options>
+Options include:
+  -n <threads>     Number of OpenMP threads to run
+    -s <size>        Size of H-M Benchmark to run (small, large, XL)
+	  -g <gridpoints>  Number of gridpoints per isotope
+	  Default is equivalent to: -s large
+
+=====================================================================
 NEW IN VERSION 7
 =====================================================================
 

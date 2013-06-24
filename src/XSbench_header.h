@@ -5,6 +5,7 @@
 #include<stdlib.h>
 #include<time.h>
 #include<string.h>
+#include<strings.h>
 #include<math.h>
 #include<omp.h>
 #include<unistd.h>
@@ -45,6 +46,12 @@ typedef struct{
 	int * xs_ptrs;
 } GridPoint;
 
+typedef struct{
+	int nthreads;
+	int n_isotopes;
+	int n_gridpoints;
+	char * HM;
+} Inputs;
 
 // Function Prototypes
 void logo(int version);
@@ -100,5 +107,7 @@ void do_flops(void);
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
 		       int n_gridpoints );	
+Inputs read_CLI( int argc, char * argv[] );
+void print_CLI_error(void);
 
 #endif
