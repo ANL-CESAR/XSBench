@@ -12,6 +12,10 @@ Options include:
 	  -g <gridpoints>  Number of gridpoints per isotope
 	  Default is equivalent to: -s large
 
+- Updated README with new CLI usage details.
+
+- Fixed several typos in the XSBench Theory PDF.
+
 =====================================================================
 NEW IN VERSION 7
 =====================================================================

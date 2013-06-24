@@ -89,39 +89,54 @@ Running XSBench---------------------------------------------------------------
 
 	>$ ./XSBench
 
-	By default, XSBench will with 1 thread per hardware core. If the
-	architecture supports hyperthreading, multiple threads will be
-	run per core.
+	For non-default settings, XSBench supports the following command line
+	options:	
 
-	To manually alter the number of threads used, run the code with
-	the desired number of threads as an argument:
+	Usage: ./XSBench <options>
+	Options include:
+	  -t <threads>     Number of OpenMP threads to run
+	  -s <size>        Size of H-M Benchmark to run (small, large, XL)
+	  -g <gridpoints>  Number of gridpoints per nuclide
+	Default is equivalent to: -s large
 
-	>$ ./XSBench 4
+	-t <threads>
 
-	To alter the Hoogenboom-Martin specification used (small or
-	large), use the second argument to specify either "Small" or
-	"Large". This corresponds to the number of nuclides present in
-	the fuel region.  The small version has 34 fuel nuclides, whereas
-	the large version has 321 fuel nuclides. This significantly slows
-	down the runtime of the program as the data structures are much
-	larger, and more lookups are required whenever a lookup occurs
-	in a fuel material.  Note that the program defaults to "Large"
-	if no specification is made. Example:
+		Sets the number of OpenMP threads to run. By default, XSBench
+		will run with 1 thread per hardware core. If the architecture
+		supports hyperthreading, multiple threads will be run per
+		core.
 
-	>$ ./XSBench 12 Small
+		If running in MPI mode, this will be the number of threads
+		per MPI rank.
 
-	-or-
+	-s <size>
+		
+		Sets the size of the Hoogenboom-Martin reactor model. There
+		are three options: 'small', 'large', and 'XL'. By default,
+		the 'large' option is selected. 
 
-	>$ ./XSBench 8 Large
+		The H-M size corresponds to the number of nuclides present
+		in the fuel region.  The small version has 34 fuel nuclides,
+		whereas the large version has 321 fuel nuclides. This
+		significantly slows down the runtime of the program as the
+		data structures are much larger, and more lookups are required
+		whenever a lookup occurs in a fuel material.  Note that the
+		program defaults to "Large" if no specification is made.
 
-	There is also an additional size option, "XL", which does not
-	directly correspond to any particular physical model. It is similar
-	to the H-M "large" option, except the number of gridpoints per nuclide
-	has been increased by a factor of 50x. This creates an extremely large
-	energy grid data structure (roughly 277 GB), which is unlikely to fit
-	on a single node, but is useful for experimentation purposes. Example:
+		The additional size option, "XL", does not directly correspond
+		to any particular physical model. It is similar to the H-M
+		"large" option, except the number of gridpoints per nuclide
+		has been increased by a factor of 50x. This creates an extremely
+		large energy grid data structure (roughly 277 GB), which is
+		unlikely to fit on a single node, but is useful for experimentation
+		purposes.
 
-	>$ ./XSbench 4 XL
+	-g <gridpoints>
+
+		Sets the number of gridpoints per nuclide. By default, this
+		value is set to 11,303. This corresponds to the average number
+		of actual gridpoints per nuclide in the H-M Large model as run
+		by OpenMC with the actual ACE ENDF cross-section data. 
 
 ==============================================================================
 Debugging, Optimization & Profiling
