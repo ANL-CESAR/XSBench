@@ -198,12 +198,7 @@ performance counters and locations to instrument.
 
 By default, PAPI is disabled.
 
-To enable PAPI, open the XSBench_header.h file and add (or uncomment)
-the following definition to the file:
-
-"#define __PAPI"
-
-Then, enable papi in the makefile:
+To enable PAPI, set in the makefile:
 
 PAPI = yes
 
