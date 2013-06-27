@@ -73,6 +73,7 @@ endif
 # PAPI source 
 ifeq ($(PAPI),yes)
   source += papi.c
+  GCC_O_FLAGS += -DPAPI
 endif
 
 # MPI
