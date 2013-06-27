@@ -15,7 +15,7 @@ int main( int argc, char* argv[] )
 	size_t memtotal;
 	int n_isotopes; // H-M Large is 355, H-M Small is 68
 	int n_gridpoints;
-	int lookups = 15000000;
+	int lookups;
 	int i, thread, nthreads, mat;
 	double omp_start, omp_end, p_energy;
 	int max_procs = omp_get_num_procs();
@@ -39,6 +39,7 @@ int main( int argc, char* argv[] )
 	nthreads = input.nthreads;
 	n_isotopes = input.n_isotopes;
 	n_gridpoints = input.n_gridpoints;
+	lookups = input.lookups;
 	HM = input.HM;
 
 	// Set number of OpenMP Threads

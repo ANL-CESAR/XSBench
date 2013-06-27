@@ -47,6 +47,7 @@ typedef struct{
 	int nthreads;
 	int n_isotopes;
 	int n_gridpoints;
+	int lookups;
 	char * HM;
 } Inputs;
 

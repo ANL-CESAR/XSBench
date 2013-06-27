@@ -155,6 +155,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	// defaults to 11303 (corresponding to H-M Large benchmark)
 	input.n_gridpoints = 11303;
 	
+	// defaults to 15,000,000
+	input.lookups = 15000000;
+	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
 	input.HM[0] = 'L' ; 
@@ -191,6 +194,14 @@ Inputs read_CLI( int argc, char * argv[] )
 			else
 				print_CLI_error();
 		}
+		// lookups (-l)
+		if( strcmp(arg, "-l") == 0 )
+		{
+			if( ++i < argc )
+				input.lookups = atoi(argv[i]);
+			else
+				print_CLI_error();
+		}
 		// HM (-s)
 		else if( strcmp(arg, "-s") == 0 )
 		{	
@@ -215,6 +226,10 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// Validate n_gridpoints
 	if( input.n_gridpoints < 1 )
+		print_CLI_error();
+
+	// Validate lookups
+	if( input.lookups < 1 )
 		print_CLI_error();
 	
 	// Validate HM size
@@ -241,6 +256,8 @@ void print_CLI_error(void)
 	printf("  -n <threads>     Number of OpenMP threads to run\n");
 	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL)\n");
 	printf("  -g <gridpoints>  Number of gridpoints per nuclide\n");
-	printf("Default is equivalent to: -s large\n");
+	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
+	printf("Default is equivalent to: -s large -l 15000000\n");
+	printf("See readme for full description of default run values\n");
 	exit(4);
 }

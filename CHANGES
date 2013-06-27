@@ -4,6 +4,9 @@ NEW IN VERSION (Working)
 
 - Moved PAPI def to makefile. Makes it easier to toggle.
 
+- Added -l command line option to set the number of cross section
+lookups performed by XSBench.
+
 =====================================================================
 NEW IN VERSION 8
 =====================================================================

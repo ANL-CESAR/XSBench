@@ -97,7 +97,8 @@ Running XSBench---------------------------------------------------------------
 	  -t <threads>     Number of OpenMP threads to run
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL)
 	  -g <gridpoints>  Number of gridpoints per nuclide
-	Default is equivalent to: -s large
+	  -l <lookups>     Number of Cross-section (XS) lookups
+	Default is equivalent to: -s large -l 15000000
 
 	-t <threads>
 
@@ -137,6 +138,15 @@ Running XSBench---------------------------------------------------------------
 		value is set to 11,303. This corresponds to the average number
 		of actual gridpoints per nuclide in the H-M Large model as run
 		by OpenMC with the actual ACE ENDF cross-section data. 
+
+	-l <lookups>
+		
+		Sets the number of cross-section (XS) lookups to perform. By
+		default, this value is set to 15,000,000. Users may want to
+		increase this value if they wish to extend the runtime of
+		XSBench, perhaps to produce more reliable performance counter
+		data - as extending the run will decrease the percentage of
+		runtime spent on initialization.
 
 ==============================================================================
 Debugging, Optimization & Profiling
