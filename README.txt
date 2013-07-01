@@ -163,6 +163,7 @@ PROFILE  = no
 MPI      = no
 PAPI     = no
 VEC_INFO = no
+VERIFY   = no
 
 Optimization enables the -O3 optimization flag.
 
@@ -194,6 +195,33 @@ out.
 MPI support can be enabled with the makefile flag "MPI". If you are not using
 the mpicc wrapper on your system, you may need to alter the makefile to
 make use of your desired compiler.
+
+
+==============================================================================
+Verification Support
+==============================================================================
+
+XSBench has the ability to verify that consistent and correct results are
+achieved. This mode is enabled by altering the "VERIFY" setting to 'yes' in
+the makefile.
+
+Once enabled, the code will generate a hash of the results and display it
+with the other data once the code has completed executing. This hash can
+then be verified against hashes that other versions or configurations of
+the code generate.
+
+Verification mode uses a RNG with a static seed. The randomized lookup
+parameters are generated within a critical region. This ensures that the
+same set of lookups are performed regardless of the number of threads
+used. Then, after each lookup is completed, another brief critical region
+is entered where each part of the macroscopic lookup array (of doubles) are
+cast to 64-bit unsigned integers and then added to a running 64-bit unsigned
+integer hash. The casting is necessary because floating point arithmetic
+is not associative, and while the same set of lookups will be performed,
+we aren't guaranteed that they will complete in the same order.
+
+Note that the verification mode runs much slower, due to the use of
+critical regions within the threading loop. 
 
 ==============================================================================
 PAPI Performance Counters
