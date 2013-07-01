@@ -203,12 +203,18 @@ Verification Support
 
 XSBench has the ability to verify that consistent and correct results are
 achieved. This mode is enabled by altering the "VERIFY" setting to 'yes' in
-the makefile.
+the makefile, i.e.:
+
+VERIFY = yes
 
 Once enabled, the code will generate a hash of the results and display it
 with the other data once the code has completed executing. This hash can
 then be verified against hashes that other versions or configurations of
-the code generate.
+the code generate. For instance, running XSBench with 4 threads vs 8 threads
+(on a machine that supports that configuration) should generate the
+same hash number. Changing the model / run parameters should NOT generate
+the same hash number (i.e., increasing the number of lookups, number
+of gridpoints, etc, will result in different hashes). 
 
 Verification mode uses a RNG with a static seed. The randomized lookup
 parameters are generated within a critical region. This ensures that the
