@@ -18,6 +18,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
 	char * HM;
+	unsigned long long vhash = 0;
 
 	#ifdef MPI
 	int nprocs;
@@ -155,7 +156,7 @@ int main( int argc, char* argv[] )
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
-	mats, concs, num_nucs, mype)
+	mats, concs, num_nucs, mype, vhash)
 	{	
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
@@ -190,6 +191,15 @@ int main( int argc, char* argv[] )
 			                    n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
+
+			// Add verification stuff here
+			#ifdef VERIFICATION
+			#pragma omp critical
+			{
+				for( int j = 0; j < 5; j++ )
+					vhash += (unsigned long long) macro_xs_vector[j];
+			}
+			#endif
 		}
 	}
 
@@ -245,7 +255,7 @@ int main( int argc, char* argv[] )
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
-		printf("Verification checksum: \n");
+		printf("Verification checksum: %llu\n", vhash);
 		#endif
 		border_print();
 

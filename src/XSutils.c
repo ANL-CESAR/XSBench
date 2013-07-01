@@ -160,7 +160,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
-	input.HM[0] = 'L' ; 
+	input.HM[0] = 'l' ; 
 	input.HM[1] = 'a' ; 
 	input.HM[2] = 'r' ; 
 	input.HM[3] = 'g' ; 
@@ -195,7 +195,7 @@ Inputs read_CLI( int argc, char * argv[] )
 				print_CLI_error();
 		}
 		// lookups (-l)
-		if( strcmp(arg, "-l") == 0 )
+		else if( strcmp(arg, "-l") == 0 )
 		{
 			if( ++i < argc )
 				input.lookups = atoi(argv[i]);
@@ -215,7 +215,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	}
 
 	// Validate Input
-	
+
 	// Validate nthreads
 	if( input.nthreads < 1 )
 		print_CLI_error();
