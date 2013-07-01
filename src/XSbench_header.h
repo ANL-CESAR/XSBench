@@ -107,5 +107,6 @@ void do_loads( int nuc,
 		       int n_gridpoints );	
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
+double rn_v(void);
 
 #endif
