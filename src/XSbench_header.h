@@ -11,9 +11,6 @@
 #include<unistd.h>
 #include<sys/time.h>
 
-// Papi Definition (comment / uncomment to toggle PAPI)
-//#define __PAPI
-
 // Papi Header
 #ifdef __PAPI
 #include "/usr/local/include/papi.h"
@@ -50,6 +47,7 @@ typedef struct{
 	int nthreads;
 	int n_isotopes;
 	int n_gridpoints;
+	int lookups;
 	char * HM;
 } Inputs;
 
@@ -109,5 +107,6 @@ void do_loads( int nuc,
 		       int n_gridpoints );	
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
+double rn_v(void);
 
 #endif

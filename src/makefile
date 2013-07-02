@@ -9,6 +9,7 @@ PROFILE  = no
 MPI      = no
 PAPI     = no
 VEC_INFO = no
+VERIFY   = no
 
 #===============================================================================
 # Program name & source code list
@@ -73,6 +74,7 @@ endif
 # PAPI source 
 ifeq ($(PAPI),yes)
   source += papi.c
+  GCC_O_FLAGS += -DPAPI
 endif
 
 # MPI
@@ -81,6 +83,10 @@ ifeq ($(MPI),yes)
   GCC_S_FLAGS += -DMPI
 endif
 
+# Verification of results mode
+ifeq ($(VERIFY),yes)
+  GCC_S_FLAGS += -DVERIFICATION
+endif
 #===============================================================================
 # Targets to Build
 #===============================================================================

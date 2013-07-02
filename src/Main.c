@@ -10,17 +10,19 @@ int main( int argc, char* argv[] )
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
-	int version = 8;
-	unsigned long seed;
-	size_t memtotal;
-	int n_isotopes; // H-M Large is 355, H-M Small is 68
-	int n_gridpoints;
-	int lookups = 15000000;
-	int i, thread, nthreads, mat;
-	double omp_start, omp_end, p_energy;
+<<<<<<< HEAD
+	int version = 9;
+=======
+	int version   = 9;
+	int mype      = 0;
 	int max_procs = omp_get_num_procs();
+
+	int n_isotopes, n_gridpoints, lookups, i, thread, nthreads, mat;
+>>>>>>> working
+	unsigned long seed;
+	double omp_start, omp_end, p_energy;
 	char * HM;
-	int mype = 0;
+	unsigned long long vhash = 0;
 
 	#ifdef MPI
 	int nprocs;
@@ -32,14 +34,21 @@ int main( int argc, char* argv[] )
 	
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
+	#ifdef VERIFICATION
+	srand(26);
+	#else
 	srand(time(NULL));
+	#endif
 
 	// Process CLI Fields
 	Inputs input = read_CLI( argc, argv );
-	nthreads = input.nthreads;
-	n_isotopes = input.n_isotopes;
+	
+	// Set CLI variables
+	nthreads =     input.nthreads;
+	n_isotopes =   input.n_isotopes;
 	n_gridpoints = input.n_gridpoints;
-	HM = input.HM;
+	lookups =      input.lookups;
+	HM =           input.HM;
 
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
@@ -49,15 +58,17 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 
 	size_t single_nuclide_grid = n_gridpoints * sizeof( NuclideGridPoint );
-	size_t all_nuclide_grids = n_isotopes * single_nuclide_grid;
-	size_t size_GridPoint =sizeof(GridPoint)+n_isotopes*sizeof(int);
-	size_t size_UEG = n_isotopes*n_gridpoints * size_GridPoint;
+	size_t all_nuclide_grids   = n_isotopes * single_nuclide_grid;
+	size_t size_GridPoint      = sizeof(GridPoint)+n_isotopes*sizeof(int);
+	size_t size_UEG            = n_isotopes*n_gridpoints * size_GridPoint;
+	size_t memtotal;
 	int mem_tot;
-	memtotal = all_nuclide_grids + size_UEG;
-	all_nuclide_grids = all_nuclide_grids  / 1048576;
-	size_UEG = size_UEG / 1048576;
-	memtotal = memtotal / 1048576;
-	mem_tot = memtotal;
+
+	memtotal          = all_nuclide_grids + size_UEG;
+	all_nuclide_grids = all_nuclide_grids / 1048576;
+	size_UEG          = size_UEG / 1048576;
+	memtotal          = memtotal / 1048576;
+	mem_tot           = memtotal;
 
 	// =====================================================================
 	// Print-out of Input Summary
@@ -68,6 +79,9 @@ int main( int argc, char* argv[] )
 		logo(version);
 		center_print("INPUT SUMMARY", 79);
 		border_print();
+		#ifdef VERIFICATION
+		printf("Verification Mode:            on\n");
+		#endif
 		printf("Materials:                    %d\n", 12);
 		printf("H-M Benchmark Size:           %s\n", HM);
 		printf("Total Nuclides:               %d\n", n_isotopes);
@@ -118,8 +132,8 @@ int main( int argc, char* argv[] )
 	
 	// Get material data
 	if( mype == 0 ) printf("Loading Mats...\n");
-	int *num_nucs = load_num_nucs(n_isotopes);
-	int **mats = load_mats(num_nucs, n_isotopes);
+	int *num_nucs  = load_num_nucs(n_isotopes);
+	int **mats     = load_mats(num_nucs, n_isotopes);
 	double **concs = load_concs(num_nucs);
 
 	// =====================================================================
@@ -146,11 +160,11 @@ int main( int argc, char* argv[] )
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
-	mats, concs, num_nucs, mype)
+	mats, concs, num_nucs, mype, vhash)
 	{	
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
-		seed = (thread+1)*19+17;
+		seed   = (thread+1)*19+17;
 		#pragma omp for
 		for( i = 0; i < lookups; i++ )
 		{
@@ -160,8 +174,16 @@ int main( int argc, char* argv[] )
 						i / ( lookups / (double) nthreads ) * 100.0);
 			
 			// Randomly pick an energy and material for the particle
+			#ifdef VERIFICATION
+			#pragma omp critical
+			{
+				p_energy = rn_v();
+				mat      = pick_mat(&seed); 
+			}
+			#else
 			p_energy = rn(&seed);
-			mat = pick_mat(&seed); 
+			mat      = pick_mat(&seed); 
+			#endif
 			
 			// debugging
 			//printf("E = %lf mat = %d\n", p_energy, mat);
@@ -173,6 +195,15 @@ int main( int argc, char* argv[] )
 			                    n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
+
+			// Add verification stuff here
+			#ifdef VERIFICATION
+			#pragma omp critical
+			{
+				for( int j = 0; j < 5; j++ )
+					vhash += (unsigned long long) macro_xs_vector[j];
+			}
+			#endif
 		}
 	}
 
@@ -226,6 +257,9 @@ int main( int argc, char* argv[] )
 		printf("Lookups:     "); fancy_int(lookups);
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
+		#endif
+		#ifdef VERIFICATION
+		printf("Verification checksum: %llu\n", vhash);
 		#endif
 		border_print();
 

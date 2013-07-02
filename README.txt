@@ -6,7 +6,7 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 8
+                                   Version 9
 
 ==============================================================================
 Contact Information
@@ -97,7 +97,8 @@ Running XSBench---------------------------------------------------------------
 	  -t <threads>     Number of OpenMP threads to run
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL)
 	  -g <gridpoints>  Number of gridpoints per nuclide
-	Default is equivalent to: -s large
+	  -l <lookups>     Number of Cross-section (XS) lookups
+	Default is equivalent to: -s large -l 15000000
 
 	-t <threads>
 
@@ -138,6 +139,15 @@ Running XSBench---------------------------------------------------------------
 		of actual gridpoints per nuclide in the H-M Large model as run
 		by OpenMC with the actual ACE ENDF cross-section data. 
 
+	-l <lookups>
+		
+		Sets the number of cross-section (XS) lookups to perform. By
+		default, this value is set to 15,000,000. Users may want to
+		increase this value if they wish to extend the runtime of
+		XSBench, perhaps to produce more reliable performance counter
+		data - as extending the run will decrease the percentage of
+		runtime spent on initialization.
+
 ==============================================================================
 Debugging, Optimization & Profiling
 ==============================================================================
@@ -153,6 +163,7 @@ PROFILE  = no
 MPI      = no
 PAPI     = no
 VEC_INFO = no
+VERIFY   = no
 
 Optimization enables the -O3 optimization flag.
 
@@ -185,6 +196,39 @@ MPI support can be enabled with the makefile flag "MPI". If you are not using
 the mpicc wrapper on your system, you may need to alter the makefile to
 make use of your desired compiler.
 
+
+==============================================================================
+Verification Support
+==============================================================================
+
+XSBench has the ability to verify that consistent and correct results are
+achieved. This mode is enabled by altering the "VERIFY" setting to 'yes' in
+the makefile, i.e.:
+
+VERIFY = yes
+
+Once enabled, the code will generate a hash of the results and display it
+with the other data once the code has completed executing. This hash can
+then be verified against hashes that other versions or configurations of
+the code generate. For instance, running XSBench with 4 threads vs 8 threads
+(on a machine that supports that configuration) should generate the
+same hash number. Changing the model / run parameters should NOT generate
+the same hash number (i.e., increasing the number of lookups, number
+of gridpoints, etc, will result in different hashes). 
+
+Verification mode uses a RNG with a static seed. The randomized lookup
+parameters are generated within a critical region. This ensures that the
+same set of lookups are performed regardless of the number of threads
+used. Then, after each lookup is completed, another brief critical region
+is entered where each part of the macroscopic lookup array (of doubles) are
+cast to 64-bit unsigned integers and then added to a running 64-bit unsigned
+integer hash. The casting is necessary because floating point arithmetic
+is not associative, and while the same set of lookups will be performed,
+we aren't guaranteed that they will complete in the same order.
+
+Note that the verification mode runs much slower, due to the use of
+critical regions within the threading loop. 
+
 ==============================================================================
 PAPI Performance Counters
 ==============================================================================
@@ -198,12 +242,7 @@ performance counters and locations to instrument.
 
 By default, PAPI is disabled.
 
-To enable PAPI, open the XSBench_header.h file and add (or uncomment)
-the following definition to the file:
-
-"#define __PAPI"
-
-Then, enable papi in the makefile:
+To enable PAPI, set in the makefile:
 
 PAPI = yes
 

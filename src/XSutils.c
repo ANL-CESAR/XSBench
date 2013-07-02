@@ -155,9 +155,12 @@ Inputs read_CLI( int argc, char * argv[] )
 	// defaults to 11303 (corresponding to H-M Large benchmark)
 	input.n_gridpoints = 11303;
 	
+	// defaults to 15,000,000
+	input.lookups = 15000000;
+	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
-	input.HM[0] = 'L' ; 
+	input.HM[0] = 'l' ; 
 	input.HM[1] = 'a' ; 
 	input.HM[2] = 'r' ; 
 	input.HM[3] = 'g' ; 
@@ -191,6 +194,14 @@ Inputs read_CLI( int argc, char * argv[] )
 			else
 				print_CLI_error();
 		}
+		// lookups (-l)
+		else if( strcmp(arg, "-l") == 0 )
+		{
+			if( ++i < argc )
+				input.lookups = atoi(argv[i]);
+			else
+				print_CLI_error();
+		}
 		// HM (-s)
 		else if( strcmp(arg, "-s") == 0 )
 		{	
@@ -204,7 +215,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	}
 
 	// Validate Input
-	
+
 	// Validate nthreads
 	if( input.nthreads < 1 )
 		print_CLI_error();
@@ -215,6 +226,10 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// Validate n_gridpoints
 	if( input.n_gridpoints < 1 )
+		print_CLI_error();
+
+	// Validate lookups
+	if( input.lookups < 1 )
 		print_CLI_error();
 	
 	// Validate HM size
@@ -241,6 +256,25 @@ void print_CLI_error(void)
 	printf("  -n <threads>     Number of OpenMP threads to run\n");
 	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL)\n");
 	printf("  -g <gridpoints>  Number of gridpoints per nuclide\n");
-	printf("Default is equivalent to: -s large\n");
+	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
+	printf("Default is equivalent to: -s large -l 15000000\n");
+	printf("See readme for full description of default run values\n");
 	exit(4);
+}
+
+// RNG Used for Verification Option.
+// This one has a static seed (must be set manually in source).
+// Park & Miller Multiplicative Conguential Algorithm
+// From "Numerical Recipes" Second Edition
+double rn_v(void)
+{
+	static unsigned long seed = 1337;
+	double ret;
+	unsigned long n1;
+	unsigned long a = 16807;
+	unsigned long m = 2147483647;
+	n1 = ( a * (seed) ) % m;
+	seed = n1;
+	ret = (double) n1 / m;
+	return ret;
 }

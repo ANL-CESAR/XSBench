@@ -1,4 +1,18 @@
 =====================================================================
+NEW IN VERSION 9
+=====================================================================
+
+- Added in new code verification mode. This can be toggled on in
+the makefile. When code is compiled and run, a hash of the results
+will be generated which can then be compared to other versions and
+configurations of XSBench. See readme for more details.
+
+- Moved PAPI def to makefile. Makes it easier to toggle.
+
+- Added -l command line option to set the number of cross section
+lookups performed by XSBench.
+
+=====================================================================
 NEW IN VERSION 8
 =====================================================================
 
