@@ -43,7 +43,7 @@ Download----------------------------------------------------------------------
 		
 		Use the following command to clone XSBench to your machine:
 
-		>$ git clone git://github.com/jtramm/XSBench.git
+		>$ git clone https://github.com/jtramm/XSBench.git
 
 		Once cloned, you can update the code to the newest version
 		using the following command (when in the XSBench directory):
