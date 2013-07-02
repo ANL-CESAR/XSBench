@@ -9,7 +9,7 @@ PROFILE  = no
 MPI      = no
 PAPI     = no
 VEC_INFO = no
-VERIFY   = no
+VERIFY   = yes
 
 #===============================================================================
 # Program name & source code list

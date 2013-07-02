@@ -179,6 +179,8 @@ VEC_INFO enables some additional information regarding the success or
 failure of the compiler's use of vectorization techniques during
 compilation.
 
+VERIFY enables a verification mode, the details of which are explained below.
+
 ==============================================================================
 MPI Support
 ==============================================================================
