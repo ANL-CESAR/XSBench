@@ -10,9 +10,8 @@ int main( int argc, char* argv[] )
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
-	int version   = 9;
-
-	int mype      = 0;
+	int version = 9;
+	int mype = 0;
 	int max_procs = omp_get_num_procs();
 	int n_isotopes, n_gridpoints, lookups, i, thread, nthreads, mat;
 	unsigned long seed;
@@ -55,8 +54,8 @@ int main( int argc, char* argv[] )
 
 	size_t single_nuclide_grid = n_gridpoints * sizeof( NuclideGridPoint );
 	size_t all_nuclide_grids   = n_isotopes * single_nuclide_grid;
-	size_t size_GridPoint      = sizeof(GridPoint)+n_isotopes*sizeof(int);
-	size_t size_UEG            = n_isotopes*n_gridpoints * size_GridPoint;
+	size_t size_GridPoint      = sizeof(GridPoint) + n_isotopes*sizeof(int);
+	size_t size_UEG            = n_isotopes * n_gridpoints * size_GridPoint;
 	size_t memtotal;
 	int mem_tot;
 
@@ -192,14 +191,15 @@ int main( int argc, char* argv[] )
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
 
-			// Add verification stuff here
+			// Verification hash calculation
 			#ifdef VERIFICATION
-			#pragma omp critical
-			{
-				for( int j = 0; j < 5; j++ )
-					vhash += (unsigned long long) macro_xs_vector[j];
-			}
+			unsigned long long vhash_local = 0;
+			for( int j = 0; j < 5; j++)
+				vhash_local += (unsigned long long) macro_xs_vector[j];
+			#pragma omp atomic
+			vhash += vhash_local;
 			#endif
+
 		}
 	}
 
