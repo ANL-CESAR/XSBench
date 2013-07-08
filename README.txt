@@ -98,7 +98,7 @@ Running XSBench---------------------------------------------------------------
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL)
 	  -g <gridpoints>  Number of gridpoints per nuclide
 	  -l <lookups>     Number of Cross-section (XS) lookups
-	Default is equivalent to: -s large -l 15000000
+	Default (no arguments given) is equivalent to: -s large -l 15000000
 
 	-t <threads>
 
