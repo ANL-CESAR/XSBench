@@ -175,8 +175,8 @@ Inputs read_CLI( int argc, char * argv[] )
 	{
 		char * arg = argv[i];
 
-		// nthreads (-n)
-		if( strcmp(arg, "-n") == 0 )
+		// nthreads (-t)
+		if( strcmp(arg, "-t") == 0 )
 		{
 			if( ++i < argc )
 				input.nthreads = atoi(argv[i]);
@@ -253,7 +253,7 @@ void print_CLI_error(void)
 {
 	printf("Usage: ./XSBench <options>\n");
 	printf("Options include:\n");
-	printf("  -n <threads>     Number of OpenMP threads to run\n");
+	printf("  -t <threads>     Number of OpenMP threads to run\n");
 	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL)\n");
 	printf("  -g <gridpoints>  Number of gridpoints per nuclide\n");
 	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
