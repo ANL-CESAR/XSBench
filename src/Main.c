@@ -197,7 +197,9 @@ int main( int argc, char* argv[] )
 			#ifdef VERIFICATION
 			double vhash_local = 0;
 			for( int j = 0; j < 5; j++)
-				vhash_local += round_double( macro_xs_vector[j] );
+			{
+				vhash_local += ceil( macro_xs_vector[j] );
+			}
 			#pragma omp atomic
 			vhash += vhash_local;
 			#endif
