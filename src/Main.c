@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
 	char * HM;
-	unsigned long long vhash = 0;
+	double vhash = 0;
 
 	#ifdef MPI
 	int nprocs;
@@ -192,10 +192,12 @@ int main( int argc, char* argv[] )
                                 macro_xs_vector );
 
 			// Verification hash calculation
+			// Roundint doubles to 5 decimal places avoids issues
+			// with non-associative floating point addition
 			#ifdef VERIFICATION
-			unsigned long long vhash_local = 0;
+			double vhash_local = 0;
 			for( int j = 0; j < 5; j++)
-				vhash_local += (unsigned long long) macro_xs_vector[j];
+				vhash_local += round_double( macro_xs_vector[j] );
 			#pragma omp atomic
 			vhash += vhash_local;
 			#endif
@@ -255,7 +257,7 @@ int main( int argc, char* argv[] )
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
-		printf("Verification checksum: %llu\n", vhash);
+		printf("Verification checksum: %lf\n", vhash);
 		#endif
 		border_print();
 

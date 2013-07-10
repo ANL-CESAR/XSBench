@@ -278,3 +278,17 @@ double rn_v(void)
 	ret = (double) n1 / m;
 	return ret;
 }
+
+// Rounds down the precision of doubles to 5 decimal places. This
+// is used as part of the code verification procedures. Should work
+// nicely, since add cross-sections are between 0.0 and 1.0, so 5
+// decimaly places should provide good confidence that results are
+// correct.
+double round_double( double input )
+{
+	double output;
+	char str[128];
+	sprintf(str, "%.5lf", input);
+	output = strtod(str, NULL);
+	return output;
+}
