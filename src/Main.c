@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
 	char * HM;
-	double vhash = 0;
+	unsigned long long vhash = 0;
 
 	#ifdef MPI
 	int nprocs;
@@ -195,7 +195,7 @@ int main( int argc, char* argv[] )
 			// Roundint doubles to 5 decimal places avoids issues
 			// with non-associative floating point addition
 			#ifdef VERIFICATION
-			double vhash_local = 0;
+			unsigned long long vhash_local = 0;
 			for( int j = 0; j < 5; j++)
 			{
 				vhash_local += ceil( macro_xs_vector[j] );
@@ -259,7 +259,7 @@ int main( int argc, char* argv[] )
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
-		printf("Verification checksum: %lf\n", vhash);
+		printf("Verification checksum: %llu\n", vhash);
 		#endif
 		border_print();
 
