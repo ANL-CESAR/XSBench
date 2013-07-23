@@ -120,6 +120,28 @@ double ** load_concs( int * num_nucs )
 	return concs;
 }
 
+// Verification version of this function (tighter control over RNG)
+double ** load_concs_v( int * num_nucs )
+{
+	double ** concs = (double **)malloc( 12 * sizeof( double *) );
+	
+	for( int i = 0; i < 12; i++ )
+		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
+	
+	for( int i = 0; i < 12; i++ )
+		for( int j = 0; j < num_nucs[i]; j++ )
+			concs[i][j] = rn_v();
+
+	// test
+	/*
+	for( int i = 0; i < 12; i++ )
+		for( int j = 0; j < num_nucs[i]; j++ )
+			printf("concs[%d][%d] = %lf\n", i, j, concs[i][j] );
+	*/
+
+	return concs;
+}
+
 // picks a material based on a probabilistic distribution
 int pick_mat( unsigned long * seed )
 {

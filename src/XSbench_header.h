@@ -65,6 +65,8 @@ int NGP_compare( const void * a, const void * b );
 
 void generate_grids( NuclideGridPoint ** nuclide_grids,
                      int n_isotopes, int n_gridpoints );
+void generate_grids_v( NuclideGridPoint ** nuclide_grids,
+                     int n_isotopes, int n_gridpoints );
 
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
                          int n_gridpoints );
@@ -96,6 +98,7 @@ int grid_search( int n, double quarry, GridPoint * A);
 int * load_num_nucs(int n_isotopes);
 int ** load_mats( int * num_nucs, int n_isotopes );
 double ** load_concs( int * num_nucs );
+double ** load_concs_v( int * num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
 int rn_int(unsigned long * seed);

@@ -111,7 +111,11 @@ int main( int argc, char* argv[] )
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
 	
+	#ifdef VERIFICATION
+	generate_grids_v( nuclide_grids, n_isotopes, n_gridpoints );	
+	#else
 	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
+	#endif
 	
 	// Sort grids by energy
 	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
@@ -129,7 +133,11 @@ int main( int argc, char* argv[] )
 	if( mype == 0 ) printf("Loading Mats...\n");
 	int *num_nucs  = load_num_nucs(n_isotopes);
 	int **mats     = load_mats(num_nucs, n_isotopes);
+	#ifdef VERIFICATION
+	double **concs = load_concs_v(num_nucs);
+	#else
 	double **concs = load_concs(num_nucs);
+	#endif
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins

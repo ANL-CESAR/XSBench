@@ -21,6 +21,21 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 		}
 }
 
+// Verification version of this function (tighter control over RNG)
+void generate_grids_v( NuclideGridPoint ** nuclide_grids,
+                     int n_isotopes, int n_gridpoints ) {
+	for( int i = 0; i < n_isotopes; i++ )
+		for( int j = 0; j < n_gridpoints; j++ )
+		{
+			nuclide_grids[i][j].energy       = rn_v();
+			nuclide_grids[i][j].total_xs     = rn_v();
+			nuclide_grids[i][j].elastic_xs   = rn_v();
+			nuclide_grids[i][j].absorbtion_xs= rn_v();
+			nuclide_grids[i][j].fission_xs   = rn_v();
+			nuclide_grids[i][j].nu_fission_xs= rn_v();
+		}
+}
+
 // Sorts the nuclide grids by energy (lowest -> highest)
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
                          int n_gridpoints )
