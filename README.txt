@@ -203,6 +203,10 @@ make use of your desired compiler.
 Verification Support
 ==============================================================================
 
+***NOTE*** Verification currently does not provide consistent results between
+           different architectures. You may need to tweak the verification
+           scheme when porting to a new language / accelerator.
+
 XSBench has the ability to verify that consistent and correct results are
 achieved. This mode is enabled by altering the "VERIFY" setting to 'yes' in
 the makefile, i.e.:
