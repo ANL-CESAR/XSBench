@@ -157,6 +157,7 @@ int main( int argc, char* argv[] )
 	int num_papi_events;
 	counter_init(&eventset, &num_papi_events);
 	#endif
+
 	
 	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
@@ -203,6 +204,16 @@ int main( int argc, char* argv[] )
 			// Roundint doubles to 5 decimal places avoids issues
 			// with non-associative floating point addition
 			#ifdef VERIFICATION
+			#pragma omp critical
+			{
+				FILE * verif = fopen("xs.txt", "a");
+				fprintf(verif,"E: %.15lf M: %d XS's: ", p_energy, mat);
+				for( int j = 0; j < 5; j++ )
+					fprintf(verif,"%.15lf ", macro_xs_vector[j]);
+				fprintf(verif, "\n");
+				fclose(verif);
+			}
+
 			unsigned long long vhash_local = 0;
 			for( int j = 0; j < 5; j++)
 			{
