@@ -204,6 +204,7 @@ int main( int argc, char* argv[] )
 			// Roundint doubles to 5 decimal places avoids issues
 			// with non-associative floating point addition
 			#ifdef VERIFICATION
+			/*
 			#pragma omp critical
 			{
 				FILE * verif = fopen("xs.txt", "a");
@@ -213,16 +214,20 @@ int main( int argc, char* argv[] )
 				fprintf(verif, "\n");
 				fclose(verif);
 			}
+			*/
+			char line[256];
+			sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+			       p_energy, mat,
+				   macro_xs_vector[0],
+				   macro_xs_vector[1],
+				   macro_xs_vector[2],
+				   macro_xs_vector[3],
+				   macro_xs_vector[4]);
 
-			unsigned long long vhash_local = 0;
-			for( int j = 0; j < 5; j++)
-			{
-				vhash_local += ceil( macro_xs_vector[j] );
-			}
+			unsigned long long vhash_local = hash(line, 10000);
 			#pragma omp atomic
 			vhash += vhash_local;
 			#endif
-
 		}
 	}
 

@@ -112,5 +112,6 @@ Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
+unsigned int hash(unsigned char *str, int nbins);
 
 #endif
