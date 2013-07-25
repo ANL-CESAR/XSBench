@@ -95,7 +95,7 @@ Running XSBench---------------------------------------------------------------
 	Usage: ./XSBench <options>
 	Options include:
 	  -t <threads>     Number of OpenMP threads to run
-	  -s <size>        Size of H-M Benchmark to run (small, large, XL)
+	  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)
 	  -g <gridpoints>  Number of gridpoints per nuclide
 	  -l <lookups>     Number of Cross-section (XS) lookups
 	Default (no arguments given) is equivalent to: -s large -l 15000000
@@ -113,7 +113,7 @@ Running XSBench---------------------------------------------------------------
 	-s <size>
 		
 		Sets the size of the Hoogenboom-Martin reactor model. There
-		are three options: 'small', 'large', and 'XL'. By default,
+		are four options: 'small', 'large', 'XL', and 'XXL'. By default,
 		the 'large' option is selected. 
 
 		The H-M size corresponds to the number of nuclides present
@@ -124,13 +124,13 @@ Running XSBench---------------------------------------------------------------
 		whenever a lookup occurs in a fuel material.  Note that the
 		program defaults to "Large" if no specification is made.
 
-		The additional size option, "XL", does not directly correspond
-		to any particular physical model. It is similar to the H-M
+		The additional size options, "XL" and "XXL", do not directly correspond
+		to any particular physical model. They are similar to the H-M
 		"large" option, except the number of gridpoints per nuclide
-		has been increased by a factor of 50x. This creates an extremely
-		large energy grid data structure (roughly 277 GB), which is
+		has been increased greatly. This creates an extremely
+		large energy grid data structure (XL: 120GB, XXL: 252GB), which is
 		unlikely to fit on a single node, but is useful for experimentation
-		purposes.
+		purposes on novel architectures.
 
 	-g <gridpoints>
 
@@ -138,6 +138,9 @@ Running XSBench---------------------------------------------------------------
 		value is set to 11,303. This corresponds to the average number
 		of actual gridpoints per nuclide in the H-M Large model as run
 		by OpenMC with the actual ACE ENDF cross-section data. 
+
+		Note that this option will override the number of default grid
+		-points as set by the '-s' option.
 
 	-l <lookups>
 		

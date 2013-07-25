@@ -235,15 +235,18 @@ Inputs read_CLI( int argc, char * argv[] )
 	// Validate HM size
 	if( strcasecmp(input.HM, "small") != 0 &&
 		strcasecmp(input.HM, "large") != 0 &&
-		strcasecmp(input.HM, "xl")    != 0 )
+		strcasecmp(input.HM, "XL") != 0 &&
+		strcasecmp(input.HM, "XXL") != 0 )
 		print_CLI_error();
 	
 	// Set HM size specific parameters
+	// (defaults to large)
 	if( strcasecmp(input.HM, "small") == 0 )
 		input.n_isotopes = 68;
-	if( strcasecmp(input.HM, "xl") == 0 )
-		if( user_g == 0 )
-			input.n_gridpoints *= 50;
+	else if( strcasecmp(input.HM, "XL") == 0 && user_g == 0 )
+		input.n_gridpoints = 238847; // sized to make 120 GB XS data
+	else if( strcasecmp(input.HM, "XXL") == 0 && user_g == 0 )
+		input.n_gridpoints = 238847 * 2.1; // 252 GB XS data
 
 	// Return input struct
 	return input;
@@ -254,8 +257,8 @@ void print_CLI_error(void)
 	printf("Usage: ./XSBench <options>\n");
 	printf("Options include:\n");
 	printf("  -t <threads>     Number of OpenMP threads to run\n");
-	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL)\n");
-	printf("  -g <gridpoints>  Number of gridpoints per nuclide\n");
+	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)\n");
+	printf("  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)\n");
 	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
 	printf("Default is equivalent to: -s large -l 15000000\n");
 	printf("See readme for full description of default run values\n");
