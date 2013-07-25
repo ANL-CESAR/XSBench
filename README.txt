@@ -6,7 +6,7 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 9
+                                   Version 10
 
 ==============================================================================
 Contact Information
@@ -206,10 +206,6 @@ make use of your desired compiler.
 Verification Support
 ==============================================================================
 
-***NOTE*** Verification currently does not provide consistent results between
-           different architectures. You may need to tweak the verification
-           scheme when porting to a new language / accelerator.
-
 XSBench has the ability to verify that consistent and correct results are
 achieved. This mode is enabled by altering the "VERIFY" setting to 'yes' in
 the makefile, i.e.:
@@ -228,15 +224,17 @@ of gridpoints, etc, will result in different hashes).
 Verification mode uses a RNG with a static seed. The randomized lookup
 parameters are generated within a critical region. This ensures that the
 same set of lookups are performed regardless of the number of threads
-used. Then, after each lookup is completed, another brief critical region
-is entered where each part of the macroscopic lookup array (of doubles) are
-cast to 64-bit unsigned integers and then added to a running 64-bit unsigned
-integer hash. The casting is necessary because floating point arithmetic
-is not associative, and while the same set of lookups will be performed,
-we aren't guaranteed that they will complete in the same order.
+used. Then, after each lookup is completed, the lookup parameters and
+the cross section vector are hashed together. This local hash is then
+atomically added to a global running hash.
 
 Note that the verification mode runs much slower, due to the use of
-critical regions within the threading loop. 
+atomics within the threading loop. 
+
+Below are the expected checksums for default runs of each size (-s):
+
+small : 74966788162
+large : 74994938929 
 
 ==============================================================================
 PAPI Performance Counters

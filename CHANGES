@@ -1,4 +1,22 @@
 =====================================================================
+NEW IN VERSION 10
+=====================================================================
+
+- Changed verification mode to be more portable. The verification
+strategy introduced in version 9 had discrepancies on different
+platforms and compilers. This was due to reliance on the compiler
+provided rand() function producing a different series of random
+numbers than other implementations. Also, there were some issues
+with the associativity of floating point arithmetic. These issues
+have now all been solved, and the verification hash is consistent
+across all tested platforms.
+
+- Revised "XL" size parameters, as well as adding in an "XXL" size
+option. The XL size now uses 120GB of XS data. The XXL mode uses
+252GN of XS data. More details are in the verification section of the
+readme. 
+
+=====================================================================
 NEW IN VERSION 9
 =====================================================================
 

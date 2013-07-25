@@ -10,7 +10,7 @@ int main( int argc, char* argv[] )
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
-	int version = 9;
+	int version = 10;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
 	int n_isotopes, n_gridpoints, lookups, i, thread, nthreads, mat;
@@ -201,20 +201,9 @@ int main( int argc, char* argv[] )
                                 macro_xs_vector );
 
 			// Verification hash calculation
-			// Roundint doubles to 5 decimal places avoids issues
-			// with non-associative floating point addition
+			// This method provides a consistent hash accross
+			// architectures and compilers.
 			#ifdef VERIFICATION
-			/*
-			#pragma omp critical
-			{
-				FILE * verif = fopen("xs.txt", "a");
-				fprintf(verif,"E: %.5lf M: %d XS's: ", p_energy, mat);
-				for( int j = 0; j < 5; j++ )
-					fprintf(verif,"%.5lf ", macro_xs_vector[j]);
-				fprintf(verif, "\n");
-				fclose(verif);
-			}
-			*/
 			char line[256];
 			sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
 			       p_energy, mat,
@@ -223,7 +212,6 @@ int main( int argc, char* argv[] )
 				   macro_xs_vector[2],
 				   macro_xs_vector[3],
 				   macro_xs_vector[4]);
-
 			unsigned long long vhash_local = hash(line, 10000);
 			#pragma omp atomic
 			vhash += vhash_local;
