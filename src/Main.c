@@ -164,7 +164,7 @@ int main( int argc, char* argv[] )
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
-	mats, concs, num_nucs, mype, vhash)
+	mats, concs, num_nucs, mype, vhash) 
 	{	
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
@@ -207,9 +207,9 @@ int main( int argc, char* argv[] )
 			#pragma omp critical
 			{
 				FILE * verif = fopen("xs.txt", "a");
-				fprintf(verif,"E: %.15lf M: %d XS's: ", p_energy, mat);
+				fprintf(verif,"E: %.5lf M: %d XS's: ", p_energy, mat);
 				for( int j = 0; j < 5; j++ )
-					fprintf(verif,"%.15lf ", macro_xs_vector[j]);
+					fprintf(verif,"%.5lf ", macro_xs_vector[j]);
 				fprintf(verif, "\n");
 				fclose(verif);
 			}
