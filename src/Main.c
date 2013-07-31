@@ -224,6 +224,7 @@ int main( int argc, char* argv[] )
 			//ts.tv_nsec = 1000000; // 1 ms
 			//ts.tv_nsec = 10000000; // 10 ms
 			ts.tv_nsec = 100000000; // 100 ms
+			ts.tv_sec = 0;
 			nanosleep(&ts, &rts);
 			//printf("req time(ns): %ld slept time (ns): %ld\n", ts.tv_nsec, ts.tv_nsec - rts.tv_nsec);
 			//printf("%% unslept: %.1f\n", (rts.tv_nsec / (float) ts.tv_nsec) * 100.0);
