@@ -10,6 +10,7 @@ MPI      = no
 PAPI     = no
 VEC_INFO = no
 VERIFY   = no
+PAUSE    = yes
 
 #===============================================================================
 # Program name & source code list
@@ -86,6 +87,12 @@ endif
 # Verification of results mode
 ifeq ($(VERIFY),yes)
   GCC_S_FLAGS += -DVERIFICATION
+endif
+
+# Injects artificial pause between XS lookups
+# to represent time for particle tracking
+ifeq ($(PAUSE),yes)
+  GCC_S_FLAGS += -DPAUSE
 endif
 #===============================================================================
 # Targets to Build

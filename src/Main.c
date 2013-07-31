@@ -216,6 +216,18 @@ int main( int argc, char* argv[] )
 			#pragma omp atomic
 			vhash += vhash_local;
 			#endif
+
+			#ifdef PAUSE
+			struct timespec ts;
+			struct timespec rts;
+			//ts.tv_nsec = 100000; // .1 ms
+			//ts.tv_nsec = 1000000; // 1 ms
+			//ts.tv_nsec = 10000000; // 10 ms
+			ts.tv_nsec = 100000000; // 100 ms
+			nanosleep(&ts, &rts);
+			//printf("req time(ns): %ld slept time (ns): %ld\n", ts.tv_nsec, ts.tv_nsec - rts.tv_nsec);
+			//printf("%% unslept: %.1f\n", (rts.tv_nsec / (float) ts.tv_nsec) * 100.0);
+			#endif
 		}
 	}
 
