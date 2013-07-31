@@ -142,6 +142,10 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
+	for( int jrt = 1; jrt <=16; jrt++ )
+	{
+		nthreads = jrt;
+		omp_set_num_threads(nthreads);
 	
 	if( mype == 0 )
 	{
@@ -158,7 +162,6 @@ int main( int argc, char* argv[] )
 	counter_init(&eventset, &num_papi_events);
 	#endif
 
-	
 	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
@@ -169,14 +172,13 @@ int main( int argc, char* argv[] )
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
 		seed   = (thread+1)*19+17;
-		#pragma omp for
+		#pragma omp for schedule(dynamic)
 		for( i = 0; i < lookups; i++ )
 		{
 			// Status text
 			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
-						i / ( lookups / (double) nthreads ) * 100.0);
-			
+						(i / ( (double)lookups / (double) nthreads )) * 100.0);
 			// Randomly pick an energy and material for the particle
 			#ifdef VERIFICATION
 			#pragma omp critical
@@ -217,17 +219,14 @@ int main( int argc, char* argv[] )
 			vhash += vhash_local;
 			#endif
 
+			// Artificial pause injected to represent particle
+			// tracking calculation time. Similar to adding dummy flops.
 			#ifdef PAUSE
-			struct timespec ts;
-			struct timespec rts;
-			//ts.tv_nsec = 100000; // .1 ms
-			//ts.tv_nsec = 1000000; // 1 ms
-			//ts.tv_nsec = 10000000; // 10 ms
-			ts.tv_nsec = 100000000; // 100 ms
+			struct timespec ts, rts;
 			ts.tv_sec = 0;
+			//ts.tv_nsec = 100000; // .1 ms
+			ts.tv_nsec = 1000000; // 1 ms
 			nanosleep(&ts, &rts);
-			//printf("req time(ns): %ld slept time (ns): %ld\n", ts.tv_nsec, ts.tv_nsec - rts.tv_nsec);
-			//printf("%% unslept: %.1f\n", (rts.tv_nsec / (float) ts.tv_nsec) * 100.0);
 			#endif
 		}
 	}
@@ -296,7 +295,7 @@ int main( int argc, char* argv[] )
 			fclose(out);
 		}
 	}	
-
+}
 	#ifdef __PAPI
 	counter_stop(&eventset, num_papi_events);
 	#endif

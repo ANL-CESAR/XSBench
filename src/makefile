@@ -10,7 +10,7 @@ MPI      = no
 PAPI     = no
 VEC_INFO = no
 VERIFY   = no
-PAUSE    = yes
+PAUSE    = no
 
 #===============================================================================
 # Program name & source code list
