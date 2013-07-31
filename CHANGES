@@ -1,4 +1,11 @@
 =====================================================================
+NEW IN VERSION WORKING VERSION
+=====================================================================
+
+- Added in option for thread sleep pause in between macro XS lookups.
+  Very similar to adding dummy flops, but a little cleaner.
+
+=====================================================================
 NEW IN VERSION 10
 =====================================================================
 
