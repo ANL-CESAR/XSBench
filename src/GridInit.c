@@ -124,7 +124,6 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	#endif
 	
 	if( mype == 0 ) printf("Assigning pointers to Unionized Energy Grid...\n");
-	omp_set_num_threads(16);	//JRT
 	#pragma omp parallel for default(none) \
 	shared( energy_grid, nuclide_grids, n_isotopes, n_gridpoints, mype )
 	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )

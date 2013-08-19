@@ -5,6 +5,10 @@ NEW IN VERSION WORKING VERSION
 - Added in option for thread sleep pause in between macro XS lookups.
   Very similar to adding dummy flops, but a little cleaner.
 
+- Specified OpenMP schedule mode as 'dynamic'. This is the default
+  on most systems, but now it's set explicitly since it's a lot
+  faster than 'static' or other modes.
+
 =====================================================================
 NEW IN VERSION 10
 =====================================================================

@@ -167,6 +167,7 @@ MPI      = no
 PAPI     = no
 VEC_INFO = no
 VERIFY   = no
+PAUSE    = no
 
 Optimization enables the -O3 optimization flag.
 
@@ -183,6 +184,10 @@ failure of the compiler's use of vectorization techniques during
 compilation.
 
 VERIFY enables a verification mode, the details of which are explained below.
+
+Pause adds an arbitrary pause in between macro-XS lookups, in order to
+represent particle tracking / communication etc that occurs in the real
+OpenMC. Note that the amount of time spent waiting
 
 ==============================================================================
 MPI Support
