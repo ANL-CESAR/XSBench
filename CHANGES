@@ -4,10 +4,20 @@ NEW IN VERSION WORKING VERSION
 
 - Added in option for thread sleep pause in between macro XS lookups.
   Very similar to adding dummy flops, but a little cleaner.
+  
+  With as small as a 0.1 ms sleep, we get linear scaling with threads.
+  While this initially appears to confirm our initial suspicions
+  regarding memory contention / latency problems, I think the delays
+  resulting from the sleeps could potentially just be washing out
+  the scaling numbers. Even with just 0.1, over 15 million lookups,
+  the majority of the runtime (>90%) is just sleep, so scaling numbers
+  aren't very expressive anymore. Need to implement timers that
+  ignore the sleep parts.
 
 - Specified OpenMP schedule mode as 'dynamic'. This is the default
   on most systems, but now it's set explicitly since it's a lot
   faster than 'static' or other modes.
+  
 
 =====================================================================
 NEW IN VERSION 10
