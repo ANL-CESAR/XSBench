@@ -2,6 +2,10 @@
 NEW IN VERSION WORKING VERSION
 =====================================================================
 
+- Updated & greatly improved the PAPI capability of XSBench. Now
+  events can be tallied during multi-core. See README for more
+  info.
+
 - Added in option for thread sleep pause in between macro XS lookups.
   Very similar to adding dummy flops, but a little cleaner.
   

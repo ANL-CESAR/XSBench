@@ -155,12 +155,14 @@ int main( int argc, char* argv[] )
 	}
 
 	omp_start = omp_get_wtime();
-	
-	#ifdef __PAPI
-	int eventset = PAPI_NULL; 
-	int num_papi_events;
-	counter_init(&eventset, &num_papi_events);
-	#endif
+  
+	#ifdef PAPI
+	/* initialize papi with one thread here  */
+	if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
+		fprintf(stderr, "PAPI library init error!\n");
+		exit(1);
+	}
+	#endif	
 
 	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
@@ -169,6 +171,12 @@ int main( int argc, char* argv[] )
 	energy_grid, nuclide_grids, lookups, nthreads, \
 	mats, concs, num_nucs, mype, vhash) 
 	{	
+		#ifdef PAPI
+		int eventset = PAPI_NULL; 
+		int num_papi_events;
+		counter_init(&eventset, &num_papi_events);
+		#endif
+
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
 		seed   = (thread+1)*19+17;
@@ -229,6 +237,11 @@ int main( int argc, char* argv[] )
 			nanosleep(&ts, &rts);
 			#endif
 		}
+		
+		#ifdef PAPI
+		counter_stop(&eventset, num_papi_events);
+		#endif
+
 	}
 
 	if( mype == 0)	
@@ -296,9 +309,6 @@ int main( int argc, char* argv[] )
 		}
 	}	
 }
-	#ifdef __PAPI
-	counter_stop(&eventset, num_papi_events);
-	#endif
 
 	#ifdef MPI
 	MPI_Finalize();

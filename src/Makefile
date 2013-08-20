@@ -7,7 +7,7 @@ OPTIMIZE = yes
 DEBUG    = no
 PROFILE  = no
 MPI      = no
-PAPI     = no
+PAPI     = yes
 VEC_INFO = no
 VERIFY   = no
 PAUSE    = no
@@ -76,6 +76,7 @@ endif
 ifeq ($(PAPI),yes)
   source += papi.c
   GCC_O_FLAGS += -DPAPI
+  LDFLAGS += -L/home/jtramm/papi-5.1.0/src -lpapi
 endif
 
 # MPI

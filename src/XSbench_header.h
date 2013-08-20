@@ -12,8 +12,8 @@
 #include<sys/time.h>
 
 // Papi Header
-#ifdef __PAPI
-#include "/usr/local/include/papi.h"
+#ifdef PAPI
+#include "/home/jtramm/papi-5.1.0/src/papi.h"
 #endif
 
 // Variable to add extra flops at each lookup from unionized grid.
@@ -25,7 +25,6 @@
 #define INFO 1
 #define DEBUG 1
 #define SAVE 1
-#define PRINT_PAPI_INFO 1
 
 // Structures
 typedef struct{
