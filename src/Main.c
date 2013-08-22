@@ -193,7 +193,7 @@ int main( int argc, char* argv[] )
 			// Status text
 			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
-						(i / ( (double)lookups / (double) nthreads )) * 100.0);
+						(i / ( (double)lookups / (double) nthreads )) / (double) nthreads * 100.0);
 			// Randomly pick an energy and material for the particle
 			#ifdef VERIFICATION
 			#pragma omp critical
@@ -245,8 +245,6 @@ int main( int argc, char* argv[] )
 			#endif
 		}
 
-
-		
 		#ifdef PAPI
 		if( mype == 0 && thread == 0 )
 		{
