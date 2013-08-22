@@ -6,7 +6,7 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 10
+                                   Version 11
 
 ==============================================================================
 Contact Information
@@ -66,15 +66,15 @@ Download----------------------------------------------------------------------
 		Once downloaded, you can decompress XSBench using the following
 		command on a linux or Mac OSX system:
 
-		>$ tar -xvf XSBench-5.tar
+		>$ tar -xvf XSBench-11.tar
 
 		This will decompress the tar file into a directory called
-		XSBench-5.
+		XSBench-11.
 
 		To begin use of the XSBench code, you will have to navigate to
 		the src directory:
 
-		>$ cd XSBench-5/src
+		>$ cd XSBench-11/src
 
 Compilation-------------------------------------------------------------------
 
@@ -159,35 +159,40 @@ There are also a number of switches that can be set in the makefile.
 
 Here is a sample of the control panel at the top of the makefile:
 
-COMPILER = gnu
-OPTIMIZE = yes
-DEBUG    = no
-PROFILE  = no
-MPI      = no
-PAPI     = no
-VEC_INFO = no
-VERIFY   = no
-PAUSE    = no
+COMPILER  = gnu
+OPTIMIZE  = yes
+DEBUG     = no
+PROFILE   = no
+MPI       = no
+PAPI      = no
+VEC_INFO  = no
+VERIFY    = no
+PAUSE     = no
+BENCHMARK = no
 
-Optimization enables the -O3 optimization flag.
+-> Optimization enables the -O3 optimization flag.
 
-Debugging enables the -g flag.
+-> Debugging enables the -g flag.
 
-Profiling enables the -pg flag.
+-> Profiling enables the -pg flag.
 
-MPI enables MPI support in the code.
+-> MPI enables MPI support in the code.
 
-The PAPI flag is explained below.
+-> The PAPI flag is explained below.
 
-VEC_INFO enables some additional information regarding the success or
+-> VEC_INFO enables some additional information regarding the success or
 failure of the compiler's use of vectorization techniques during
 compilation.
 
-VERIFY enables a verification mode, the details of which are explained below.
+-> VERIFY enables a verification mode, the details of which are explained below.
 
-Pause adds an arbitrary pause in between macro-XS lookups, in order to
+-> Pause adds an arbitrary pause in between macro-XS lookups, in order to
 represent particle tracking / communication etc that occurs in the real
 OpenMC. Note that the amount of time spent waiting
+
+-> Benchmark mode tests all possible thread configurations on the given
+computer. I.e., if your computer supports 16 threads, XSBench will
+automatically do 1 <= nthreads <= 16 lookup loops
 
 ==============================================================================
 MPI Support
@@ -262,6 +267,10 @@ Note that you may need to change the relevant library paths for papi to
 work (as these are dependent on your machine).  The library path can be
 specified in the makefile, and the header path is specified in the
 XSBench_header.h file.
+
+To select the performance counters you are interested in, open
+the file papi.c and alter the events[] array to the events
+you would like to count. 
 
 ==============================================================================
 Running on ANL BlueGene/Q (Vesta & Mira)
