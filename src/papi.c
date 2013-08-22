@@ -7,7 +7,9 @@ void counter_init( int *eventset, int *num_papi_events )
 	int events[] = {PAPI_TOT_INS,PAPI_LD_INS,PAPI_FP_INS};
 	int stat;
 
-	printf("Initializing PAPI counters...\n");
+	int thread = omp_get_thread_num();
+	if( thread == 0 )
+		printf("Initializing PAPI counters...\n");
 
 	*num_papi_events = sizeof(events) / sizeof(int);
 
@@ -43,22 +45,18 @@ void counter_stop( int * eventset, int num_papi_events )
 	PAPI_event_info_t info;
 
 	long_long * values = malloc( num_papi_events * sizeof(long_long));
-
 	PAPI_stop(*eventset, values);
+	int thread = omp_get_thread_num();
 
-	FILE * out = fopen("counters.txt", "a");
-	center_print("PAPI INFORMATION", 79);
-	border_print();
-	printf("Count          \tSmybol      \tDescription\n");
-	for( int i = 0; i < num_papi_events; i++ )
+	#pragma omp critical (papi)
 	{
-		PAPI_get_event_info(events[i], &info);
-		fprintf(out,"%lld\t",values[i]);
-		printf("%-15lld\t%s\t%s\n", values[i],info.symbol,info.long_descr);
+		printf("Thread %d\n", thread);
+		for( int i = 0; i < num_papi_events; i++ )
+		{
+			PAPI_get_event_info(events[i], &info);
+			printf("%-15lld\t%s\t%s\n", values[i],info.symbol,info.long_descr);
+		}
+		free(events);
+		free(values);	
 	}
-	fprintf(out,"\n");
-	border_print();
-	free(events);
-	free(values);	
-	fclose(out);
 }

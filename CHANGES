@@ -20,8 +20,16 @@ NEW IN VERSION WORKING VERSION
 
 - Specified OpenMP schedule mode as 'dynamic'. This is the default
   on most systems, but now it's set explicitly since it's a lot
-  faster than 'static' or other modes.
-  
+  faster than 'static' or other modes. Downside is that it can
+  cause some issues with the status indicator, as there's no good
+  way of knowing how many iterations each thread will receive
+  in a given batch.
+
+- Added in a "benchmarking" mode, which will attempt all possible
+  thread combinations between 1 <= nthreads <= max_threads.
+  This helps to save considerable benchmarking time, as the
+  data structures can be re-used between runs rather than regenerated
+  each time. Benchmarking mode is enabled in the makefile.
 
 =====================================================================
 NEW IN VERSION 10

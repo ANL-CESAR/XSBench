@@ -142,13 +142,16 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
-	for( int jrt = 1; jrt <=16; jrt++ )
+	#ifdef BENCHMARK
+	for( int jrt = 1; jrt <=omp_get_num_procs(); jrt++ )
 	{
 		nthreads = jrt;
 		omp_set_num_threads(nthreads);
-	
+ 	#endif
+
 	if( mype == 0 )
 	{
+		printf("\n");
 		border_print();
 		center_print("SIMULATION", 79);
 		border_print();
@@ -174,12 +177,16 @@ int main( int argc, char* argv[] )
 		#ifdef PAPI
 		int eventset = PAPI_NULL; 
 		int num_papi_events;
-		counter_init(&eventset, &num_papi_events);
+		#pragma omp critical
+		{
+			counter_init(&eventset, &num_papi_events);
+		}
 		#endif
 
 		double macro_xs_vector[5];
 		thread = omp_get_thread_num();
 		seed   = (thread+1)*19+17;
+
 		#pragma omp for schedule(dynamic)
 		for( i = 0; i < lookups; i++ )
 		{
@@ -237,18 +244,33 @@ int main( int argc, char* argv[] )
 			nanosleep(&ts, &rts);
 			#endif
 		}
+
+
 		
 		#ifdef PAPI
+		if( mype == 0 && thread == 0 )
+		{
+			printf("\n");
+			border_print();
+			center_print("PAPI COUNTER RESULTS", 79);
+			border_print();
+			printf("Count          \tSmybol      \tDescription\n");
+		}
+		{
+		#pragma omp barrier
+		}
 		counter_stop(&eventset, num_papi_events);
 		#endif
 
 	}
 
+	#ifndef PAPI
 	if( mype == 0)	
 	{	
 		printf("\n" );
 		printf("Simulation complete.\n" );
 	}
+	#endif
 
 	omp_end = omp_get_wtime();
 	
@@ -308,7 +330,9 @@ int main( int argc, char* argv[] )
 			fclose(out);
 		}
 	}	
-}
+	#ifdef BENCHMARK
+	}
+	#endif
 
 	#ifdef MPI
 	MPI_Finalize();

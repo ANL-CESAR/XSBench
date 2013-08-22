@@ -2,15 +2,16 @@
 # User Options
 #===============================================================================
 
-COMPILER = gnu
-OPTIMIZE = yes
-DEBUG    = no
-PROFILE  = no
-MPI      = no
-PAPI     = yes
-VEC_INFO = no
-VERIFY   = no
-PAUSE    = no
+COMPILER  = gnu
+OPTIMIZE  = yes
+DEBUG     = no
+PROFILE   = no
+MPI       = no
+PAPI      = no
+VEC_INFO  = no
+VERIFY    = no
+PAUSE     = no
+BENCHMARK = no
 
 #===============================================================================
 # Program name & source code list
@@ -76,7 +77,8 @@ endif
 ifeq ($(PAPI),yes)
   source += papi.c
   GCC_O_FLAGS += -DPAPI
-  LDFLAGS += -L/home/jtramm/papi-5.1.0/src -lpapi
+  GCC_S_FLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
+  LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
 endif
 
 # MPI
@@ -94,6 +96,12 @@ endif
 # to represent time for particle tracking
 ifeq ($(PAUSE),yes)
   GCC_S_FLAGS += -DPAUSE
+endif
+
+# Adds outer 'benchmarking' loop to do multiple trials for
+# 1 < threads <= max_threads
+ifeq ($(BENCHMARK),yes)
+  GCC_S_FLAGS += -DBENCHMARK
 endif
 #===============================================================================
 # Targets to Build

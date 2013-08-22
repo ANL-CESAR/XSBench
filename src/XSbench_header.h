@@ -13,7 +13,7 @@
 
 // Papi Header
 #ifdef PAPI
-#include "/home/jtramm/papi-5.1.0/src/papi.h"
+#include "papi.h"
 #endif
 
 // Variable to add extra flops at each lookup from unionized grid.
