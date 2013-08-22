@@ -7,7 +7,7 @@ OPTIMIZE  = yes
 DEBUG     = no
 PROFILE   = no
 MPI       = no
-PAPI      = no
+PAPI      = yes
 VEC_INFO  = no
 VERIFY    = no
 PAUSE     = no
@@ -73,12 +73,14 @@ ifeq ($(VEC_INFO),yes)
   GCC_O_FLAGS += -ftree-vectorizer-verbose=6
 endif
 
-# PAPI source 
+# PAPI source (you may need to provide -I and -L pointing
+# to PAPI depending on your installation
 ifeq ($(PAPI),yes)
   source += papi.c
   GCC_O_FLAGS += -DPAPI
-  GCC_S_FLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
-  LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
+  #GCC_S_FLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
+  #LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
+  LDFLAGS += -lpapi
 endif
 
 # MPI
