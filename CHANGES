@@ -20,10 +20,7 @@ NEW IN VERSION 11
 
 - Specified OpenMP schedule mode as 'dynamic'. This is the default
   on most systems, but now it's set explicitly since it's a lot
-  faster than 'static' or other modes. Downside is that it can
-  cause some issues with the status indicator, as there's no good
-  way of knowing how many iterations each thread will receive
-  in a given batch.
+  faster than 'static' or other modes.
 
 - Added in a "benchmarking" mode, which will attempt all possible
   thread combinations between 1 <= nthreads <= max_threads.
