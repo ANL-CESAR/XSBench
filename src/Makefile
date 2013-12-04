@@ -21,10 +21,12 @@ program = XSBench
 
 source = \
 Main.c \
-CalculateXS.c \
+UEG_CalculateXS.c \
+nuclide_CalculateXS.c \
 GridInit.c \
 XSutils.c \
-Materials.c
+Materials.c \
+io.c
 
 obj = $(source:.c=.o)
 
