@@ -48,6 +48,7 @@ typedef struct{
 	int n_gridpoints;
 	int lookups;
 	char * HM;
+	int UEG;
 } Inputs;
 
 // Function Prototypes

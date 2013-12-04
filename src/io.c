@@ -85,6 +85,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.HM[3] = 'g' ; 
 	input.HM[4] = 'e' ; 
 	input.HM[5] = '\0';
+
+	// defaults to UEG useage
+	input.UEG = 1;
 	
 	// Check if user sets these
 	int user_g = 0;
@@ -126,6 +129,15 @@ Inputs read_CLI( int argc, char * argv[] )
 		{	
 			if( ++i < argc )
 				input.HM = argv[i];
+			else
+				print_CLI_error();
+		}
+		// UEG or No UEG
+		else if( strcmp(arg, "-u") == 0 )
+		{	
+			if( ++i < argc )
+				if( strcasecmp(argv[i], "nuclide") == 0 )
+					input.UEG = 0;
 			else
 				print_CLI_error();
 		}

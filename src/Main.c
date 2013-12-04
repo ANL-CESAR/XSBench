@@ -13,7 +13,7 @@ int main( int argc, char* argv[] )
 	int version = 11;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
-	int n_isotopes, n_gridpoints, lookups, i, thread, nthreads, mat;
+	int n_isotopes, n_gridpoints, lookups, i, thread, nthreads, mat, UEG;
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
 	char * HM;
@@ -44,6 +44,7 @@ int main( int argc, char* argv[] )
 	n_gridpoints = input.n_gridpoints;
 	lookups =      input.lookups;
 	HM =           input.HM;
+	UEG =          input.UEG;
 
 	// Set number of OpenMP Threads
 	omp_set_num_threads(nthreads); 
@@ -59,7 +60,11 @@ int main( int argc, char* argv[] )
 	size_t memtotal;
 	int mem_tot;
 
-	memtotal          = all_nuclide_grids + size_UEG;
+	if( UEG == 1 )
+		memtotal      = all_nuclide_grids + size_UEG;
+	else
+		memtotal      = all_nuclide_grids;
+
 	all_nuclide_grids = all_nuclide_grids / 1048576;
 	size_UEG          = size_UEG / 1048576;
 	memtotal          = memtotal / 1048576;
@@ -82,8 +87,11 @@ int main( int argc, char* argv[] )
 		printf("Total Nuclides:               %d\n", n_isotopes);
 		printf("Gridpoints (per Nuclide):     ");
 		fancy_int(n_gridpoints);
-		printf("Unionized Energy Gridpoints:  ");
-		fancy_int(n_isotopes*n_gridpoints);
+		if( UEG == 1 )
+		{
+			printf("Unionized Energy Gridpoints:  ");
+			fancy_int(n_isotopes*n_gridpoints);
+		}
 		printf("XS Lookups:                   "); fancy_int(lookups);
 		#ifdef MPI
 		printf("MPI Ranks:                    %d\n", nprocs);
@@ -122,12 +130,15 @@ int main( int argc, char* argv[] )
 	sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
 
 	// Prepare Unionized Energy Grid Framework
-	GridPoint * energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,
+	GridPoint * energy_grid;
+	if( UEG == 1 )
+		energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,
 	                                                nuclide_grids ); 	
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
-	//set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	if( UEG == 1)
+		set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
 	
 	// Get material data
 	if( mype == 0 ) printf("Loading Mats...\n");
@@ -172,7 +183,7 @@ int main( int argc, char* argv[] )
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
 	energy_grid, nuclide_grids, lookups, nthreads, \
-	mats, concs, num_nucs, mype, vhash) 
+	mats, concs, num_nucs, mype, vhash, UEG) 
 	{	
 		#ifdef PAPI
 		int eventset = PAPI_NULL; 
@@ -212,10 +223,17 @@ int main( int argc, char* argv[] )
 			// This returns the macro_xs_vector, but we're not going
 			// to do anything with it in this program, so return value
 			// is written over.
-			NO_UEG_calculate_macro_xs( p_energy, mat, n_isotopes,
-			                    n_gridpoints, num_nucs, concs,
-			                    energy_grid, nuclide_grids, mats,
-                                macro_xs_vector );
+			if( UEG == 1 )
+				calculate_macro_xs( p_energy, mat, n_isotopes,
+									n_gridpoints, num_nucs, concs,
+									energy_grid, nuclide_grids, mats,
+									macro_xs_vector );
+
+			else
+				NO_UEG_calculate_macro_xs( p_energy, mat, n_isotopes,
+									n_gridpoints, num_nucs, concs,
+									energy_grid, nuclide_grids, mats,
+									macro_xs_vector );
 
 			// Verification hash calculation
 			// This method provides a consistent hash accross
