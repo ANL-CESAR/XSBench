@@ -5,7 +5,7 @@
 // makefile takes this into account.
 
 // Does a extra, arbitrary flops.
-void do_flops( void )
+inline void do_flops( void )
 {
 	double a = 1.33;
 	double b = 2.34;

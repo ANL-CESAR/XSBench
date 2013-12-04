@@ -125,7 +125,8 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	
 	if( mype == 0 ) printf("Assigning pointers to Unionized Energy Grid...\n");
 	#pragma omp parallel for default(none) \
-	shared( energy_grid, nuclide_grids, n_isotopes, n_gridpoints, mype )
+	shared( energy_grid, nuclide_grids, n_isotopes, n_gridpoints, mype )\
+	num_threads(32)
 	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
 		double quarry = energy_grid[i].energy;

@@ -143,7 +143,7 @@ int main( int argc, char* argv[] )
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
 	#ifdef BENCHMARK
-	for( int jrt = 1; jrt <=omp_get_num_procs(); jrt++ )
+	for( int jrt = 1; jrt <= omp_get_num_procs(); jrt++ )
 	{
 		nthreads = jrt;
 		omp_set_num_threads(nthreads);

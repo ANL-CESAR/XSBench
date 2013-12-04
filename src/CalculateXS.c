@@ -28,7 +28,7 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	
 	#ifdef ADD_EXTRAS
 	do_flops();
-	do_loads( nuc, nuclide_grids, n_gridpoints );	
+	//do_loads( nuc, nuclide_grids, n_gridpoints );	
 	#endif
 	
 	// Elastic XS
@@ -36,7 +36,7 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	
 	#ifdef ADD_EXTRAS
 		do_flops();
-		do_loads( (nuc+1) % n_isotopes, nuclide_grids, n_gridpoints );	
+		//do_loads( (nuc+1) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	
 	// Absorbtion XS
@@ -44,7 +44,7 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	
 	#ifdef ADD_EXTRAS
 		do_flops();
-		do_loads( (nuc+2) % n_isotopes, nuclide_grids, n_gridpoints );	
+		//do_loads( (nuc+2) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	
 	// Fission XS
@@ -52,7 +52,7 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	
 	#ifdef ADD_EXTRAS
 		do_flops();
-		do_loads( (nuc+3) % n_isotopes, nuclide_grids, n_gridpoints );	
+		//do_loads( (nuc+3) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	
 	// Nu Fission XS
@@ -60,7 +60,7 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 	
 	#ifdef ADD_EXTRAS
 		do_flops();
-		do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
+		//do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
 	#endif
 	
 	//test
