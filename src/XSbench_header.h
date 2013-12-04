@@ -43,13 +43,12 @@ typedef struct{
 } Nuclide;
 
 typedef struct{
-	//double energy;
-	int * xs_ptrs;
+	int * nuclides;
 } GridPoint;
 
 typedef struct{
 	double * energy;
-	GridPoint * nuclides;
+	GridPoint * points;
 } Grid;
 
 typedef struct{

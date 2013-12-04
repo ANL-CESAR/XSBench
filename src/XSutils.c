@@ -19,26 +19,26 @@ int NGP_compare( const void * a, const void * b )
 
 
 // Binary Search function for nuclide grid
-// Returns ptr to energy less than the quarry that is closest to the quarry
-int binary_search( NuclideGridPoint * A, double quarry, int n )
+// Returns idx to energy less than the quarry that is closest to the quarry
+int binary_search( double * A, double quarry, int n )
 {
 	int min = 0;
 	int max = n-1;
 	int mid;
 	
 	// checks to ensure we're not reading off the end of the grid
-	if( A[0].energy > quarry )
+	if( A[0] > quarry )
 		return 0;
-	else if( A[n-1].energy < quarry )
+	else if( A[n-1] < quarry )
 		return n-2;
 	
 	// Begins binary search	
 	while( max >= min )
 	{
 		mid = min + floor( (max-min) / 2.0);
-		if( A[mid].energy < quarry )
+		if( A[mid] < quarry )
 			min = mid+1;
-		else if( A[mid].energy > quarry )
+		else if( A[mid] > quarry )
 			max = mid-1;
 		else
 			return mid;

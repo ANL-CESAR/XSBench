@@ -130,7 +130,10 @@ Grid generate_energy_grid( int n_isotopes, int n_gridpoints,
 	Grid grid;
 	int pts = n_isotopes * n_gridpoints;
 	grid.energy = (double *) malloc( sizeof(double *) * pts );
-	grid.nuclides = (int *) malloc( sizeof(GridPoint) * pts );
+	grid.points = (int *) malloc( sizeof(GridPoint) * pts );
+	int * tmp = (int *) malloc( sizeof(int) * pts * n_isotopes );
+	for( int i = 0; i < pts; i++ )
+		grid.points[i].nuclides = &tmp[i * n_isotopes];
 
 	if( mype == 0 ) printf("Copying and Sorting all nuclide grids...\n");
 	
@@ -161,7 +164,7 @@ dbl_cmp(const void * a, const void * b)
 // pointer from unionized grid to the correct spot in the nuclide grid.
 // This process is time consuming, as the number of binary searches
 // required is:  binary searches = n_gridpoints * n_isotopes^2
-void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
+void set_grid_ptrs( Grid grid, Nuclide * nuclides,
 		int n_isotopes, int n_gridpoints )
 {
 	int mype = 0;
@@ -176,7 +179,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	num_threads(32)
 	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
-		double quarry = energy_grid[i].energy;
+		double quarry = grid.energy[i];
 		if( INFO && mype == 0 && omp_get_thread_num() == 0 && i % 200 == 0 )
 			printf("\rAligning Unionized Grid...(%.0lf%% complete)",
 					100.0 * (double) i / (n_isotopes*n_gridpoints /
@@ -185,8 +188,8 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 		{
 			// j is the nuclide i.d.
 			// log n binary search
-			energy_grid[i].xs_ptrs[j] = 
-				binary_search( nuclide_grids[j], quarry, n_gridpoints);
+			grid.points[i].nuclides[j] = 
+				binary_search( nuclides[j].energy, quarry, n_gridpoints);
 		}
 	}
 	if( mype == 0 ) printf("\n");

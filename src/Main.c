@@ -182,7 +182,7 @@ int main( int argc, char* argv[] )
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, n_isotopes, n_gridpoints, \
-	energy_grid, nuclide_grids, lookups, nthreads, \
+	grid, nuclides, lookups, nthreads, \
 	mats, concs, num_nucs, mype, vhash, UEG) 
 	{	
 		#ifdef PAPI
@@ -226,13 +226,13 @@ int main( int argc, char* argv[] )
 			if( UEG == 1 )
 				calculate_macro_xs( p_energy, mat, n_isotopes,
 									n_gridpoints, num_nucs, concs,
-									energy_grid, nuclide_grids, mats,
+									grid, nuclides, mats,
 									macro_xs_vector );
 
 			else
 				NO_UEG_calculate_macro_xs( p_energy, mat, n_isotopes,
 									n_gridpoints, num_nucs, concs,
-									energy_grid, nuclide_grids, mats,
+									grid, nuclides, mats,
 									macro_xs_vector );
 
 			// Verification hash calculation
