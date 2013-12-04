@@ -1,4 +1,30 @@
 =====================================================================
+NEW IN VERSION 12
+=====================================================================
+
+- Files have been reordered slightly to improve organization of
+  source code.
+ 
+- New option to run simulation without the aid of the Unionized
+  Energy Grid (UEG). XSBench still runs by default with the UEG,
+  but can be run with only the nuclide grids by using the
+  -u flag with the nuclide option. I.e., doing:
+
+  -u nuclide
+  -u UEG
+
+  Sets the code to run with only nuclide grids or with the UEG
+  respectively.
+
+  Running with only the nuclide grid greatly reduces the memory
+  footprint of XSBench, at the cost of slower performance. See
+  README documentation for further details.
+
+- TODO - reorder NGPs to not have energy within them.
+
+
+
+=====================================================================
 NEW IN VERSION 11
 =====================================================================
 
