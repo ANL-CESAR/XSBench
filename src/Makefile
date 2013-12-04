@@ -5,9 +5,9 @@
 COMPILER  = gnu
 OPTIMIZE  = yes
 DEBUG     = no
-PROFILE   = no
+PROFILE   = yes
 MPI       = no
-PAPI      = yes
+PAPI      = no
 VEC_INFO  = no
 VERIFY    = no
 PAUSE     = no

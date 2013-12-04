@@ -4,6 +4,29 @@
 #include<mpi.h>
 #endif
 
+// Allocates nuclide matrix
+NuclideGridPoint ** gpmatrix(size_t m, size_t n)
+{
+	int i,j;
+	NuclideGridPoint * full = (NuclideGridPoint *) malloc( m * n *
+	                          sizeof( NuclideGridPoint ) );
+	NuclideGridPoint ** M = (NuclideGridPoint **) malloc( m *
+	                          sizeof(NuclideGridPoint *) );
+
+	for( i = 0, j=0; i < m*n; i++ )
+		if( i % n == 0 )
+			M[j++] = &full[i];
+
+	return M;
+}
+
+// Frees nuclide matrix
+void gpmatrix_free( NuclideGridPoint ** M )
+{
+	free( *M );
+	free( M );
+}
+
 // Generates randomized energy grid for each nuclide
 // Note that this is done as part of initialization (serial), so
 // rand() is used.

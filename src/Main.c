@@ -127,7 +127,7 @@ int main( int argc, char* argv[] )
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
-	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	//set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
 	
 	// Get material data
 	if( mype == 0 ) printf("Loading Mats...\n");
@@ -212,7 +212,7 @@ int main( int argc, char* argv[] )
 			// This returns the macro_xs_vector, but we're not going
 			// to do anything with it in this program, so return value
 			// is written over.
-			calculate_macro_xs( p_energy, mat, n_isotopes,
+			NO_UEG_calculate_macro_xs( p_energy, mat, n_isotopes,
 			                    n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );

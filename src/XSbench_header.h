@@ -112,5 +112,18 @@ void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
 unsigned int hash(unsigned char *str, int nbins);
+void NO_UEG_calculate_macro_xs( double p_energy, int mat, int n_isotopes,
+                         int n_gridpoints, int * restrict num_nucs,
+                         double ** restrict concs,
+                         GridPoint * restrict energy_grid,
+                         NuclideGridPoint ** restrict nuclide_grids,
+                         int ** restrict mats,
+                         double * restrict macro_xs_vector );
+
+void NO_UEG_calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
+                           int n_gridpoints,
+                           GridPoint * restrict energy_grid,
+                           NuclideGridPoint ** restrict nuclide_grids,
+                           int idx, double * restrict xs_vector );
 
 #endif
