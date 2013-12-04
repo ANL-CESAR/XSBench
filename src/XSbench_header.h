@@ -27,9 +27,9 @@
 #define SAVE 1
 
 // Structures
+
 typedef struct{
-	double energy;
-	
+	//double energy;
 	double total_xs;
 	double elastic_xs;
 	double absorbtion_xs;
@@ -38,9 +38,19 @@ typedef struct{
 } NuclideGridPoint;
 
 typedef struct{
-	double energy;
+	double * energy;
+	NuclideGridPoint * XS;
+} Nuclide;
+
+typedef struct{
+	//double energy;
 	int * xs_ptrs;
 } GridPoint;
+
+typedef struct{
+	double * energy;
+	GridPoint * nuclides;
+} Grid;
 
 typedef struct{
 	int nthreads;
@@ -126,5 +136,6 @@ void NO_UEG_calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
                            int idx, double * restrict xs_vector );
+void nuclide_qsort(double * energy, NuclideGridPoint * XS, int low,int high);
 
 #endif

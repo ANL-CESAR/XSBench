@@ -117,23 +117,23 @@ int main( int argc, char* argv[] )
 	// Allocate & fill energy grids
 	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	
-	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
+	Nuclide * nuclides = (Nuclide *) malloc( sizeof(Nuclide) * n_isotopes);
 	
 	#ifdef VERIFICATION
-	generate_grids_v( nuclide_grids, n_isotopes, n_gridpoints );	
+	generate_grids_v( nuclides, n_isotopes, n_gridpoints );	
 	#else
-	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
+	generate_grids( nuclides, n_isotopes, n_gridpoints );	
 	#endif
 	
 	// Sort grids by energy
 	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
-	sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
+	sort_nuclide_grids( nuclides, n_isotopes, n_gridpoints );
 
 	// Prepare Unionized Energy Grid Framework
-	GridPoint * energy_grid;
+	Grid grid;
 	if( UEG == 1 )
-		energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,
-	                                                nuclide_grids ); 	
+		grid = generate_energy_grid( n_isotopes, n_gridpoints,
+	                                                nuclides ); 	
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
