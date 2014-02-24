@@ -1,8 +1,8 @@
 #include "XSbench_header.h"
 
 // Calculates the microscopic cross section for a given nuclide & energy
-void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
-                           int n_gridpoints,
+void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+                           long n_gridpoints,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
                            int idx, double * restrict xs_vector ){
@@ -77,8 +77,8 @@ void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
-void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
-                         int n_gridpoints, int * restrict num_nucs,
+void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+                         long n_gridpoints, int * restrict num_nucs,
                          double ** restrict concs,
                          GridPoint * restrict energy_grid,
                          NuclideGridPoint ** restrict nuclide_grids,
@@ -86,7 +86,7 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
                          double * restrict macro_xs_vector ){
 	double xs_vector[5];
 	int p_nuc; // the nuclide we are looking up
-	int idx = 0;	
+	long idx = 0;	
 	double conc; // the concentration of the nuclide in the material
 
 	// cleans out macro_xs_vector
@@ -126,12 +126,12 @@ void calculate_macro_xs( double p_energy, int mat, int n_isotopes,
 
 // (fixed) binary search for energy on unionized energy grid
 // returns lower index
-int grid_search( int n, double quarry, GridPoint * A)
+long grid_search( long n, double quarry, GridPoint * A)
 {
-	int lowerLimit = 0;
-	int upperLimit = n-1;
-	int examinationPoint;
-	int length = upperLimit - lowerLimit;
+	long lowerLimit = 0;
+	long upperLimit = n-1;
+	long examinationPoint;
+	long length = upperLimit - lowerLimit;
 
 	while( length > 1 )
 	{

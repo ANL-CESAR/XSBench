@@ -189,7 +189,7 @@ Inputs read_CLI( int argc, char * argv[] )
 			if( ++i < argc )
 			{
 				user_g = 1;
-				input.n_gridpoints = atoi(argv[i]);
+				input.n_gridpoints = atol(argv[i]);
 			}
 			else
 				print_CLI_error();

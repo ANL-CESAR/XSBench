@@ -8,9 +8,9 @@
 // Note that this is done as part of initialization (serial), so
 // rand() is used.
 void generate_grids( NuclideGridPoint ** nuclide_grids,
-                     int n_isotopes, int n_gridpoints ) {
-	for( int i = 0; i < n_isotopes; i++ )
-		for( int j = 0; j < n_gridpoints; j++ )
+                     long n_isotopes, long n_gridpoints ) {
+	for( long i = 0; i < n_isotopes; i++ )
+		for( long j = 0; j < n_gridpoints; j++ )
 		{
 			nuclide_grids[i][j].energy       =((double)rand()/(double)RAND_MAX);
 			nuclide_grids[i][j].total_xs     =((double)rand()/(double)RAND_MAX);
@@ -23,9 +23,9 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 
 // Verification version of this function (tighter control over RNG)
 void generate_grids_v( NuclideGridPoint ** nuclide_grids,
-                     int n_isotopes, int n_gridpoints ) {
-	for( int i = 0; i < n_isotopes; i++ )
-		for( int j = 0; j < n_gridpoints; j++ )
+                     long n_isotopes, long n_gridpoints ) {
+	for( long i = 0; i < n_isotopes; i++ )
+		for( long j = 0; j < n_gridpoints; j++ )
 		{
 			nuclide_grids[i][j].energy       = rn_v();
 			nuclide_grids[i][j].total_xs     = rn_v();
@@ -37,13 +37,13 @@ void generate_grids_v( NuclideGridPoint ** nuclide_grids,
 }
 
 // Sorts the nuclide grids by energy (lowest -> highest)
-void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
-                         int n_gridpoints )
+void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
+                         long n_gridpoints )
 {
 	int (*cmp) (const void *, const void *);
 	cmp = NGP_compare;
 	
-	for( int i = 0; i < n_isotopes; i++ )
+	for( long i = 0; i < n_isotopes; i++ )
 		qsort( nuclide_grids[i], n_gridpoints, sizeof(NuclideGridPoint),
 		       cmp );
 	
@@ -60,7 +60,7 @@ void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
 
 // Allocates unionized energy grid, and assigns union of energy levels
 // from nuclide grids to it.
-GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
+GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
                                   NuclideGridPoint ** nuclide_grids) {
 	int mype = 0;
 
@@ -70,7 +70,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	
 	if( mype == 0 ) printf("Generating Unionized Energy Grid...\n");
 	
-	int n_unionized_grid_points = n_isotopes*n_gridpoints;
+	long n_unionized_grid_points = n_isotopes*n_gridpoints;
 	int (*cmp) (const void *, const void *);
 	cmp = NGP_compare;
 	
@@ -89,7 +89,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	
 	if( mype == 0 ) printf("Assigning energies to unionized grid...\n");
 	
-	for( int i = 0; i < n_unionized_grid_points; i++ )
+	for( long i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].energy = n_grid_sorted[0][i].energy;
 	
 
@@ -98,7 +98,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 	int * full = (int *) malloc( n_isotopes * n_unionized_grid_points
 	                             * sizeof(int) );
 	
-	for( int i = 0; i < n_unionized_grid_points; i++ )
+	for( long i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].xs_ptrs = &full[n_isotopes * i];
 	
 	// debug error checking
@@ -115,7 +115,7 @@ GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
 // This process is time consuming, as the number of binary searches
 // required is:  binary searches = n_gridpoints * n_isotopes^2
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    int n_isotopes, int n_gridpoints )
+                    long n_isotopes, long n_gridpoints )
 {
 	int mype = 0;
 
@@ -126,14 +126,14 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	if( mype == 0 ) printf("Assigning pointers to Unionized Energy Grid...\n");
 	#pragma omp parallel for default(none) \
 	shared( energy_grid, nuclide_grids, n_isotopes, n_gridpoints, mype )
-	for( int i = 0; i < n_isotopes * n_gridpoints ; i++ )
+	for( long i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
 		double quarry = energy_grid[i].energy;
 		if( INFO && mype == 0 && omp_get_thread_num() == 0 && i % 200 == 0 )
 			printf("\rAligning Unionized Grid...(%.0lf%% complete)",
 			       100.0 * (double) i / (n_isotopes*n_gridpoints /
 				                         omp_get_num_threads())     );
-		for( int j = 0; j < n_isotopes; j++ )
+		for( long j = 0; j < n_isotopes; j++ )
 		{
 			// j is the nuclide i.d.
 			// log n binary search

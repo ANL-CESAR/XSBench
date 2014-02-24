@@ -4,7 +4,7 @@
 #include "XSbench_header.h"
 
 // num_nucs represents the number of nuclides that each material contains
-int * load_num_nucs(int n_isotopes)
+int * load_num_nucs(long n_isotopes)
 {
 	int * num_nucs = (int*)malloc(12*sizeof(int));
 	
@@ -31,7 +31,7 @@ int * load_num_nucs(int n_isotopes)
 }
 
 // Assigns an array of nuclide ID's to each material
-int ** load_mats( int * num_nucs, int n_isotopes )
+int ** load_mats( int * num_nucs, long n_isotopes )
 {
 	int ** mats = (int **) malloc( 12 * sizeof(int *) );
 	for( int i = 0; i < 12; i++ )

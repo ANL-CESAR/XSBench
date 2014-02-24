@@ -44,8 +44,8 @@ typedef struct{
 
 typedef struct{
 	int nthreads;
-	int n_isotopes;
-	int n_gridpoints;
+	long n_isotopes;
+	long n_gridpoints;
 	int lookups;
 	char * HM;
 } Inputs;
@@ -63,39 +63,39 @@ void gpmatrix_free( NuclideGridPoint ** M );
 int NGP_compare( const void * a, const void * b );
 
 void generate_grids( NuclideGridPoint ** nuclide_grids,
-                     int n_isotopes, int n_gridpoints );
+                     long n_isotopes, long n_gridpoints );
 void generate_grids_v( NuclideGridPoint ** nuclide_grids,
-                     int n_isotopes, int n_gridpoints );
+                     long n_isotopes, long n_gridpoints );
 
-void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, int n_isotopes,
-                         int n_gridpoints );
+void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
+                         long n_gridpoints );
 
-GridPoint * generate_energy_grid( int n_isotopes, int n_gridpoints,
+GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
                                   NuclideGridPoint ** nuclide_grids);
 
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    int n_isotopes, int n_gridpoints );
+                    long n_isotopes, long n_gridpoints );
 
 int binary_search( NuclideGridPoint * A, double quarry, int n );
 
-void calculate_macro_xs(   double p_energy, int mat, int n_isotopes,
-                           int n_gridpoints, int * restrict num_nucs,
+void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
+                           long n_gridpoints, int * restrict num_nucs,
                            double ** restrict concs,
 						   GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
 						   int ** restrict mats,
                            double * restrict macro_xs_vector );
 
-void calculate_micro_xs(   double p_energy, int nuc, int n_isotopes,
-                           int n_gridpoints,
+void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+                           long n_gridpoints,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids, int idx,
                            double * restrict xs_vector );
 
-int grid_search( int n, double quarry, GridPoint * A);
+long grid_search( long n, double quarry, GridPoint * A);
 
-int * load_num_nucs(int n_isotopes);
-int ** load_mats( int * num_nucs, int n_isotopes );
+int * load_num_nucs(long n_isotopes);
+int ** load_mats( int * num_nucs, long n_isotopes );
 double ** load_concs( int * num_nucs );
 double ** load_concs_v( int * num_nucs );
 int pick_mat(unsigned long * seed);
@@ -106,7 +106,7 @@ void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
-		       int n_gridpoints );	
+		       long n_gridpoints );	
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 double rn_v(void);

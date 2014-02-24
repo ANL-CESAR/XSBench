@@ -1,4 +1,20 @@
 =====================================================================
+NEW IN VERSION 12
+=====================================================================
+- (Bugfix) The XL and XXL runtime options didn't work correctly.
+  The unionized energy grid overflowed the bounds of normal 4 byte
+  integers, and actually required use of 8 byte integers.
+
+  The variables "n_isotopes" and "n_gridpoints" have been refactored
+  to 8 byte long integers. All variables that use n_isotopes and
+  n_gridpoints as input have also been refactored to 8 byte longs.
+
+  Note that a simple "patch" from version 11 to version 12 can be
+  manually done by simply changing line 73 of GridInit.c to be a
+  long instead of an int. The more thorough refactoring done in v12
+  is done to "future proof" the code.
+
+=====================================================================
 NEW IN VERSION 11
 =====================================================================
 

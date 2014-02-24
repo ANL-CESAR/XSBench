@@ -10,10 +10,11 @@ int main( int argc, char* argv[] )
 	// Initialization & Command Line Read-In
 	// =====================================================================
 	
-	int version = 11;
+	int version = 12;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
-	int n_isotopes, n_gridpoints, lookups, i, thread, nthreads, mat;
+	int lookups, i, thread, nthreads, mat;
+	long n_isotopes, n_gridpoints;
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
 	char * HM;

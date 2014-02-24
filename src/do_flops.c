@@ -20,9 +20,9 @@ void do_flops( void )
 // Does extra, random memory loads
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
-		       int n_gridpoints )
+		       long n_gridpoints )
 {
-	int i, idx;
+	long i, idx;
 	unsigned long tmp = nuc;
 	double load;
 	for( i = 0; i < EXTRA_LOADS; i++ )
