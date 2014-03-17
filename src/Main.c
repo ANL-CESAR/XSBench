@@ -80,7 +80,7 @@ int main( int argc, char* argv[] )
 		#endif
 		printf("Materials:                    %d\n", 12);
 		printf("H-M Benchmark Size:           %s\n", HM);
-		printf("Total Nuclides:               %d\n", n_isotopes);
+		printf("Total Nuclides:               %ld\n", n_isotopes);
 		printf("Gridpoints (per Nuclide):     ");
 		fancy_int(n_gridpoints);
 		printf("Unionized Energy Gridpoints:  ");
