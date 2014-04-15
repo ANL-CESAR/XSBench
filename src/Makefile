@@ -13,7 +13,7 @@ VERIFY      = no
 PAUSE       = no
 BENCHMARK   = no
 BINARY_DUMP = no
-BINARY_READ = yes
+BINARY_READ = no
 
 #===============================================================================
 # Program name & source code list

@@ -108,7 +108,9 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 
 	// Allocate & fill energy grids
+	#ifndef BINARY_READ
 	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
+	#endif
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
 	
@@ -143,6 +145,7 @@ int main( int argc, char* argv[] )
 	#endif
 
 	#ifdef BINARY_READ
+	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
 	binary_read(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
 	#endif
 	
