@@ -112,5 +112,6 @@ void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
 unsigned int hash(unsigned char *str, int nbins);
+void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
 
 #endif

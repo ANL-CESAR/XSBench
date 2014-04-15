@@ -292,3 +292,22 @@ unsigned int hash(unsigned char *str, int nbins)
 
 	return hash % nbins;
 }
+
+void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid)
+{
+	FILE * fp = fopen("XS_data.dat", "wb");
+	// Dump Nuclide Grid Data
+	for( int i = 0; i < n_isotopes; i++ )
+		fwrite(nuclide_grids[i], sizeof(NuclideGridPoint), n_gridpoints, fp);
+	// Dump UEG Data
+	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
+	{
+		// Write energy level
+		fwrite(&energy_grid[i].energy, sizeof(double), 1, fp);
+
+		// Write index data array (xs_ptrs array)
+		fwrite(energy_grid[i].xs_ptrs, sizeof(int), n_isotopes, fp);
+	}
+
+	fclose(fp);
+}

@@ -140,6 +140,13 @@ int main( int argc, char* argv[] )
 	double **concs = load_concs(num_nucs);
 	#endif
 
+	#ifdef BINARY_DUMP
+	if( mype == 0 ) printf("Dumping data to binary file...\n");
+	binary_dump(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
+	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
+	return 0;
+	#endif
+
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
