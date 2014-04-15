@@ -119,16 +119,32 @@ int main( int argc, char* argv[] )
 	#endif
 	
 	// Sort grids by energy
+	#ifndef BINARY_READ
 	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
 	sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
+	#endif
 
 	// Prepare Unionized Energy Grid Framework
+	#ifndef BINARY_READ
 	GridPoint * energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,
 	                                                nuclide_grids ); 	
+	#else
+	GridPoint * energy_grid = (GridPoint *)malloc( n_isotopes * n_gridpoints
+	                                               * sizeof( GridPoint ) );
+	int * index_data = (int *) malloc( n_isotopes * n_gridpoints * n_isotopes * sizeof(int));
+	for( int i = 0; i < n_isotopes*n_gridpoints; i++ )
+		energy_grid[i].xs_ptrs = &index_data[i*n_isotopes];
+	#endif
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
+	#ifndef BINARY_READ
 	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	#endif
+
+	#ifdef BINARY_READ
+	binary_read(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
+	#endif
 	
 	// Get material data
 	if( mype == 0 ) printf("Loading Mats...\n");

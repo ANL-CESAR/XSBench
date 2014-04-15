@@ -12,8 +12,8 @@ VEC_INFO    = no
 VERIFY      = no
 PAUSE       = no
 BENCHMARK   = no
-BINARY_DUMP = yes
-BINARY_READ = no
+BINARY_DUMP = no
+BINARY_READ = yes
 
 #===============================================================================
 # Program name & source code list

@@ -311,3 +311,24 @@ void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide
 
 	fclose(fp);
 }
+
+void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid)
+{
+	int stat;
+	FILE * fp = fopen("XS_data.dat", "rb");
+	// Read Nuclide Grid Data
+	for( int i = 0; i < n_isotopes; i++ )
+		stat = fread(nuclide_grids[i], sizeof(NuclideGridPoint), n_gridpoints, fp);
+	// Dump UEG Data
+	for( int i = 0; i < n_isotopes * n_gridpoints; i++ )
+	{
+		// Write energy level
+		stat = fread(&energy_grid[i].energy, sizeof(double), 1, fp);
+
+		// Write index data array (xs_ptrs array)
+		stat = fread(energy_grid[i].xs_ptrs, sizeof(int), n_isotopes, fp);
+	}
+
+	fclose(fp);
+
+}
