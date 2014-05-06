@@ -82,7 +82,7 @@ int main( int argc, char* argv[] )
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
 	#ifndef BINARY_READ
-	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
 	#endif
 
 	#ifdef BINARY_READ

@@ -11,7 +11,7 @@ PAPI        = no
 VEC_INFO    = no
 VERIFY      = no
 BENCHMARK   = no
-BINARY_DUMP = no
+BINARY_DUMP = yes
 BINARY_READ = no
 
 #===============================================================================
@@ -101,12 +101,12 @@ endif
 
 # Binary dump for file I/O based initialization
 ifeq ($(BINARY_DUMP),yes)
-  GCC_S_FLAGS += -DBINARY_DUMP
+  CFLAGS += -DBINARY_DUMP
 endif
 
 # Binary read for file I/O based initialization
 ifeq ($(BINARY_READ),yes)
-  GCC_S_FLAGS += -DBINARY_READ
+  CFLAGS += -DBINARY_READ
 endif
 
 
