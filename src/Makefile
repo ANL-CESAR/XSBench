@@ -10,7 +10,6 @@ MPI       = no
 PAPI      = no
 VEC_INFO  = no
 VERIFY    = no
-PAUSE     = no
 BENCHMARK = no
 
 #===============================================================================
@@ -35,95 +34,86 @@ obj = $(source:.c=.o)
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
-  GCC = gcc
+  CC = gcc
 endif
 
 # BG/Q gcc Cross-Compiler
 ifeq ($(MACHINE),bluegene)
-  GCC = mpicc
+  CC = mpicc
 endif
 
 # Standard Flags
-GCC_S_FLAGS := -fopenmp -std=gnu99
-
-# Optional/Extra Flags
-GCC_O_FLAGS =
+CFLAGS := -fopenmp -std=gnu99
 
 # Linker Flags
 LDFLAGS = -lm
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
-  GCC_O_FLAGS += -g
+  CFLAGS += -g
   LDFLAGS  += -g
 endif
 
 # Profiling Flags
 ifeq ($(PROFILE),yes)
-  GCC_O_FLAGS += -pg
+  CFLAGS += -pg
   LDFLAGS  += -pg
 endif
 
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
-  GCC_O_FLAGS += -O3
+  CFLAGS += -O3
 endif
 
 # Compiler Vectorization (needs -O3 flag) information
 ifeq ($(VEC_INFO),yes)
-  GCC_O_FLAGS += -ftree-vectorizer-verbose=6
+  CFLAGS += -ftree-vectorizer-verbose=6
 endif
 
 # PAPI source (you may need to provide -I and -L pointing
 # to PAPI depending on your installation
 ifeq ($(PAPI),yes)
   source += papi.c
-  GCC_O_FLAGS += -DPAPI
-  #GCC_S_FLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
+  CFLAGS += -DPAPI
+  #CFLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
   #LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
   LDFLAGS += -lpapi
 endif
 
 # MPI
 ifeq ($(MPI),yes)
-  GCC = mpicc
-  GCC_S_FLAGS += -DMPI
+  CC = mpicc
+  CFLAGS += -DMPI
 endif
 
 # Verification of results mode
 ifeq ($(VERIFY),yes)
-  GCC_S_FLAGS += -DVERIFICATION
-endif
-
-# Injects artificial pause between XS lookups
-# to represent time for particle tracking
-ifeq ($(PAUSE),yes)
-  GCC_S_FLAGS += -DPAUSE
+  CFLAGS += -DVERIFICATION
 endif
 
 # Adds outer 'benchmarking' loop to do multiple trials for
 # 1 < threads <= max_threads
 ifeq ($(BENCHMARK),yes)
-  GCC_S_FLAGS += -DBENCHMARK
+  CFLAGS += -DBENCHMARK
 endif
 #===============================================================================
 # Targets to Build
 #===============================================================================
 
 $(program): $(obj) XSbench_header.h
-	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) $(obj) -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
 %.o: %.c
-	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf XSBench XSBench.dSYM $(obj)
+	rm -rf $(program) $(obj)
 
 edit:
 	vim -p $(source) papi.c XSbench_header.h
 
 run:
-	./XSBench
+	./$(program)
 
 bgqrun:
 	qsub -t 10 -n 1 -O test XSBench

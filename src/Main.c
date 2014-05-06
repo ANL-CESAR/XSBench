@@ -9,7 +9,6 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	
 	int version = 12;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
@@ -49,7 +48,8 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 
 	// Allocate & fill energy grids
-	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
+	if( mype == 0)
+		printf("Generating Nuclide Energy Grids...\n");
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 	
@@ -60,7 +60,8 @@ int main( int argc, char* argv[] )
 	#endif
 	
 	// Sort grids by energy
-	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
+	if( mype == 0)
+		printf("Sorting Nuclide Energy Grids...\n");
 	sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
 
 	// Prepare Unionized Energy Grid Framework
@@ -72,9 +73,11 @@ int main( int argc, char* argv[] )
 	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
 	
 	// Get material data
-	if( mype == 0 ) printf("Loading Mats...\n");
+	if( mype == 0 )
+		printf("Loading Mats...\n");
 	int *num_nucs  = load_num_nucs(in.n_isotopes);
 	int **mats     = load_mats(num_nucs, in.n_isotopes);
+
 	#ifdef VERIFICATION
 	double **concs = load_concs_v(num_nucs);
 	#else
@@ -84,6 +87,8 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
+
+	// Outer benchmark loop can loop through all possible # of threads
 	#ifdef BENCHMARK
 	for( int bench_n = 1; bench_n <=omp_get_num_procs(); bench_n++ )
 	{
@@ -101,8 +106,8 @@ int main( int argc, char* argv[] )
 
 	omp_start = omp_get_wtime();
   
+	//initialize papi with one thread (master) here
 	#ifdef PAPI
-	/* initialize papi with one thread here  */
 	if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
 		fprintf(stderr, "PAPI library init error!\n");
 		exit(1);
@@ -115,6 +120,7 @@ int main( int argc, char* argv[] )
 	shared( max_procs, in, energy_grid, nuclide_grids, \
 	        mats, concs, num_nucs, mype, vhash) 
 	{	
+		// Initialize parallel PAPI counters
 		#ifdef PAPI
 		int eventset = PAPI_NULL; 
 		int num_papi_events;
@@ -125,9 +131,12 @@ int main( int argc, char* argv[] )
 		#endif
 
 		double macro_xs_vector[5];
+
+		// Initialize RNG seeds for threads
 		thread = omp_get_thread_num();
 		seed   = (thread+1)*19+17;
 
+		// XS Lookup Loop
 		#pragma omp for schedule(dynamic)
 		for( i = 0; i < in.lookups; i++ )
 		{
@@ -136,6 +145,7 @@ int main( int argc, char* argv[] )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
 						(i / ( (double)in.lookups / (double) in.nthreads ))
 						/ (double) in.nthreads * 100.0);
+
 			// Randomly pick an energy and material for the particle
 			#ifdef VERIFICATION
 			#pragma omp critical
@@ -177,6 +187,7 @@ int main( int argc, char* argv[] )
 			#endif
 		}
 
+		// Prints out thread local PAPI counters
 		#ifdef PAPI
 		if( mype == 0 && thread == 0 )
 		{
