@@ -24,7 +24,6 @@
 // Structures
 typedef struct{
 	double energy;
-	
 	double total_xs;
 	double elastic_xs;
 	double absorbtion_xs;
