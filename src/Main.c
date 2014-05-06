@@ -48,8 +48,9 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 
 	// Allocate & fill energy grids
-	if( mype == 0)
-		printf("Generating Nuclide Energy Grids...\n");
+	#ifndef BINARY_READ
+	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
+	#endif
 	
 	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 	
@@ -60,17 +61,34 @@ int main( int argc, char* argv[] )
 	#endif
 	
 	// Sort grids by energy
-	if( mype == 0)
-		printf("Sorting Nuclide Energy Grids...\n");
+	#ifndef BINARY_READ
+	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
 	sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
+	#endif
 
 	// Prepare Unionized Energy Grid Framework
+	#ifndef BINARY_READ
 	GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-		in.n_gridpoints, nuclide_grids ); 	
+	                          in.n_gridpoints, nuclide_grids ); 	
+	#else
+	GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
+	                           in.n_gridpoints * sizeof( GridPoint ) );
+	int * index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
+	                   * in.n_isotopes * sizeof(int));
+	for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
+		energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
+	#endif
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
-	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
+	#ifndef BINARY_READ
+	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	#endif
+
+	#ifdef BINARY_READ
+	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
+	binary_read(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
+	#endif
 	
 	// Get material data
 	if( mype == 0 )
@@ -82,6 +100,13 @@ int main( int argc, char* argv[] )
 	double **concs = load_concs_v(num_nucs);
 	#else
 	double **concs = load_concs(num_nucs);
+	#endif
+
+	#ifdef BINARY_DUMP
+	if( mype == 0 ) printf("Dumping data to binary file...\n");
+	binary_dump(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
+	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
+	return 0;
 	#endif
 
 	// =====================================================================

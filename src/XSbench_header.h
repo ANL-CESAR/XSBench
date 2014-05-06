@@ -109,5 +109,7 @@ unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
+void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
 
 #endif
