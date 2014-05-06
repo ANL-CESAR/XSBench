@@ -133,10 +133,10 @@ void fancy_int( long a )
         printf("%ld\n",a);
 
     else if( a >= 1000 && a < 1000000 )
-        printf("%d,%03ld\n", a / 1000, a % 1000);
+        printf("%ld,%03ld\n", a / 1000, a % 1000);
 
     else if( a >= 1000000 && a < 1000000000 )
-        printf("%d,%03ld,%03ld\n", a / 1000000, (a % 1000000) / 1000, a % 1000 );
+        printf("%ld,%03ld,%03ld\n",a / 1000000,(a % 1000000) / 1000,a % 1000 );
 
     else if( a >= 1000000000 )
         printf("%ld,%03ld,%03ld,%03ld\n",
