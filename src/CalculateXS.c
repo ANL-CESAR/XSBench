@@ -26,42 +26,17 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	// Total XS
 	xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
 	
-	#ifdef ADD_EXTRAS
-	do_flops();
-	do_loads( nuc, nuclide_grids, n_gridpoints );	
-	#endif
-	
 	// Elastic XS
 	xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
-	
-	#ifdef ADD_EXTRAS
-		do_flops();
-		do_loads( (nuc+1) % n_isotopes, nuclide_grids, n_gridpoints );	
-	#endif
 	
 	// Absorbtion XS
 	xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
 	
-	#ifdef ADD_EXTRAS
-		do_flops();
-		do_loads( (nuc+2) % n_isotopes, nuclide_grids, n_gridpoints );	
-	#endif
-	
 	// Fission XS
 	xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
 	
-	#ifdef ADD_EXTRAS
-		do_flops();
-		do_loads( (nuc+3) % n_isotopes, nuclide_grids, n_gridpoints );	
-	#endif
-	
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-	
-	#ifdef ADD_EXTRAS
-		do_flops();
-		do_loads( (nuc+4) % n_isotopes, nuclide_grids, n_gridpoints );	
-	#endif
 	
 	//test
 	/*	

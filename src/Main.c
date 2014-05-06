@@ -94,10 +94,6 @@ int main( int argc, char* argv[] )
 		printf("Threads:                      %d\n", nthreads);
 		printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 		#endif
-		if( EXTRA_FLOPS > 0 )
-			printf("Extra Flops:                  %d\n", EXTRA_FLOPS);
-		if( EXTRA_LOADS > 0 )
-			printf("Extra Loads:                  %d\n", EXTRA_LOADS);
 		border_print();
 		center_print("INITIALIZATION", 79);
 		border_print();
@@ -301,10 +297,6 @@ int main( int argc, char* argv[] )
 		#ifdef MPI
 		printf("MPI ranks:   %d\n", nprocs);
 		#endif
-		if( EXTRA_FLOPS > 0 )
-		printf("Extra Flops: %d\n", EXTRA_FLOPS);
-		if( EXTRA_LOADS > 0 )
-		printf("Extra Loads: %d\n", EXTRA_LOADS);
 		#ifdef MPI
 		printf("Total Lookups/s:            ");
 		fancy_int(total_lookups);

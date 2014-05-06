@@ -309,49 +309,6 @@ Further information on queuing can be found at:
 https://www.alcf.anl.gov/resource-guides/vesta-queuing
 
 ==============================================================================
-Adding Extra Flops
-==============================================================================
-
-One of the areas we're investigating is the effect of adding additional
-flops per each load from the nuclide xs arrays. Adding flops has so far
-shown to increase scaling, indicating that there is in fact a bottleneck
-being caused by the memory loads.
-
-To enable this feature, go to the XSBench_header.h file and uncomment
-out the "#define ADD_EXTRAS" line.
-
-By default, there are no "extra" flops in the benchmark. To add these
-in, open the XSbench_header.h file and change the EXTRA_FLOPS definition
-to the desired number of additional flops. i.e.,
-
-"#define EXTRA_FLOPS 10"
-
-Note that even just 5-10 extra flops will greatly increase the running
-time of the program.
-
-==============================================================================
-Adding Extra Memory Loads
-==============================================================================
-
-One of the areas we're investigating is the effect of adding additional
-memory loads per each required load from the nuclide xs arrays. Adding
-loads has so far been rather inconclusive, as randomizing the loads
-requires a number of flops be performed to generate the random index
-number to load from.
-
-To enable this feature, go to the XSBench_header.h file and uncomment
-out the "#define ADD_EXTRAS" line.
-
-By default, there are no "extra" loads in the benchmark. To add these
-in, open the XSbench_header.h file and change the EXTRA_LOADS definition
-to the desired number of additional loads. i.e.,
-
-"#define EXTRA_LOADS 10"
-
-Note that even just a few extra loads will greatly increase the running
-time of the program.
-
-==============================================================================
 Citing XSBench
 ==============================================================================
 

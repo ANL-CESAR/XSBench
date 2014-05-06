@@ -109,20 +109,17 @@ endif
 # Targets to Build
 #===============================================================================
 
-$(program): $(obj) do_flops.o XSbench_header.h
-	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) do_flops.o $(obj) -o $@ $(LDFLAGS)
+$(program): $(obj) XSbench_header.h
+	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) $(obj) -o $@ $(LDFLAGS)
 
 %.o: %.c
 	$(GCC) $(GCC_S_FLAGS) $(GCC_O_FLAGS) -c $< -o $@
 
-do_flops.o: do_flops.c
-	$(GCC) $(GCC_S_FLAGS) -c do_flops.c
-
 clean:
-	rm -rf XSBench XSBench.dSYM $(obj) do_flops.o
+	rm -rf XSBench XSBench.dSYM $(obj)
 
 edit:
-	vim -p $(source) do_flops.c papi.c XSbench_header.h
+	vim -p $(source) papi.c XSbench_header.h
 
 run:
 	./XSBench
