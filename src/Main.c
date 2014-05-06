@@ -13,11 +13,9 @@ int main( int argc, char* argv[] )
 	int version = 12;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
-	int lookups, i, thread, nthreads, mat;
-	long n_isotopes, n_gridpoints;
+	int i, thread, mat;
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
-	char * HM;
 	unsigned long long vhash = 0;
 	int nprocs;
 
@@ -36,23 +34,15 @@ int main( int argc, char* argv[] )
 	srand(time(NULL));
 	#endif
 
-	// Process CLI Fields
-	Inputs input = read_CLI( argc, argv );
+	// Process CLI Fields -- store in "Inputs" structure
+	Inputs in = read_CLI( argc, argv );
 	
-	// Set CLI variables
-	nthreads =     input.nthreads;
-	n_isotopes =   input.n_isotopes;
-	n_gridpoints = input.n_gridpoints;
-	lookups =      input.lookups;
-	HM =           input.HM;
-
 	// Set number of OpenMP Threads
-	omp_set_num_threads(nthreads); 
-		
+	omp_set_num_threads(in.nthreads); 
 
 	// Print-out of Input Summary
 	if( mype == 0 )
-		print_inputs( input, nprocs, version );
+		print_inputs( in, nprocs, version );
 
 	// =====================================================================
 	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -61,30 +51,30 @@ int main( int argc, char* argv[] )
 	// Allocate & fill energy grids
 	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	
-	NuclideGridPoint ** nuclide_grids = gpmatrix( n_isotopes, n_gridpoints );
+	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 	
 	#ifdef VERIFICATION
-	generate_grids_v( nuclide_grids, n_isotopes, n_gridpoints );	
+	generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
 	#else
-	generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
+	generate_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
 	#endif
 	
 	// Sort grids by energy
 	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
-	sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
+	sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
 
 	// Prepare Unionized Energy Grid Framework
-	GridPoint * energy_grid = generate_energy_grid( n_isotopes, n_gridpoints,
-	                                                nuclide_grids ); 	
+	GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
+		in.n_gridpoints, nuclide_grids ); 	
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
-	set_grid_ptrs( energy_grid, nuclide_grids, n_isotopes, n_gridpoints );
+	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
 	
 	// Get material data
 	if( mype == 0 ) printf("Loading Mats...\n");
-	int *num_nucs  = load_num_nucs(n_isotopes);
-	int **mats     = load_mats(num_nucs, n_isotopes);
+	int *num_nucs  = load_num_nucs(in.n_isotopes);
+	int **mats     = load_mats(num_nucs, in.n_isotopes);
 	#ifdef VERIFICATION
 	double **concs = load_concs_v(num_nucs);
 	#else
@@ -97,8 +87,8 @@ int main( int argc, char* argv[] )
 	#ifdef BENCHMARK
 	for( int bench_n = 1; bench_n <=omp_get_num_procs(); bench_n++ )
 	{
-		nthreads = bench_n;
-		omp_set_num_threads(nthreads);
+		in.nthreads = bench_n;
+		omp_set_num_threads(in.nthreads);
  	#endif
 
 	if( mype == 0 )
@@ -122,9 +112,8 @@ int main( int argc, char* argv[] )
 	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
-	shared( max_procs, n_isotopes, n_gridpoints, \
-	energy_grid, nuclide_grids, lookups, nthreads, \
-	mats, concs, num_nucs, mype, vhash) 
+	shared( max_procs, in, energy_grid, nuclide_grids, \
+	        mats, concs, num_nucs, mype, vhash) 
 	{	
 		#ifdef PAPI
 		int eventset = PAPI_NULL; 
@@ -140,12 +129,13 @@ int main( int argc, char* argv[] )
 		seed   = (thread+1)*19+17;
 
 		#pragma omp for schedule(dynamic)
-		for( i = 0; i < lookups; i++ )
+		for( i = 0; i < in.lookups; i++ )
 		{
 			// Status text
 			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
-						(i / ( (double)lookups / (double) nthreads )) / (double) nthreads * 100.0);
+						(i / ( (double)in.lookups / (double) in.nthreads ))
+						/ (double) in.nthreads * 100.0);
 			// Randomly pick an energy and material for the particle
 			#ifdef VERIFICATION
 			#pragma omp critical
@@ -164,8 +154,8 @@ int main( int argc, char* argv[] )
 			// This returns the macro_xs_vector, but we're not going
 			// to do anything with it in this program, so return value
 			// is written over.
-			calculate_macro_xs( p_energy, mat, n_isotopes,
-			                    n_gridpoints, num_nucs, concs,
+			calculate_macro_xs( p_energy, mat, in.n_isotopes,
+			                    in.n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
 
@@ -184,16 +174,6 @@ int main( int argc, char* argv[] )
 			unsigned long long vhash_local = hash(line, 10000);
 			#pragma omp atomic
 			vhash += vhash_local;
-			#endif
-
-			// Artificial pause injected to represent particle
-			// tracking calculation time. Similar to adding dummy flops.
-			#ifdef PAUSE
-			struct timespec ts, rts;
-			ts.tv_sec = 0;
-			//ts.tv_nsec = 100000; // .1 ms
-			ts.tv_nsec = 1000000; // 1 ms
-			nanosleep(&ts, &rts);
 			#endif
 		}
 
@@ -225,7 +205,7 @@ int main( int argc, char* argv[] )
 	omp_end = omp_get_wtime();
 	
 	// Print / Save Results and Exit
-	print_results( input, mype, omp_end-omp_start, nprocs, vhash );
+	print_results( in, mype, omp_end-omp_start, nprocs, vhash );
 
 	#ifdef BENCHMARK
 	}
