@@ -48,7 +48,7 @@ typedef struct{
 void logo(int version);
 void center_print(const char *s, int width);
 void border_print(void);
-void fancy_int(int a);
+void fancy_int(long a);
 
 NuclideGridPoint ** gpmatrix(size_t m, size_t n);
 
@@ -106,5 +106,8 @@ void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
 unsigned int hash(unsigned char *str, int nbins);
+size_t estimate_mem_usage( Inputs in );
+void print_inputs(Inputs in, int nprocs, int version);
+void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
 
 #endif

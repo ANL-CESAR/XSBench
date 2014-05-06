@@ -21,6 +21,7 @@ program = XSBench
 
 source = \
 Main.c \
+io.c \
 CalculateXS.c \
 GridInit.c \
 XSutils.c \

@@ -79,25 +79,25 @@ void border_print(void)
 }
 
 // Prints comma separated integers - for ease of reading
-void fancy_int( int a )
+void fancy_int( long a )
 {
     if( a < 1000 )
-        printf("%d\n",a);
+        printf("%ld\n",a);
 
     else if( a >= 1000 && a < 1000000 )
-        printf("%d,%03d\n", a / 1000, a % 1000);
+        printf("%d,%03ld\n", a / 1000, a % 1000);
 
     else if( a >= 1000000 && a < 1000000000 )
-        printf("%d,%03d,%03d\n", a / 1000000, (a % 1000000) / 1000, a % 1000 );
+        printf("%d,%03ld,%03ld\n", a / 1000000, (a % 1000000) / 1000, a % 1000 );
 
     else if( a >= 1000000000 )
-        printf("%d,%03d,%03d,%03d\n",
+        printf("%ld,%03ld,%03ld,%03ld\n",
                a / 1000000000,
                (a % 1000000000) / 1000000,
                (a % 1000000) / 1000,
                a % 1000 );
     else
-        printf("%d\n",a);
+        printf("%ld\n",a);
 }
 
 // Binary Search function for nuclide grid
@@ -291,4 +291,19 @@ unsigned int hash(unsigned char *str, int nbins)
 		hash = ((hash << 5) + hash) + c;
 
 	return hash % nbins;
+}
+
+size_t estimate_mem_usage( Inputs in )
+{
+	size_t single_nuclide_grid = in.n_gridpoints * sizeof( NuclideGridPoint );
+	size_t all_nuclide_grids   = in.n_isotopes * single_nuclide_grid;
+	size_t size_GridPoint      = sizeof(GridPoint) + in.n_isotopes*sizeof(int);
+	size_t size_UEG            = in.n_isotopes*in.n_gridpoints * size_GridPoint;
+	size_t memtotal;
+
+	memtotal          = all_nuclide_grids + size_UEG;
+	all_nuclide_grids = all_nuclide_grids / 1048576;
+	size_UEG          = size_UEG / 1048576;
+	memtotal          = memtotal / 1048576;
+	return memtotal;
 }
