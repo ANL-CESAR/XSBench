@@ -1,4 +1,17 @@
 =====================================================================
+NEW IN VERSION 13
+=====================================================================
+- Minor refactoring/reorganization of code to make the code clearer
+  and easier to read. After many updates, the code had become a
+  little bloated and difficult to read, so a cleanup was in order.
+
+- Removed synthetic delay injection (via dummy FLOPS or loads).
+  These were not very useful or accurate and had not been used by
+  anyone after the initial analyses were done with them. As they were
+  definitely adding to the code bloat of the program, they were
+  removed.
+
+=====================================================================
 NEW IN VERSION 12
 =====================================================================
 - (Bugfix) The XL and XXL runtime options didn't work correctly.

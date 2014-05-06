@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	int version = 12;
+	int version = 13;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
 	int i, thread, mat;
