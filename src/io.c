@@ -108,7 +108,7 @@ void print_inputs(Inputs in, int nprocs, int version )
 	printf("XS Lookups:                   "); fancy_int(in.lookups);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
-	printf("OMP Threads per MPI Rank:     %d\n", nthreads);
+	printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
 	printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
 	#else
 	printf("Threads:                      %d\n", in.nthreads);
