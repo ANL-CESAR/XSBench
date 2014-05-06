@@ -87,7 +87,7 @@ int main( int argc, char* argv[] )
 
 	#ifdef BINARY_READ
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
-	binary_read(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
+	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
 	#endif
 	
 	// Get material data
@@ -104,7 +104,7 @@ int main( int argc, char* argv[] )
 
 	#ifdef BINARY_DUMP
 	if( mype == 0 ) printf("Dumping data to binary file...\n");
-	binary_dump(n_isotopes, n_gridpoints, nuclide_grids, energy_grid);
+	binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
 	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
 	return 0;
 	#endif

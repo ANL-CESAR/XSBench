@@ -169,6 +169,8 @@ VEC_INFO  = no
 VERIFY    = no
 PAUSE     = no
 BENCHMARK = no
+BINARY_DUMP = no
+BINARY_READ = no
 
 -> Optimization enables the -O3 optimization flag.
 
@@ -181,18 +183,24 @@ BENCHMARK = no
 -> The PAPI flag is explained below.
 
 -> VEC_INFO enables some additional information regarding the success or
-failure of the compiler's use of vectorization techniques during
-compilation.
+   failure of the compiler's use of vectorization techniques during
+   compilation.
 
 -> VERIFY enables a verification mode, the details of which are explained below.
 
--> Pause adds an arbitrary pause in between macro-XS lookups, in order to
-represent particle tracking / communication etc that occurs in the real
-OpenMC. Note that the amount of time spent waiting
-
 -> Benchmark mode tests all possible thread configurations on the given
-computer. I.e., if your computer supports 16 threads, XSBench will
-automatically do 1 <= nthreads <= 16 lookup loops
+   computer. I.e., if your computer supports 16 threads, XSBench will
+   automatically do 1 <= nthreads <= 16 lookup loops
+
+-> Binary dump mode writes a binary file containing a randomized data set
+   of cross sections. This can be used in tandem with the binary read mode
+   to skip generation of cross section data every time the program is run.
+
+-> Binary read mode reads the binary file created by the binary dump mode
+   as a (usually) much faster substitution for randomly generating XS
+   data on-the-fly. This mode is particularly useful if running on
+   simulators where walltime minimization is extremely critical for
+   logistical reasons.
 
 ==============================================================================
 MPI Support
@@ -271,6 +279,26 @@ XSBench_header.h file.
 To select the performance counters you are interested in, open
 the file papi.c and alter the events[] array to the events
 you would like to count. 
+
+==============================================================================
+Binary File Support
+==============================================================================
+
+The flags:
+
+BINARY_DUMP = no
+BINARY_READ = no
+
+Can be set to yes in order to write or read a binary file containing
+a randomized XS data set (both nuclide grids and unionized grids). This
+feature may be extremely useful for users running on simulators where
+walltime minimization is critical for logistical purposes, or for users
+who are doing many sequential runs.
+
+Note that identical input parameters (problem size, etc) must be used
+when reading and writing a binary file. No runtime checks are made
+to validate that the file correctly corresponds to the selected input
+parameters.
 
 ==============================================================================
 Running on ANL BlueGene/Q (Vesta & Mira)

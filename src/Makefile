@@ -11,7 +11,7 @@ PAPI        = no
 VEC_INFO    = no
 VERIFY      = no
 BENCHMARK   = no
-BINARY_DUMP = yes
+BINARY_DUMP = no
 BINARY_READ = no
 
 #===============================================================================

@@ -1,6 +1,13 @@
 =====================================================================
 NEW IN VERSION 13
 =====================================================================
+- (Feature) Added in the ability for XSBench to write out a binary
+  file containing a randomized XS dataset. The code is also capable
+  of reading in this file instead of generating a new XS dataset
+  each time the program is run. This feature may be useful for those
+  running in simulation environments where walltime minimization
+  is key for logistical reasons.
+
 - Minor refactoring/reorganization of code to make the code clearer
   and easier to read. After many updates, the code had become a
   little bloated and difficult to read, so a cleanup was in order.
