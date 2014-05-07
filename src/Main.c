@@ -156,6 +156,12 @@ int main( int argc, char* argv[] )
 		#endif
 
 		double macro_xs_vector[5];
+		
+		// Allocate Microscopic XS cache
+		double ** micro_xs_cache = (double **) malloc( in.n_isotopes * sizeof(double *));
+		double * mcache_data = (double *) malloc( in.n_isotopes * 5 * sizeof(double));
+		for( int j = 0; j < in.n_isotopes; j++ )
+			micro_xs_cache[j] = &mcache_data[j*5];
 
 		// Initialize RNG seeds for threads
 		thread = omp_get_thread_num();
@@ -192,7 +198,7 @@ int main( int argc, char* argv[] )
 			calculate_macro_xs( p_energy, mat, in.n_isotopes,
 			                    in.n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
-                                macro_xs_vector );
+                                macro_xs_vector, micro_xs_cache );
 
 			// Verification hash calculation
 			// This method provides a consistent hash accross
