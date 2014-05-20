@@ -22,6 +22,7 @@ program = XSBench
 
 source = \
 Main.c \
+tree.c \
 io.c \
 CalculateXS.c \
 GridInit.c \
