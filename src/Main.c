@@ -89,7 +89,7 @@ int main( int argc, char* argv[] )
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
 	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
 	#endif
-	
+
 	// Get material data
 	if( mype == 0 )
 		printf("Loading Mats...\n");
@@ -108,6 +108,30 @@ int main( int argc, char* argv[] )
 	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
 	return 0;
 	#endif
+	
+	// =====================================================================
+	// Convert Regular UEG to Bsearch optimized grid
+	// =====================================================================
+	if( mype == 0 ) printf("Converting data to optimized format...\n");
+	double * e_vals = (double *) malloc( in.n_isotopes * in.n_gridpoints
+			* sizeof(double));
+	int ** p_vals = (int **) malloc( in.n_isotopes * in.n_gridpoints
+			* sizeof(int *));
+	assert(e_vals != NULL );
+	assert(p_vals != NULL );
+	
+	for( i = 0; i < in.n_isotopes * in.n_gridpoints; i++ )
+	{
+		e_vals[i] = energy_grid[i].energy;
+		p_vals[i] = energy_grid[i].xs_ptrs;
+	}
+
+	if( mype == 0 ) printf("Generating Binary Search Grid...\n");
+	TreeStuff T = maketree(e_vals, p_vals, in.n_isotopes * in.n_gridpoints ); 
+	free(e_vals);
+	free(p_vals);
+	e_vals = T.tree;
+	p_vals = T.ptree;
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins
@@ -119,131 +143,131 @@ int main( int argc, char* argv[] )
 	{
 		in.nthreads = bench_n;
 		omp_set_num_threads(in.nthreads);
- 	#endif
-
-	if( mype == 0 )
-	{
-		printf("\n");
-		border_print();
-		center_print("SIMULATION", 79);
-		border_print();
-	}
-
-	omp_start = omp_get_wtime();
-  
-	//initialize papi with one thread (master) here
-	#ifdef PAPI
-	if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
-		fprintf(stderr, "PAPI library init error!\n");
-		exit(1);
-	}
-	#endif	
-
-	// OpenMP compiler directives - declaring variables as shared or private
-	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, mat, seed) \
-	shared( max_procs, in, energy_grid, nuclide_grids, \
-	        mats, concs, num_nucs, mype, vhash) 
-	{	
-		// Initialize parallel PAPI counters
-		#ifdef PAPI
-		int eventset = PAPI_NULL; 
-		int num_papi_events;
-		#pragma omp critical
-		{
-			counter_init(&eventset, &num_papi_events);
-		}
 		#endif
 
-		double macro_xs_vector[5];
-
-		// Initialize RNG seeds for threads
-		thread = omp_get_thread_num();
-		seed   = (thread+1)*19+17;
-
-		// XS Lookup Loop
-		#pragma omp for schedule(dynamic)
-		for( i = 0; i < in.lookups; i++ )
-		{
-			// Status text
-			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
-				printf("\rCalculating XS's... (%.0lf%% completed)",
-						(i / ( (double)in.lookups / (double) in.nthreads ))
-						/ (double) in.nthreads * 100.0);
-
-			// Randomly pick an energy and material for the particle
-			#ifdef VERIFICATION
-			#pragma omp critical
-			{
-				p_energy = rn_v();
-				mat      = pick_mat(&seed); 
-			}
-			#else
-			p_energy = rn(&seed);
-			mat      = pick_mat(&seed); 
-			#endif
-			
-			// debugging
-			//printf("E = %lf mat = %d\n", p_energy, mat);
-				
-			// This returns the macro_xs_vector, but we're not going
-			// to do anything with it in this program, so return value
-			// is written over.
-			calculate_macro_xs( p_energy, mat, in.n_isotopes,
-			                    in.n_gridpoints, num_nucs, concs,
-			                    energy_grid, nuclide_grids, mats,
-                                macro_xs_vector );
-
-			// Verification hash calculation
-			// This method provides a consistent hash accross
-			// architectures and compilers.
-			#ifdef VERIFICATION
-			char line[256];
-			sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
-			       p_energy, mat,
-				   macro_xs_vector[0],
-				   macro_xs_vector[1],
-				   macro_xs_vector[2],
-				   macro_xs_vector[3],
-				   macro_xs_vector[4]);
-			unsigned long long vhash_local = hash(line, 10000);
-			#pragma omp atomic
-			vhash += vhash_local;
-			#endif
-		}
-
-		// Prints out thread local PAPI counters
-		#ifdef PAPI
-		if( mype == 0 && thread == 0 )
+		if( mype == 0 )
 		{
 			printf("\n");
 			border_print();
-			center_print("PAPI COUNTER RESULTS", 79);
+			center_print("SIMULATION", 79);
 			border_print();
-			printf("Count          \tSmybol      \tDescription\n");
 		}
-		{
-		#pragma omp barrier
+
+		omp_start = omp_get_wtime();
+
+		//initialize papi with one thread (master) here
+		#ifdef PAPI
+		if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
+			fprintf(stderr, "PAPI library init error!\n");
+			exit(1);
 		}
-		counter_stop(&eventset, num_papi_events);
+		#endif	
+
+		// OpenMP compiler directives - declaring variables as shared or private
+		#pragma omp parallel default(none) \
+		private(i, thread, p_energy, mat, seed) \
+		shared( max_procs, in, energy_grid, nuclide_grids, \
+				mats, concs, num_nucs, mype, vhash) 
+		{	
+			// Initialize parallel PAPI counters
+			#ifdef PAPI
+			int eventset = PAPI_NULL; 
+			int num_papi_events;
+			#pragma omp critical
+			{
+				counter_init(&eventset, &num_papi_events);
+			}
+			#endif
+
+			double macro_xs_vector[5];
+
+			// Initialize RNG seeds for threads
+			thread = omp_get_thread_num();
+			seed   = (thread+1)*19+17;
+
+			// XS Lookup Loop
+			#pragma omp for schedule(dynamic)
+			for( i = 0; i < in.lookups; i++ )
+			{
+				// Status text
+				if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
+					printf("\rCalculating XS's... (%.0lf%% completed)",
+							(i / ( (double)in.lookups / (double) in.nthreads ))
+							/ (double) in.nthreads * 100.0);
+
+				// Randomly pick an energy and material for the particle
+				#ifdef VERIFICATION
+				#pragma omp critical
+				{
+					p_energy = rn_v();
+					mat      = pick_mat(&seed); 
+				}
+				#else
+				p_energy = rn(&seed);
+				mat      = pick_mat(&seed); 
+				#endif
+
+				// debugging
+				//printf("E = %lf mat = %d\n", p_energy, mat);
+
+				// This returns the macro_xs_vector, but we're not going
+				// to do anything with it in this program, so return value
+				// is written over.
+				calculate_macro_xs( p_energy, mat, in.n_isotopes,
+						in.n_gridpoints, num_nucs, concs,
+						energy_grid, nuclide_grids, mats,
+						macro_xs_vector );
+
+				// Verification hash calculation
+				// This method provides a consistent hash accross
+				// architectures and compilers.
+				#ifdef VERIFICATION
+				char line[256];
+				sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+						p_energy, mat,
+						macro_xs_vector[0],
+						macro_xs_vector[1],
+						macro_xs_vector[2],
+						macro_xs_vector[3],
+						macro_xs_vector[4]);
+				unsigned long long vhash_local = hash(line, 10000);
+				#pragma omp atomic
+				vhash += vhash_local;
+				#endif
+			}
+
+			// Prints out thread local PAPI counters
+			#ifdef PAPI
+			if( mype == 0 && thread == 0 )
+			{
+				printf("\n");
+				border_print();
+				center_print("PAPI COUNTER RESULTS", 79);
+				border_print();
+				printf("Count          \tSmybol      \tDescription\n");
+			}
+			{
+				#pragma omp barrier
+			}
+			counter_stop(&eventset, num_papi_events);
+			#endif
+
+		}
+
+		#ifndef PAPI
+		if( mype == 0)	
+		{	
+			printf("\n" );
+			printf("Simulation complete.\n" );
+		}
 		#endif
 
-	}
+		omp_end = omp_get_wtime();
 
-	#ifndef PAPI
-	if( mype == 0)	
-	{	
-		printf("\n" );
-		printf("Simulation complete.\n" );
-	}
-	#endif
+		// Print / Save Results and Exit
+		print_results( in, mype, omp_end-omp_start, nprocs, vhash );
 
-	omp_end = omp_get_wtime();
-	
-	// Print / Save Results and Exit
-	print_results( in, mype, omp_end-omp_start, nprocs, vhash );
-
-	#ifdef BENCHMARK
+		#ifdef BENCHMARK
 	}
 	#endif
 

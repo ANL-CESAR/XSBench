@@ -10,6 +10,7 @@
 #include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
+#include<assert.h>
 
 // Papi Header
 #ifdef PAPI
@@ -30,6 +31,11 @@ typedef struct{
 	double fission_xs;
 	double nu_fission_xs;
 } NuclideGridPoint;
+
+typedef struct{
+	double * tree;
+	int ** ptree;
+} TreeStuff;
 
 typedef struct{
 	double energy;
@@ -111,5 +117,6 @@ void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
+TreeStuff maketree( double * A, int **ptrs, long n );
 
 #endif
