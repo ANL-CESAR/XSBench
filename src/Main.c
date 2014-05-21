@@ -158,8 +158,8 @@ int main( int argc, char* argv[] )
 		double macro_xs_vector[5];
 		
 		// Allocate Microscopic XS cache
-		double ** micro_xs_cache = (double **) malloc( in.n_isotopes * sizeof(double *));
-		double * mcache_data = (double *) malloc( in.n_isotopes * 5 * sizeof(double));
+		volatile double ** micro_xs_cache = (volatile double **) malloc( in.n_isotopes * sizeof(double *));
+		volatile double * mcache_data = (volatile double *) malloc( in.n_isotopes * 5 * sizeof(double));
 		for( int j = 0; j < in.n_isotopes; j++ )
 			micro_xs_cache[j] = &mcache_data[j*5];
 

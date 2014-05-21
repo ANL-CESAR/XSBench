@@ -4,10 +4,10 @@
 
 COMPILER    = gnu
 OPTIMIZE    = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
-PAPI        = yes
+PAPI        = no
 VEC_INFO    = no
 VERIFY      = no
 BENCHMARK   = no

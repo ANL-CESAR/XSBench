@@ -58,7 +58,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          NuclideGridPoint ** restrict nuclide_grids,
                          int ** restrict mats,
                          double * restrict macro_xs_vector,
-						 double ** restrict micro_xs_cache ){
+						 volatile double ** restrict micro_xs_cache ){
 	double xs_vector[5];
 	int p_nuc; // the nuclide we are looking up
 	long idx = 0;	

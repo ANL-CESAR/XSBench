@@ -79,7 +79,7 @@ void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
                            NuclideGridPoint ** restrict nuclide_grids,
 						   int ** restrict mats,
                            double * restrict macro_xs_vector,
-						   double ** restrict micro_xs_cache );
+						   volatile double ** restrict micro_xs_cache );
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
