@@ -214,7 +214,7 @@ int main( int argc, char* argv[] )
 				calculate_macro_xs( p_energy, mat, in.n_isotopes,
 						in.n_gridpoints, num_nucs, concs,
 						energy_grid, nuclide_grids, mats,
-						macro_xs_vector, T );
+						macro_xs_vector, T.tree, T.ptree, T.n_tree_elements );
 
 				// Verification hash calculation
 				// This method provides a consistent hash accross

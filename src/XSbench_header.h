@@ -79,21 +79,21 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 
 int binary_search( NuclideGridPoint * A, double quarry, int n );
 
-void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
-                           long n_gridpoints, int * restrict num_nucs,
-                           double ** restrict concs,
-						   GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids,
-						   int ** restrict mats,
-                           double * restrict macro_xs_vector,
-                           TreeDataPtrs T);
+void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+                         long n_gridpoints, int * restrict num_nucs,
+                         double ** restrict concs,
+                         GridPoint * restrict energy_grid,
+                         NuclideGridPoint ** restrict nuclide_grids,
+                         int ** restrict mats,
+                         double * restrict macro_xs_vector,
+                         double * restrict tree, int ** restrict ptree, long n_tree_elements);
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids, int idx,
-                           double * restrict xs_vector,
-                           TreeDataPtrs T);
+                           NuclideGridPoint ** restrict nuclide_grids,
+                           int idx, double * restrict xs_vector,
+                           int ** restrict ptree);
 
 long grid_search( long n, double quarry, GridPoint * A);
 
@@ -124,6 +124,6 @@ TreeDataPtrs maketree( double * A, int **ptrs, long n );
 long smaller_child( long i );
 long larger_child( long i );
 long parent( long i );
-long tree_search( long n, double quarry, double * T);
+long tree_search( long n, double quarry, double * restrict T);
 
 #endif
