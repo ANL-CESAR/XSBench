@@ -150,8 +150,18 @@ long tree_search( long n, double quarry, double * restrict T)
 
 	while(1)
 	{
+		/* If we go off the end of the array it means we
+		 need to backtrack to the last leaf */
 		if( idx >= n-1 )
-			return parent(idx);
+		{
+			idx = parent(idx);
+			// Need to be careful to select node that is
+			// smaller than quarry
+			if( T[idx] < quarry )
+				return idx;
+			else
+				return parent(idx);
+		}
 		else if( T[idx] < quarry )
 			idx = larger_child(idx);
 		else if( T[idx] > quarry )
