@@ -4,7 +4,7 @@
 
 COMPILER    = gnu
 OPTIMIZE    = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 PAPI        = no

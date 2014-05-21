@@ -126,12 +126,10 @@ int main( int argc, char* argv[] )
 		p_vals[i] = energy_grid[i].xs_ptrs;
 	}
 
-	if( mype == 0 ) printf("Generating Binary Search Grid...\n");
-	TreeStuff T = maketree(e_vals, p_vals, in.n_isotopes * in.n_gridpoints ); 
+	if( mype == 0 ) printf("Generating Binary Search Tree...\n");
+	TreeDataPtrs T = maketree(e_vals, p_vals, in.n_isotopes * in.n_gridpoints ); 
 	free(e_vals);
 	free(p_vals);
-	e_vals = T.tree;
-	p_vals = T.ptree;
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation Begins
@@ -167,7 +165,7 @@ int main( int argc, char* argv[] )
 		#pragma omp parallel default(none) \
 		private(i, thread, p_energy, mat, seed) \
 		shared( max_procs, in, energy_grid, nuclide_grids, \
-				mats, concs, num_nucs, mype, vhash) 
+				mats, concs, num_nucs, mype, vhash, T) 
 		{	
 			// Initialize parallel PAPI counters
 			#ifdef PAPI
@@ -216,7 +214,7 @@ int main( int argc, char* argv[] )
 				calculate_macro_xs( p_energy, mat, in.n_isotopes,
 						in.n_gridpoints, num_nucs, concs,
 						energy_grid, nuclide_grids, mats,
-						macro_xs_vector );
+						macro_xs_vector, T );
 
 				// Verification hash calculation
 				// This method provides a consistent hash accross

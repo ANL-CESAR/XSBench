@@ -35,7 +35,8 @@ typedef struct{
 typedef struct{
 	double * tree;
 	int ** ptree;
-} TreeStuff;
+	long n_tree_elements;
+} TreeDataPtrs;
 
 typedef struct{
 	double energy;
@@ -84,13 +85,15 @@ void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
 						   GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
 						   int ** restrict mats,
-                           double * restrict macro_xs_vector );
+                           double * restrict macro_xs_vector,
+                           TreeDataPtrs T);
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids, int idx,
-                           double * restrict xs_vector );
+                           double * restrict xs_vector,
+                           TreeDataPtrs T);
 
 long grid_search( long n, double quarry, GridPoint * A);
 
@@ -117,6 +120,10 @@ void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
-TreeStuff maketree( double * A, int **ptrs, long n );
+TreeDataPtrs maketree( double * A, int **ptrs, long n );
+long smaller_child( long i );
+long larger_child( long i );
+long parent( long i );
+long tree_search( long n, double quarry, double * T);
 
 #endif

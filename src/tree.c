@@ -1,12 +1,13 @@
 #include "XSbench_header.h"
 
-TreeStuff maketree( double * A, int **ptrs, long n )
+TreeDataPtrs maketree( double * A, int **ptrs, long n )
 {
-	long levels = (int) ceil(log2(n));
+	long levels = (long) ceil(log2(n));
+	long n_tree_elements = (long) pow(2,levels) - 1;
 
-	double * tree = (double *) malloc( sizeof(double) * (pow(2,levels)-1));
+	double * tree = (double *) malloc( sizeof(double) * n_tree_elements);
 	assert(tree  != NULL);
-	int **  ptree = (int ** )  malloc( sizeof(int * ) * (pow(2,levels)-1));
+	int **  ptree = (int ** )  malloc( sizeof(int * ) * n_tree_elements);
 	assert(ptree != NULL);
 
 	long idx = 0;
@@ -21,9 +22,10 @@ TreeStuff maketree( double * A, int **ptrs, long n )
 		}
 	}
 
-	TreeStuff T;
+	TreeDataPtrs T;
 	T.tree = tree;
 	T.ptree = ptree;
+	T.n_tree_elements = n_tree_elements;
 
 	return T;
 }
