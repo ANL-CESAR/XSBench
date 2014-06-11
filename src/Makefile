@@ -34,21 +34,28 @@ obj = $(source:.c=.o)
 # Sets Flags
 #===============================================================================
 
+# Standard Flags
+CFLAGS := -std=gnu99
+
+# Linker Flags
+LDFLAGS = -lm
+
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
+  CFLAGS += -fopenmp
+endif
+
+# Intel Compiler
+ifeq ($(COMPILER),intel)
+  CC = icc
+  CFLAGS += -openmp 
 endif
 
 # BG/Q gcc Cross-Compiler
 ifeq ($(MACHINE),bluegene)
   CC = mpicc
 endif
-
-# Standard Flags
-CFLAGS := -fopenmp -std=gnu99
-
-# Linker Flags
-LDFLAGS = -lm
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
