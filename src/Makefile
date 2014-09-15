@@ -1,140 +1,88 @@
-#===============================================================================
-# User Options
-#===============================================================================
+#Set USE_NVIDIA to 0 if OpenCL program runs on non-NVIDIA GPUs.
+include make.header
 
-COMPILER    = gnu
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-MPI         = no
-PAPI        = no
-VEC_INFO    = no
-VERIFY      = no
-BENCHMARK   = no
-BINARY_DUMP = no
-BINARY_READ = no
+#C compiler
+CC = g++ 
+NVCC = nvcc
+CC_FLAGS_SERIAL = -O3 -Wall -ffloat-store 
+CLIBS1 = -lm 
+#TARGET is where the output binary is stored
+TARGET = ./bin
 
-#===============================================================================
-# Program name & source code list
-#===============================================================================
+#Set the output binary names for different compilers
+BENCHMARK_SERIAL = $(TARGET)/xsbench_serial
+BENCHMARK_OPENCL = $(TARGET)/xsbench_ARC_OPENCL
+BENCHMARK_CUDA = $(TARGET)/xsbench_ARC_CUDA
 
-program = XSBench
 
-source = \
-Main.c \
-io.c \
-CalculateXS.c \
-GridInit.c \
-XSutils.c \
-Materials.c
-
-obj = $(source:.c=.o)
-
-#===============================================================================
-# Sets Flags
-#===============================================================================
-
-# Standard Flags
-CFLAGS := -std=gnu99
-
-# Linker Flags
-LDFLAGS = -lm
-
-# Regular gcc Compiler
-ifeq ($(COMPILER),gnu)
-  CC = gcc
-  CFLAGS += -fopenmp
+#Choose the correct runtime library depending upon whether OMP is enabled or not.
+ifeq ($(OMP),1)
+CLIBS2_BASE = -lm -lgomp
+xsbench_ARC_CUDA: CFLAGS2_BASE = -Xcompiler -fopenmp
+xsbench_ARC_OPENCL: CFLAGS2_BASE = -fopenmp
+ACCRT_BASE = openaccrtomp
+else
+CLIBS2_BASE = -lm 
+CFLAGS2_BASE =
+ACCRT_BASE = openaccrt
 endif
 
-# Intel Compiler
-ifeq ($(COMPILER),intel)
-  CC = icc
-  CFLAGS += -openmp 
+#Check for the profiler mode
+MODE ?= normal
+ifeq ($(MODE), profile)
+PREF = pf
+else
+PREF = 
 endif
 
-# BG/Q gcc Cross-Compiler
-ifeq ($(MACHINE),bluegene)
-  CC = mpicc
+ifeq ($(ASPEN), aspenrt)
+ASPENFILE = "aspenrt.cpp"
+else 
+ASPENFILE = 
 endif
 
-# Debug Flags
-ifeq ($(DEBUG),yes)
-  CFLAGS += -g
-  LDFLAGS  += -g
-endif
+#Select underlying compiler-specific runtime library and compile flags
+xsbench_ARC_OPENCL: ACCRT_BASE2 = $(ACCRT_BASE)_opencl$(PREF)
+xsbench_ARC_OPENCL: CFLAGS2 = $(CFLAGS2_BASE) -I$(OPENARCLIB) $(OPENCL_INCLUDE) $(OPENCL_FLAGS)
+xsbench_ARC_OPENCL: CLIBS2 = $(CLIBS2_BASE) -L$(OPENARCLIB)/ -l$(ACCRT_BASE2) $(OPENCL_LIB)
 
-# Profiling Flags
-ifeq ($(PROFILE),yes)
-  CFLAGS += -pg
-  LDFLAGS  += -pg
-endif
-
-# Optimization Flags
-ifeq ($(OPTIMIZE),yes)
-  CFLAGS += -O3
-endif
-
-# Compiler Vectorization (needs -O3 flag) information
-ifeq ($(VEC_INFO),yes)
-  CFLAGS += -ftree-vectorizer-verbose=6
-endif
-
-# PAPI source (you may need to provide -I and -L pointing
-# to PAPI depending on your installation
-ifeq ($(PAPI),yes)
-  source += papi.c
-  CFLAGS += -DPAPI
-  #CFLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
-  #LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
-  LDFLAGS += -lpapi
-endif
-
-# MPI
-ifeq ($(MPI),yes)
-  CC = mpicc
-  CFLAGS += -DMPI
-endif
-
-# Verification of results mode
-ifeq ($(VERIFY),yes)
-  CFLAGS += -DVERIFICATION
-endif
-
-# Adds outer 'benchmarking' loop to do multiple trials for
-# 1 < threads <= max_threads
-ifeq ($(BENCHMARK),yes)
-  CFLAGS += -DBENCHMARK
-endif
-
-# Binary dump for file I/O based initialization
-ifeq ($(BINARY_DUMP),yes)
-  CFLAGS += -DBINARY_DUMP
-endif
-
-# Binary read for file I/O based initialization
-ifeq ($(BINARY_READ),yes)
-  CFLAGS += -DBINARY_READ
-endif
+xsbench_ARC_CUDA: ACCRT_BASE2 = $(ACCRT_BASE)_cuda$(PREF)	
+xsbench_ARC_CUDA: CFLAGS2 = $(CFLAGS2_BASE) -I$(OPENARCLIB) -I/home/alund/openarc/test/XSBench -I../../openarcrt/openacc.h $(CUDA_INCLUDE) $(GNVCC_FLAGS)
+xsbench_ARC_CUDA: CLIBS2 = $(CLIBS2_BASE) -L$(OPENARCLIB)/ -l$(ACCRT_BASE2) $(OPENCL_LIB) $(CUDA_LIB)
 
 
-#===============================================================================
-# Targets to Build
-#===============================================================================
+ARC_CUDA: xsbench_ARC_CUDA
+ARC_OPENCL: xsbench_ARC_OPENCL
+all: all_CUDA
+all_CUDA: xsbench_ARC_CUDA xsbench_serial
+all_OPENCL: xsbench_ARC_OPENCL xsbench_serial
+serial: xsbench_serial
 
-$(program): $(obj) XSbench_header.h
-	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
+#########
+# Macro #
+#########
+#_N_ ?= 4096
+OMP ?= 0
+DEFSET_SERIAL ?= -D_N_=$(_N_) -DOMP=$(OMP)
+DEFSET_ACC ?= -D_N_=$(_N_) -DOMP=$(OMP)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+CETUS_OUTPUT_CPP = $(CETUS_OUTPUT)/CalculateXS.cpp $(CETUS_OUTPUT)/GridInit.cpp $(CETUS_OUTPUT)/io.cpp $(CETUS_OUTPUT)/Main.cpp $(CETUS_OUTPUT)/Materials.cpp $(CETUS_OUTPUT)/XSutils.cpp
+CPP = CalculateXS.cpp GridInit.cpp io.cpp Main.cpp Materials.cpp XSutils.cpp
+
+xsbench_serial: %.c XSbench_header.h
+	$(CC) $(COMMONFLAGS) $(CC_FLAGS_SERIAL) $(DEFSET_SERIAL) -o $(BENCHMARK_SERIAL) %.c $(CLIBS1)
+
+xsbench_ARC_CUDA: $(CETUS_OUTPUT_CPP)
+	cd $(CETUS_OUTPUT); $(NVCC) $(CFLAGS2) $(DEFSET_ACC) -o ../$(BENCHMARK_CUDA) $(CPP) $(ASPENFILE) $(CLIBS2); cp openarc_kernel.cu ../$(TARGET); cp $(OPENARCLIB)/binBuilder_cuda ../$(TARGET); cp $(OPENARCLIB)/Timer ../$(TARGET); cd ../
+
+
+xsbench_ARC_OPENCL: $(CETUS_OUTPUT_CPP)
+	cd $(CETUS_OUTPUT); $(OPENCL_CC) $(CFLAGS2) $(DEFSET_ACC) -o ../$(BENCHMARK_OPENCL) $(CPP) $(ASPENFILE) $(CLIBS2); cp openarc_kernel.cl ../$(TARGET); cp $(OPENARCLIB)/binBuilder_opencl ../$(TARGET); cp $(OPENARCLIB)/Timer ../$(TARGET);  cd ../
 
 clean:
-	rm -rf $(program) $(obj)
+	rm -f *.o;
+	if [ -d ./$(CETUS_OUTPUT) ]; then cd $(CETUS_OUTPUT); rm -f *.o *~ memcheck aspenrt memcheck.c aspenrt.c; cd ..; fi
+	if [ -d $(TARGET) ]; then rm -f $(BENCHMARK_SERIAL) $(BENCHMARK_CUDA) $(BENCHMARK_OPENCL) Timer; cd $(TARGET); rm -f openarc_kernel*.ptx openarc_kernel.cu openarc_kernel.cl binBuilder_cuda binBuilder_opencl Timer; fi
 
-edit:
-	vim -p $(source) papi.c XSbench_header.h
-
-run:
-	./$(program)
-
-bgqrun:
-	qsub -t 10 -n 1 -O test XSBench
+purge: clean
+	if [ -d ./$(CETUS_OUTPUT) ]; then cd $(CETUS_OUTPUT); rm -f *.cpp *.h *.cl *.cu *.aspen *.c *.log aspenrt memcheck smallmodeltest; cd ..; fi

@@ -4,7 +4,7 @@
 #include<mpi.h>
 #endif
 
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
 	// =====================================================================
 	// Initialization & Command Line Read-In
@@ -17,6 +17,19 @@ int main( int argc, char* argv[] )
 	double omp_start, omp_end, p_energy;
 	unsigned long long vhash = 0;
 	int nprocs;
+	double elapsed_time;
+
+	Inputs in;
+	double *** nuclide_grids; //NuclideGridPoint ** nuclide_grids;
+	double * energy_grid; //GridPoint * energy_grid;
+	int ** grid_ptrs;
+	int *index_data;
+	int size_mats, *num_nucs, *mats_ptr, *mats;
+	double *concs;
+	int bench_n; // benchmark loop index
+	double macro_xs_vector[5];
+	char line[256]; // verification hash
+	unsigned long long vhash_local; // verification hash
 
 	#ifdef MPI
 	MPI_Status stat;
@@ -34,14 +47,13 @@ int main( int argc, char* argv[] )
 	#endif
 
 	// Process CLI Fields -- store in "Inputs" structure
-	Inputs in = read_CLI( argc, argv );
-	
+	in = read_CLI(argc, argv);
+
 	// Set number of OpenMP Threads
 	omp_set_num_threads(in.nthreads); 
 
 	// Print-out of Input Summary
-	if( mype == 0 )
-		print_inputs( in, nprocs, version );
+	if(mype == 0) print_inputs(in, nprocs, version);
 
 	// =====================================================================
 	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -49,63 +61,57 @@ int main( int argc, char* argv[] )
 
 	// Allocate & fill energy grids
 	#ifndef BINARY_READ
-	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
+	if(mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	#endif
 	
-	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
-	
+	nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
+
 	#ifdef VERIFICATION
-	generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
+	generate_grids_v(nuclide_grids, in.n_isotopes, in.n_gridpoints);	
 	#else
-	generate_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
+	generate_grids(nuclide_grids, in.n_isotopes, in.n_gridpoints);	
 	#endif
-	
+
 	// Sort grids by energy
 	#ifndef BINARY_READ
-	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
-	sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
+	if(mype == 0) printf("Sorting Nuclide Energy Grids...\n");
+	sort_nuclide_grids(nuclide_grids, in.n_isotopes, in.n_gridpoints);
 	#endif
 
 	// Prepare Unionized Energy Grid Framework
-	#ifndef BINARY_READ
-	GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-	                          in.n_gridpoints, nuclide_grids ); 	
-	#else
-	GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
-	                           in.n_gridpoints * sizeof( GridPoint ) );
-	int * index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
-	                   * in.n_isotopes * sizeof(int));
-	for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
-		energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
-	#endif
-
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
 	#ifndef BINARY_READ
-	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
+	energy_grid = generate_energy_grid(in.n_isotopes, in.n_gridpoints, nuclide_grids);
+	grid_ptrs = generate_grid_ptrs(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);	
+	#else
+	energy_grid = malloc(in.n_isotopes*in.n_gridpoints*sizeof(double));
+	grid_ptrs = pmatrix(in.n_isotopes*in.n_gridpoints, in.n_isotopes);
 	#endif
 
 	#ifdef BINARY_READ
-	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
-	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
+	if(mype == 0) printf("Reading data from \"XS_data.dat\" file...\n");
+	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
 	#endif
 	
 	// Get material data
-	if( mype == 0 )
-		printf("Loading Mats...\n");
-	int *num_nucs  = load_num_nucs(in.n_isotopes);
-	int **mats     = load_mats(num_nucs, in.n_isotopes);
+	if(mype == 0) printf("Loading Mats...\n");
+	if(in.n_isotopes == 68) size_mats = 197;
+	else size_mats = 484;
+	num_nucs  = load_num_nucs(in.n_isotopes);
+	mats_ptr  = load_mats_ptr(num_nucs);
+	mats      = load_mats(num_nucs, mats_ptr, size_mats, in.n_isotopes);
 
 	#ifdef VERIFICATION
-	double **concs = load_concs_v(num_nucs);
+	concs = load_concs_v(size_mats);
 	#else
-	double **concs = load_concs(num_nucs);
+	concs = load_concs(size_mats);
 	#endif
 
 	#ifdef BINARY_DUMP
-	if( mype == 0 ) printf("Dumping data to binary file...\n");
-	binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
-	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
+	if(mype == 0) printf("Dumping data to binary file...\n");
+	binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
+	if(mype == 0) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
 	return 0;
 	#endif
 
@@ -115,13 +121,13 @@ int main( int argc, char* argv[] )
 
 	// Outer benchmark loop can loop through all possible # of threads
 	#ifdef BENCHMARK
-	for( int bench_n = 1; bench_n <=omp_get_num_procs(); bench_n++ )
+	for(bench_n = 1; bench_n <=omp_get_num_procs(); bench_n++)
 	{
 		in.nthreads = bench_n;
 		omp_set_num_threads(in.nthreads);
  	#endif
 
-	if( mype == 0 )
+	if(mype == 0)
 	{
 		printf("\n");
 		border_print();
@@ -129,76 +135,60 @@ int main( int argc, char* argv[] )
 		border_print();
 	}
 
-	omp_start = omp_get_wtime();
-  
-	//initialize papi with one thread (master) here
-	#ifdef PAPI
-	if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
-		fprintf(stderr, "PAPI library init error!\n");
-		exit(1);
-	}
-	#endif	
+	//#pragma omp parallel default(none) \
+	private(i, thread, p_energy, mat, seed, vhash_local, line, macro_xs_vector) \
+	shared( max_procs, in, energy_grid, nuclide_grids, grid_ptrs, \
+	        mats_ptr, mats, concs, num_nucs, mype, vhash) 
 
-	// OpenMP compiler directives - declaring variables as shared or private
-	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, mat, seed) \
-	shared( max_procs, in, energy_grid, nuclide_grids, \
-	        mats, concs, num_nucs, mype, vhash) 
+	elapsed_time = timer();
+	#pragma acc data \
+	copy(in, vhash) \
+	copyin(num_nucs[0:in.n_isotopes], concs[0:size_mats], mats[0:size_mats], mats_ptr[0:12], \
+	       energy_grid[0:in.n_isotopes*in.n_gridpoints], \
+	       grid_ptrs[0:in.n_isotopes*in.n_gridpoints][0:in.n_isotopes], \
+	       nuclide_grids[0:in.n_isotopes][0:in.n_gridpoints][0:6]) \
+	create(p_energy, mat, macro_xs_vector, vhash_local, line, seed)
 	{	
-		// Initialize parallel PAPI counters
-		#ifdef PAPI
-		int eventset = PAPI_NULL; 
-		int num_papi_events;
-		#pragma omp critical
-		{
-			counter_init(&eventset, &num_papi_events);
-		}
-		#endif
 
-		double macro_xs_vector[5];
-
-		// Initialize RNG seeds for threads
-		thread = omp_get_thread_num();
-		seed   = (thread+1)*19+17;
+		//thread = omp_get_thread_num();
+		//seed   = (thread+1)*19+17;
+		seed = 13; //what to do for openacc?
 
 		// XS Lookup Loop
-		#pragma omp for schedule(dynamic)
-		for( i = 0; i < in.lookups; i++ )
+		//#pragma omp for schedule(dynamic)
+		#pragma acc parallel \
+		private(macro_xs_vector, p_energy, mat, seed, vhash_local, line)
+		for(i=0; i<in.lookups; i++)
 		{
 			// Status text
-			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
+			/*if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
 						(i / ( (double)in.lookups / (double) in.nthreads ))
 						/ (double) in.nthreads * 100.0);
-
+			*/
 			// Randomly pick an energy and material for the particle
 			#ifdef VERIFICATION
-			#pragma omp critical
+			//#pragma omp critical
 			{
+				mat = pick_mat(&seed); 
 				p_energy = rn_v();
-				mat      = pick_mat(&seed); 
 			}
 			#else
+			mat = pick_mat(&seed); 
 			p_energy = rn(&seed);
-			mat      = pick_mat(&seed); 
 			#endif
 			
-			// debugging
-			//printf("E = %lf mat = %d\n", p_energy, mat);
-				
 			// This returns the macro_xs_vector, but we're not going
 			// to do anything with it in this program, so return value
 			// is written over.
-			calculate_macro_xs( p_energy, mat, in.n_isotopes,
-			                    in.n_gridpoints, num_nucs, concs,
-			                    energy_grid, nuclide_grids, mats,
-                                macro_xs_vector );
+			calculate_macro_xs(p_energy, mat, in.n_isotopes, in.n_gridpoints,
+					   num_nucs, concs, energy_grid, nuclide_grids,
+					   grid_ptrs, mats, mats_ptr, macro_xs_vector);
 
 			// Verification hash calculation
 			// This method provides a consistent hash accross
 			// architectures and compilers.
 			#ifdef VERIFICATION
-			char line[256];
 			sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
 			       p_energy, mat,
 				   macro_xs_vector[0],
@@ -206,42 +196,20 @@ int main( int argc, char* argv[] )
 				   macro_xs_vector[2],
 				   macro_xs_vector[3],
 				   macro_xs_vector[4]);
-			unsigned long long vhash_local = hash(line, 10000);
-			#pragma omp atomic
+			vhash_local = hash(line, 10000);
+			//#pragma omp atomic
 			vhash += vhash_local;
 			#endif
 		}
-
-		// Prints out thread local PAPI counters
-		#ifdef PAPI
-		if( mype == 0 && thread == 0 )
-		{
-			printf("\n");
-			border_print();
-			center_print("PAPI COUNTER RESULTS", 79);
-			border_print();
-			printf("Count          \tSmybol      \tDescription\n");
-		}
-		{
-		#pragma omp barrier
-		}
-		counter_stop(&eventset, num_papi_events);
-		#endif
-
 	}
 
-	#ifndef PAPI
-	if( mype == 0)	
-	{	
-		printf("\n" );
-		printf("Simulation complete.\n" );
-	}
-	#endif
+	if(mype == 0) printf("\nSimulation complete.\n" );
 
-	omp_end = omp_get_wtime();
-	
+	elapsed_time = timer() - elapsed_time;
+	printf("Acclerator elapsed time: %lf seconds\n", elapsed_time);
+
 	// Print / Save Results and Exit
-	print_results( in, mype, omp_end-omp_start, nprocs, vhash );
+	print_results(in, mype, omp_end-omp_start, nprocs, vhash);
 
 	#ifdef BENCHMARK
 	}

@@ -7,6 +7,7 @@
 // Prints program logo
 void logo(int version)
 {
+	char v[100];
 	border_print();
 	printf(
 	"                   __   __ ___________                 _                        \n"
@@ -18,7 +19,6 @@ void logo(int version)
     );
 	border_print();
 	center_print("Developed at Argonne National Laboratory", 79);
-	char v[100];
 	sprintf(v, "Version: %d", version);
 	center_print(v, 79);
 	border_print();
@@ -41,7 +41,8 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 {
 	// Calculate Lookups per sec
 	int lookups_per_sec = (int) ((double) in.lookups / runtime);
-	
+	FILE * out;	
+
 	// If running in MPI, reduce timing statistics and calculate average
 	#ifdef MPI
 	int total_lookups = 0;
@@ -81,7 +82,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		// For bechmarking, output lookup/s data to file
 		if( SAVE )
 		{
-			FILE * out = fopen( "results.txt", "a" );
+			out = fopen( "results.txt", "a" );
 			fprintf(out, "%d\t%d\n", in.nthreads, lookups_per_sec);
 			fclose(out);
 		}
@@ -164,7 +165,9 @@ void print_CLI_error(void)
 Inputs read_CLI( int argc, char * argv[] )
 {
 	Inputs input;
-	
+	int user_g, i;
+	char * arg;	
+
 	// defaults to max threads on the system	
 	input.nthreads = omp_get_num_procs();
 	
@@ -187,12 +190,12 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.HM[5] = '\0';
 	
 	// Check if user sets these
-	int user_g = 0;
+	user_g = 0;
 	
 	// Collect Raw Input
-	for( int i = 1; i < argc; i++ )
+	for( i = 1; i < argc; i++ )
 	{
-		char * arg = argv[i];
+		arg = argv[i];
 
 		// nthreads (-t)
 		if( strcmp(arg, "-t") == 0 )

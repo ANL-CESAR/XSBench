@@ -30,12 +30,24 @@ int * load_num_nucs(long n_isotopes)
 	return num_nucs;
 }
 
-// Assigns an array of nuclide ID's to each material
-int ** load_mats( int * num_nucs, long n_isotopes )
+int * load_mats_ptr(int * num_nucs)
 {
-	int ** mats = (int **) malloc( 12 * sizeof(int *) );
-	for( int i = 0; i < 12; i++ )
-		mats[i] = (int *) malloc(num_nucs[i] * sizeof(int) );
+	int * mats_ptr = (int*)malloc(12*sizeof(int));
+	int i, j = 0;
+	
+	for(i=0; i<12; i++){
+		mats_ptr[i] = j;
+		j += num_nucs[i];
+	}
+
+	return mats_ptr;
+}
+
+// Assigns an array of nuclide ID's to each material
+int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes )
+{
+	int i;
+	int * mats = (int *) malloc( size_mats * sizeof(int *) );
 
 	// Small H-M has 34 fuel nuclides
 	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
@@ -45,8 +57,6 @@ int ** load_mats( int * num_nucs, long n_isotopes )
 	int mats0_Lrg[321] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41 }; //fuel
-	for( int i = 0; i < 321-34; i++ )
-		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// These are the non-fuel materials	
 	int mats1[] =  { 63, 64, 65, 66, 67 }; // cladding
@@ -67,25 +77,28 @@ int ** load_mats( int * num_nucs, long n_isotopes )
 	                 49, 50, 51, 11, 12, 13, 14 }; // top nozzle
 	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67 }; // top of FA's
 	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67 }; // bottom FA's
+
+	for( i = 0; i < 321-34; i++ )
+		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// H-M large v small dependency
 	if( n_isotopes == 68 )
-		memcpy( mats[0],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
+		memcpy( &mats[mats_ptr[0]],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
 	else
-		memcpy( mats[0],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
+		memcpy( &mats[mats_ptr[0]],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
 	
 	// Copy other materials
-	memcpy( mats[1],  mats1,  num_nucs[1]  * sizeof(int) );	
-	memcpy( mats[2],  mats2,  num_nucs[2]  * sizeof(int) );	
-	memcpy( mats[3],  mats3,  num_nucs[3]  * sizeof(int) );	
-	memcpy( mats[4],  mats4,  num_nucs[4]  * sizeof(int) );	
-	memcpy( mats[5],  mats5,  num_nucs[5]  * sizeof(int) );	
-	memcpy( mats[6],  mats6,  num_nucs[6]  * sizeof(int) );	
-	memcpy( mats[7],  mats7,  num_nucs[7]  * sizeof(int) );	
-	memcpy( mats[8],  mats8,  num_nucs[8]  * sizeof(int) );	
-	memcpy( mats[9],  mats9,  num_nucs[9]  * sizeof(int) );	
-	memcpy( mats[10], mats10, num_nucs[10] * sizeof(int) );	
-	memcpy( mats[11], mats11, num_nucs[11] * sizeof(int) );	
+	memcpy( &mats[mats_ptr[1]],  mats1,  num_nucs[1]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[2]],  mats2,  num_nucs[2]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[3]],  mats3,  num_nucs[3]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[4]],  mats4,  num_nucs[4]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[5]],  mats5,  num_nucs[5]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[6]],  mats6,  num_nucs[6]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[7]],  mats7,  num_nucs[7]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[8]],  mats8,  num_nucs[8]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[9]],  mats9,  num_nucs[9]  * sizeof(int) );	
+	memcpy( &mats[mats_ptr[10]], mats10, num_nucs[10] * sizeof(int) );	
+	memcpy( &mats[mats_ptr[11]], mats11, num_nucs[11] * sizeof(int) );	
 	
 	// test
 	/*
@@ -99,16 +112,13 @@ int ** load_mats( int * num_nucs, long n_isotopes )
 }
 
 // Creates a randomized array of 'concentrations' of nuclides in each mat
-double ** load_concs( int * num_nucs )
+double * load_concs( int size_mats )
 {
-	double ** concs = (double **)malloc( 12 * sizeof( double *) );
+	int i;
+	double * concs = (double *)malloc( size_mats * sizeof( double *) );
 	
-	for( int i = 0; i < 12; i++ )
-		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
-	
-	for( int i = 0; i < 12; i++ )
-		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i][j] = (double) rand() / (double) RAND_MAX;
+	for( i = 0; i < size_mats; i++ )
+		concs[i] = (double) rand() / (double) RAND_MAX;
 
 	// test
 	/*
@@ -121,16 +131,13 @@ double ** load_concs( int * num_nucs )
 }
 
 // Verification version of this function (tighter control over RNG)
-double ** load_concs_v( int * num_nucs )
+double * load_concs_v( int size_mats )
 {
-	double ** concs = (double **)malloc( 12 * sizeof( double *) );
+	int i;
+	double * concs = (double *)malloc( size_mats * sizeof( double *) );
 	
-	for( int i = 0; i < 12; i++ )
-		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
-	
-	for( int i = 0; i < 12; i++ )
-		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i][j] = rn_v();
+	for( i = 0; i < size_mats; i++ )
+		concs[i] = rn_v();
 
 	// test
 	/*
@@ -153,6 +160,8 @@ int pick_mat( unsigned long * seed )
 	// Also could be argued that doing fractions by weight would be 
 	// a better approximation, but volume does a good enough job for now.
 
+	double roll, running;
+	int i, j;
 	double dist[12];
 	dist[0]  = 0.140;	// fuel
 	dist[1]  = 0.052;	// cladding
@@ -169,16 +178,16 @@ int pick_mat( unsigned long * seed )
 	
 	//double roll = (double) rand() / (double) RAND_MAX;
 	#ifdef VERIFICATION
-	double roll = rn_v();
+	roll = rn_v();
 	#else
-	double roll = rn(seed);
+	roll = rn(seed);
 	#endif
 
 	// makes a pick based on the distro
-	for( int i = 0; i < 12; i++ )
+	for( i = 0; i < 12; i++ )
 	{
-		double running = 0;
-		for( int j = i; j > 0; j-- )
+		running = 0;
+		for( j = i; j > 0; j-- )
 			running += dist[j];
 		if( roll < running )
 			return i;
