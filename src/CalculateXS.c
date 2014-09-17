@@ -3,7 +3,7 @@
 // Calculates the microscopic cross section for a given nuclide & energy
 void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpoints,
                         double * restrict energy_grid, double *** restrict nuclide_grids,
-                        int ** restrict grid_ptrs, int idx, double * restrict xs_vector)
+                        int * restrict grid_ptrs, int idx, double * restrict xs_vector)
 {	
 	// Variables
 	double f;
@@ -11,13 +11,13 @@ void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpo
 
 	// pull ptr from energy grid and check to ensure that
 	// we're not reading off the end of the nuclide's grid
-	if(grid_ptrs[idx][nuc] == n_gridpoints - 1){
-		low = nuclide_grids[nuc][grid_ptrs[idx][nuc] - 1];
-		high = nuclide_grids[nuc][grid_ptrs[idx][nuc]];
+	if(grid_ptrs[n_isotopes*idx + nuc] == n_gridpoints - 1){
+		low = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc] - 1];
+		high = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc]];
 	}
 	else{
-		low = nuclide_grids[nuc][grid_ptrs[idx][nuc]];
-		high = nuclide_grids[nuc][grid_ptrs[idx][nuc] + 1];
+		low = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc]];
+		high = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc] + 1];
 	}	
 
 	// calculate the re-useable interpolation factor
@@ -55,7 +55,7 @@ void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpo
 void calculate_macro_xs(double p_energy, int mat, long n_isotopes, long n_gridpoints,
 			int * restrict num_nucs, double * restrict concs,
 			double * restrict energy_grid, double *** restrict nuclide_grids,
-			int ** restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
+			int * restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
 			double * restrict macro_xs_vector)
 {
 	double xs_vector[5];

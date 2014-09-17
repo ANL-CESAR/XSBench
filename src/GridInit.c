@@ -84,18 +84,18 @@ double * generate_energy_grid(long n_isotopes, long n_gridpoints, double *** nuc
 // pointer from unionized grid to the correct spot in the nuclide grid.
 // This process is time consuming, as the number of binary searches
 // required is:  binary searches = n_gridpoints * n_isotopes^2
-int ** generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid)
+int * generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid)
 {
 	long i, j;
 	double quarry;
 	int mype = 0;
-	int ** grid_ptrs;
+	int * grid_ptrs;
 
 	#ifdef MPI
 	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 	#endif
 
-	grid_ptrs = pmatrix(n_isotopes*n_gridpoints, n_isotopes);
+	grid_ptrs = (int *) malloc(n_isotopes*n_gridpoints*n_isotopes*sizeof(int));
 
 	if(mype == 0) printf("Assigning pointers to Unionized Energy Grid...\n");
 
@@ -111,7 +111,7 @@ int ** generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide
 		for(j=0; j<n_isotopes; j++){
 			// j is the nuclide i.d.
 			// log n binary search
-			grid_ptrs[i][j] = binary_search(nuclide_grids[j], quarry, n_gridpoints);
+			grid_ptrs[n_isotopes*i + j] = binary_search(nuclide_grids[j], quarry, n_gridpoints);
 		}
 	}
 	if(mype == 0) printf("\n");

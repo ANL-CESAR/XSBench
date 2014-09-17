@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 	//Inputs in;
 	double *** nuclide_grids;
 	double *energy_grid;
-	int ** grid_ptrs;
+	int *grid_ptrs;
 	int *index_data;
 	int size_mats, *num_nucs, *mats_ptr, *mats;
 	double *concs;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	grid_ptrs = generate_grid_ptrs(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);	
 	#else
 	energy_grid = malloc(in.n_isotopes*in.n_gridpoints*sizeof(double));
-	grid_ptrs = pmatrix(in.n_isotopes*in.n_gridpoints, in.n_isotopes);
+	grid_ptrs = (int *) malloc(in.n_isotopes*in.n_gridpoints*in.n_isotopes*sizeof(int));
 	#endif
 
 	#ifdef BINARY_READ

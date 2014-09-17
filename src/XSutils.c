@@ -146,7 +146,7 @@ size_t estimate_mem_usage(Inputs in)
 	return memtotal;
 }
 
-void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int ** grid_ptrs)
+void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int * grid_ptrs)
 {
 	FILE * fp = fopen("XS_data.dat", "wb");
 	long i, j;
@@ -162,20 +162,15 @@ void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, d
 			fwrite(&nuclide_grids[i][j][5], sizeof(double), 1, fp);
 		}
 	}
-	// Dump UEG Data
-	for(i=0; i<n_isotopes*n_gridpoints; i++)
-	{
-		// Write energy level
-		fwrite(&energy_grid[i], sizeof(double), 1, fp);
 
-		// Write index data array (xs_ptrs array)
-		fwrite(grid_ptrs[i], sizeof(int), n_isotopes, fp);
-	}
+	//Dump UEG Data
+	fwrite(energy_grid, sizeof(double), n_isotopes*n_gridpoints, fp);
+	fwrite(grid_ptrs, sizeof(int), n_isotopes*n_gridpoints*n_isotopes, fp);
 
 	fclose(fp);
 }
 
-void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int ** grid_ptrs)
+void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int * grid_ptrs)
 {
 	int stat;
 	long i, j;
@@ -192,15 +187,9 @@ void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, d
 			stat = fread(&nuclide_grids[i][j][5], sizeof(double), 1, fp);
 		}
 	}
-	// Dump UEG Data
-	for(i=0; i<n_isotopes*n_gridpoints; i++)
-	{
-		// Write energy level
-		stat = fread(&energy_grid[i], sizeof(double), 1, fp);
-
-		// Write index data array (xs_ptrs array)
-		stat = fread(grid_ptrs[i], sizeof(int), n_isotopes, fp);
-	}
+	//Read UEG Data
+	stat = fread(energy_grid, sizeof(double), n_isotopes*n_gridpoints, fp);
+	stat = fread(grid_ptrs, sizeof(int), n_isotopes*n_gridpoints*n_isotopes, fp);
 
 	fclose(fp);
 

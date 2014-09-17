@@ -50,8 +50,8 @@ double rn(unsigned long * seed);
 double rn_v(void);
 unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage(Inputs in);
-void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int ** grid_ptrs);
-void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int ** grid_ptrs);
+void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int * grid_ptrs);
+void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int * grid_ptrs);
 double timer();
 
 // GridInit.c function prototypes
@@ -59,17 +59,17 @@ void generate_grids(double *** nuclide_grids, long n_isotopes, long n_gridpoints
 void generate_grids_v(double *** nuclide_grids, long n_isotopes, long n_gridpoints);
 void sort_nuclide_grids(double *** nuclide_grids, long n_isotopes, long n_gridpoints); 
 double * generate_energy_grid(long n_isotopes, long n_gridpoints, double *** nuclide_grids);
-int ** generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid);
+int * generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid);
 
 // CalculateXS.c function prototypes
 void calculate_macro_xs(double p_energy, int mat, long n_isotopes, long n_gridpoints,
 			int * restrict num_nucs, double * restrict concs,
 			double * restrict energy_grid, double *** restrict nuclide_grids,
-			int ** restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
+			int * restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
 			double * restrict macro_xs_vector);
 void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpoints,
 			double * restrict energy_grid, double *** restrict nuclide_grids,
-			int ** restrict grid_ptrs, int idx, double * restrict xs_vector);
+			int * restrict grid_ptrs, int idx, double * restrict xs_vector);
 long grid_search(long n, double quarry, double * A);
 
 // Materials.c function prototypes
