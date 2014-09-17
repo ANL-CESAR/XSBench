@@ -4,21 +4,22 @@
 #   - Set OPENARCLIB to the path to openarcrt directory.           #
 #   - Modify GNVCC_FLAGS and CUDA_INCLUDE if targeting CUDA GPUs.  #
 #   - Modify OPENCL_INCLUDE if targeting OpenCL devices.           #
+#   - Modify XSBENCH_DIR to be the path to XSBench source.         #
 ####################################################################
+
 ## OpenMP: set to 1 to use OpenMP ##
 OMP ?= 1
-OPENACC ?= 1
 
 ## OpenARC ##
 OPENARCLIB = ${HOME}/openarc/openarcrt
 CETUS_OUTPUT = cetus_output
 
+## XSBench directory ##
+XSBENCH_DIR = ${HOME}/XSBench/src
+
 ## CUDA ##
 CUDA_ARCH = sm_20
-# For Newark machine
 CUDA_INCLUDE = -I/usr/local/cuda-6.0/include
-# For KID machine
-#CUDA_INCLUDE = -I/sw/kfs/cuda/5.0/linux_binary/include
 CUDA_LIB = -lcuda
 GNVCC_FLAGS = -arch $(CUDA_ARCH) -O3
 
@@ -37,7 +38,4 @@ OPENCL_CC = g++
 OPENCL_FLAGS = -O3 -Wall
 OPENCL_LIB = -lOpenCL
 OPENCL_INCLUDE = -I/opt/AMDAPP/include
-## AMD OpenCL on Mac ##
-#OPENCL_CC = g++
-#OPENCL_FLAGS = -arch i386 -arch x86_64 -framework OpenCL
 endif 
