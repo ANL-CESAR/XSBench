@@ -9,6 +9,7 @@ int main(int argc, char* argv[])
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
+	Inputs in;
 	int version = 13;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
@@ -17,11 +18,11 @@ int main(int argc, char* argv[])
 	double omp_start, omp_end, p_energy;
 	unsigned long long vhash = 0;
 	int nprocs;
-	double elapsed_time;
+	//double elapsed_time;
 
-	Inputs in;
-	double *** nuclide_grids; //NuclideGridPoint ** nuclide_grids;
-	double * energy_grid; //GridPoint * energy_grid;
+	//Inputs in;
+	double *** nuclide_grids;
+	double *energy_grid;
 	int ** grid_ptrs;
 	int *index_data;
 	int size_mats, *num_nucs, *mats_ptr, *mats;
@@ -48,6 +49,9 @@ int main(int argc, char* argv[])
 
 	// Process CLI Fields -- store in "Inputs" structure
 	in = read_CLI(argc, argv);
+
+	//!!!!!
+	in.n_isotopes = 68;
 
 	// Set number of OpenMP Threads
 	omp_set_num_threads(in.nthreads); 
@@ -135,40 +139,42 @@ int main(int argc, char* argv[])
 		border_print();
 	}
 
-	//#pragma omp parallel default(none) \
+	omp_start = omp_get_wtime();
+
+	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed, vhash_local, line, macro_xs_vector) \
 	shared( max_procs, in, energy_grid, nuclide_grids, grid_ptrs, \
 	        mats_ptr, mats, concs, num_nucs, mype, vhash) 
 
-	elapsed_time = timer();
-	#pragma acc data \
+	//elapsed_time = timer();
+//	#pragma acc data \
 	copy(in, vhash) \
 	copyin(num_nucs[0:in.n_isotopes], concs[0:size_mats], mats[0:size_mats], mats_ptr[0:12], \
-	       energy_grid[0:in.n_isotopes*in.n_gridpoints], \
-	       grid_ptrs[0:in.n_isotopes*in.n_gridpoints][0:in.n_isotopes], \
-	       nuclide_grids[0:in.n_isotopes][0:in.n_gridpoints][0:6]) \
+	       energy_grid[0:in.n_isotopes*in.n_gridpoints]) \
+	       /*grid_ptrs[0:in.n_isotopes*in.n_isotopes*in.n_gridpoints], \
+	       nuclide_grids[0:in.n_isotopes*in.n_gridpoints*6])*/ \
 	create(p_energy, mat, macro_xs_vector, vhash_local, line, seed)
 	{	
 
-		//thread = omp_get_thread_num();
-		//seed   = (thread+1)*19+17;
-		seed = 13; //what to do for openacc?
+		thread = omp_get_thread_num();
+		seed   = (thread+1)*19+17;
+		//seed = 13; //what to do for openacc?
 
 		// XS Lookup Loop
-		//#pragma omp for schedule(dynamic)
-		#pragma acc parallel \
+		#pragma omp for schedule(dynamic)
+		//#pragma acc parallel \
 		private(macro_xs_vector, p_energy, mat, seed, vhash_local, line)
 		for(i=0; i<in.lookups; i++)
 		{
 			// Status text
-			/*if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
+			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
 				printf("\rCalculating XS's... (%.0lf%% completed)",
 						(i / ( (double)in.lookups / (double) in.nthreads ))
 						/ (double) in.nthreads * 100.0);
-			*/
+
 			// Randomly pick an energy and material for the particle
 			#ifdef VERIFICATION
-			//#pragma omp critical
+			#pragma omp critical
 			{
 				mat = pick_mat(&seed); 
 				p_energy = rn_v();
@@ -177,7 +183,7 @@ int main(int argc, char* argv[])
 			mat = pick_mat(&seed); 
 			p_energy = rn(&seed);
 			#endif
-			
+		
 			// This returns the macro_xs_vector, but we're not going
 			// to do anything with it in this program, so return value
 			// is written over.
@@ -197,16 +203,18 @@ int main(int argc, char* argv[])
 				   macro_xs_vector[3],
 				   macro_xs_vector[4]);
 			vhash_local = hash(line, 10000);
-			//#pragma omp atomic
+			#pragma omp atomic
 			vhash += vhash_local;
 			#endif
 		}
 	}
 
+	omp_end = omp_get_wtime();
+
 	if(mype == 0) printf("\nSimulation complete.\n" );
 
-	elapsed_time = timer() - elapsed_time;
-	printf("Acclerator elapsed time: %lf seconds\n", elapsed_time);
+	//elapsed_time = timer() - elapsed_time;
+	//printf("Acclerator elapsed time: %lf seconds\n", elapsed_time);
 
 	// Print / Save Results and Exit
 	print_results(in, mype, omp_end-omp_start, nprocs, vhash);

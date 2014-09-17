@@ -1,72 +1,141 @@
-include make.header
+#===============================================================================
+# User Options
+#===============================================================================
 
-#C compiler
-CC = g++ 
-NVCC = nvcc
-CC_FLAGS_SERIAL = -O3 -Wall -ffloat-store 
-CLIBS1 = -lm 
-TARGET = ./bin
+COMPILER    = gnu
+OPTIMIZE    = yes
+DEBUG       = no
+PROFILE     = no
+MPI         = no
+OPENACC     = no
+PAPI        = no
+VEC_INFO    = no
+VERIFY      = yes
+BENCHMARK   = no
+BINARY_DUMP = no
+BINARY_READ = no
 
-#Set the output binary names for different compilers
-BENCHMARK_SERIAL = $(TARGET)/xsbench_serial
-BENCHMARK_OPENCL = $(TARGET)/xsbench_ARC_OPENCL
-BENCHMARK_CUDA = $(TARGET)/xsbench_ARC_CUDA
+#===============================================================================
+# Program name & source code list
+#===============================================================================
 
-#Choose the correct runtime library depending upon whether OMP is enabled or not.
-OMP ?= 0
-ifeq ($(OMP),1)
-CLIBS2_BASE = -lm -lgomp
-ACCRT_BASE = openaccrtomp
-xsbench_ARC_CUDA: CFLAGS2_BASE = -Xcompiler -fopenmp
-xsbench_ARC_OPENCL: CFLAGS2_BASE = -fopenmp
-else
-CLIBS2_BASE = -lm 
-CFLAGS2_BASE =
-ACCRT_BASE = openaccrt
+program = XSBench
+
+source = \
+Main.c \
+io.c \
+CalculateXS.c \
+GridInit.c \
+XSutils.c \
+Materials.c
+
+obj = $(source:.c=.o)
+
+#===============================================================================
+# Sets Flags
+#===============================================================================
+
+# Standard Flags
+CFLAGS := -std=gnu99
+
+# Linker Flags
+LDFLAGS = -lm
+
+# Regular gcc Compiler
+ifeq ($(COMPILER),gnu)
+  CC = gcc
+  CFLAGS += -fopenmp
 endif
 
-#Check for the profiler mode
-MODE ?= normal
-ifeq ($(MODE), profile)
-PREF = pf
-else
-PREF = 
+# Intel Compiler
+ifeq ($(COMPILER),intel)
+  CC = icc
+  CFLAGS += -openmp 
 endif
 
-#Select underlying compiler-specific runtime library and compile flags
-xsbench_ARC_OPENCL: ACCRT_BASE2 = $(ACCRT_BASE)_opencl$(PREF)
-xsbench_ARC_OPENCL: CFLAGS2 = $(CFLAGS2_BASE) -I$(OPENARCLIB) -I$(XSBENCH_DIR) $(OPENCL_INCLUDE) $(OPENCL_FLAGS)
-xsbench_ARC_OPENCL: CLIBS2 = $(CLIBS2_BASE) -L$(OPENARCLIB)/ -l$(ACCRT_BASE2) $(OPENCL_LIB)
+# BG/Q gcc Cross-Compiler
+ifeq ($(MACHINE),bluegene)
+  CC = mpicc
+endif
 
-xsbench_ARC_CUDA: ACCRT_BASE2 = $(ACCRT_BASE)_cuda$(PREF)	
-xsbench_ARC_CUDA: CFLAGS2 = $(CFLAGS2_BASE) -I$(OPENARCLIB) -I$(XSBENCH_DIR) $(CUDA_INCLUDE) $(GNVCC_FLAGS)
-xsbench_ARC_CUDA: CLIBS2 = $(CLIBS2_BASE) -L$(OPENARCLIB)/ -l$(ACCRT_BASE2) $(OPENCL_LIB) $(CUDA_LIB)
+# Debug Flags
+ifeq ($(DEBUG),yes)
+  CFLAGS += -g
+  LDFLAGS  += -g
+endif
+
+# Profiling Flags
+ifeq ($(PROFILE),yes)
+  CFLAGS += -pg
+  LDFLAGS  += -pg
+endif
+
+# Optimization Flags
+ifeq ($(OPTIMIZE),yes)
+  CFLAGS += -O3
+endif
+
+# Compiler Vectorization (needs -O3 flag) information
+ifeq ($(VEC_INFO),yes)
+  CFLAGS += -ftree-vectorizer-verbose=6
+endif
+
+# PAPI source (you may need to provide -I and -L pointing
+# to PAPI depending on your installation
+ifeq ($(PAPI),yes)
+  source += papi.c
+  CFLAGS += -DPAPI
+  #CFLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
+  #LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
+  LDFLAGS += -lpapi
+endif
+
+# MPI
+ifeq ($(MPI),yes)
+  CC = mpicc
+  CFLAGS += -DMPI
+endif
+
+# Verification of results mode
+ifeq ($(VERIFY),yes)
+  CFLAGS += -DVERIFICATION
+endif
+
+# Adds outer 'benchmarking' loop to do multiple trials for
+# 1 < threads <= max_threads
+ifeq ($(BENCHMARK),yes)
+  CFLAGS += -DBENCHMARK
+endif
+
+# Binary dump for file I/O based initialization
+ifeq ($(BINARY_DUMP),yes)
+  CFLAGS += -DBINARY_DUMP
+endif
+
+# Binary read for file I/O based initialization
+ifeq ($(BINARY_READ),yes)
+  CFLAGS += -DBINARY_READ
+endif
 
 
-ARC_CUDA: xsbench_ARC_CUDA
-ARC_OPENCL: xsbench_ARC_OPENCL
-all: all_CUDA
-all_CUDA: xsbench_ARC_CUDA xsbench_serial
-all_OPENCL: xsbench_ARC_OPENCL xsbench_serial
-serial: xsbench_serial
+#===============================================================================
+# Targets to Build
+#===============================================================================
 
-C = Main.c CalculateXS.c GridInit.c Materials.c XSutils.c io.c
-CPP = $(C:.c=.cpp)
-CETUS_OUTPUT_CPP = $(addprefix $(CETUS_OUTPUT)/, $(CPP))
+$(program): $(obj) XSbench_header.h
+	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-xsbench_serial: $(C) | target_dir
-	$(CC) $(COMMONFLAGS) $(CC_FLAGS_SERIAL) -o $(BENCHMARK_SERIAL) $(C) $(CLIBS1)
-
-xsbench_ARC_CUDA: $(CETUS_OUTPUT_CPP) | target_dir
-	cd $(CETUS_OUTPUT); $(NVCC) $(CFLAGS2) -o ../$(BENCHMARK_CUDA) $(CPP) $(CLIBS2); cp openarc_kernel.cu ../$(TARGET); cp $(OPENARCLIB)/binBuilder_cuda ../$(TARGET); cp $(OPENARCLIB)/Timer ../$(TARGET); cd ../
-
-xsbench_ARC_OPENCL: $(CETUS_OUTPUT_CPP) | target_dir
-	cd $(CETUS_OUTPUT); $(OPENCL_CC) $(CFLAGS2) -o ../$(BENCHMARK_OPENCL) $(CPP) $(CLIBS2); cp openarc_kernel.cl ../$(TARGET); cp $(OPENARCLIB)/binBuilder_opencl ../$(TARGET); cp $(OPENARCLIB)/Timer ../$(TARGET);  cd ../
-
-target_dir:
-	mkdir -p $(TARGET)
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o;
-	if [ -d ./$(CETUS_OUTPUT) ]; then cd $(CETUS_OUTPUT); rm -f *.o *~ memcheck memcheck.c; cd ..; fi
-	rm -rf $(TARGET)
+	rm -rf $(program) $(obj)
+
+edit:
+	vim -p $(source) papi.c XSbench_header.h
+
+run:
+	./$(program)
+
+bgqrun:
+	qsub -t 10 -n 1 -O test XSBench
