@@ -71,22 +71,22 @@ int d_compare(const void * a, const void * b)
 
 // Binary Search function for nuclide grid
 // Returns ptr to energy less than the quarry that is closest to the quarry
-int binary_search(double ** A, double quarry, int n)
+int binary_search(double * A, double quarry, int n)
 {
 	int min = 0;
 	int max = n-1;
 	int mid;
 	
 	// checks to ensure we're not reading off the end of the grid
-	if(A[0][0] > quarry) return 0;
-	else if(A[n-1][0] < quarry) return n-2;
+	if(A[0*6 + 0] > quarry) return 0;
+	else if(A[(n-1)*6 + 0] < quarry) return n-2;
 	
 	// Begins binary search	
 	while(max >= min)
 	{
 		mid = min + floor((max-min) / 2.0);
-		if(A[mid][0] < quarry) min = mid+1;
-		else if(A[mid][0] > quarry) max = mid-1;
+		if(A[mid*6 + 0] < quarry) min = mid+1;
+		else if(A[mid*6 + 0] > quarry) max = mid-1;
 		else return mid;
 	}
 	return max;
@@ -146,7 +146,7 @@ size_t estimate_mem_usage(Inputs in)
 	return memtotal;
 }
 
-void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int * grid_ptrs)
+void binary_dump(long n_isotopes, long n_gridpoints, double * nuclide_grids, double * energy_grid, int * grid_ptrs)
 {
 	FILE * fp = fopen("XS_data.dat", "wb");
 	long i, j;
@@ -154,12 +154,12 @@ void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, d
 	for(i=0; i<n_isotopes; i++){
 		//fwrite(nuclide_grids[i], 6*sizeof(double), n_gridpoints, fp);
 		for(j=0; j<n_gridpoints; j++){
-			fwrite(&nuclide_grids[i][j][0], sizeof(double), 1, fp);
-			fwrite(&nuclide_grids[i][j][1], sizeof(double), 1, fp);
-			fwrite(&nuclide_grids[i][j][2], sizeof(double), 1, fp);
-			fwrite(&nuclide_grids[i][j][3], sizeof(double), 1, fp);
-			fwrite(&nuclide_grids[i][j][4], sizeof(double), 1, fp);
-			fwrite(&nuclide_grids[i][j][5], sizeof(double), 1, fp);
+			fwrite(&nuclide_grids[i*n_gridpoints*6 + j*6 + 0], sizeof(double), 1, fp);
+			fwrite(&nuclide_grids[i*n_gridpoints*6 + j*6 + 1], sizeof(double), 1, fp);
+			fwrite(&nuclide_grids[i*n_gridpoints*6 + j*6 + 2], sizeof(double), 1, fp);
+			fwrite(&nuclide_grids[i*n_gridpoints*6 + j*6 + 3], sizeof(double), 1, fp);
+			fwrite(&nuclide_grids[i*n_gridpoints*6 + j*6 + 4], sizeof(double), 1, fp);
+			fwrite(&nuclide_grids[i*n_gridpoints*6 + j*6 + 5], sizeof(double), 1, fp);
 		}
 	}
 
@@ -170,7 +170,7 @@ void binary_dump(long n_isotopes, long n_gridpoints, double *** nuclide_grids, d
 	fclose(fp);
 }
 
-void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid, int * grid_ptrs)
+void binary_read(long n_isotopes, long n_gridpoints, double * nuclide_grids, double * energy_grid, int * grid_ptrs)
 {
 	int stat;
 	long i, j;
@@ -179,12 +179,12 @@ void binary_read(long n_isotopes, long n_gridpoints, double *** nuclide_grids, d
 	for(i=0; i<n_isotopes; i++){
 		//stat = fread(nuclide_grids[i], 6*sizeof(double), n_gridpoints, fp);
 		for(j=0; j<n_gridpoints; j++){
-			stat = fread(&nuclide_grids[i][j][0], sizeof(double), 1, fp);
-			stat = fread(&nuclide_grids[i][j][1], sizeof(double), 1, fp);
-			stat = fread(&nuclide_grids[i][j][2], sizeof(double), 1, fp);
-			stat = fread(&nuclide_grids[i][j][3], sizeof(double), 1, fp);
-			stat = fread(&nuclide_grids[i][j][4], sizeof(double), 1, fp);
-			stat = fread(&nuclide_grids[i][j][5], sizeof(double), 1, fp);
+			stat = fread(&nuclide_grids[i*n_gridpoints*6 + j*6 + 0], sizeof(double), 1, fp);
+			stat = fread(&nuclide_grids[i*n_gridpoints*6 + j*6 + 1], sizeof(double), 1, fp);
+			stat = fread(&nuclide_grids[i*n_gridpoints*6 + j*6 + 2], sizeof(double), 1, fp);
+			stat = fread(&nuclide_grids[i*n_gridpoints*6 + j*6 + 3], sizeof(double), 1, fp);
+			stat = fread(&nuclide_grids[i*n_gridpoints*6 + j*6 + 4], sizeof(double), 1, fp);
+			stat = fread(&nuclide_grids[i*n_gridpoints*6 + j*6 + 5], sizeof(double), 1, fp);
 		}
 	}
 	//Read UEG Data

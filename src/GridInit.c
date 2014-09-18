@@ -6,52 +6,52 @@
 
 // Generates randomized energy grid for each nuclide
 // Note that this is done as part of initialization (serial), so rand() is used.
-void generate_grids(double *** nuclide_grids, long n_isotopes, long n_gridpoints)
+void generate_grids(double * nuclide_grids, long n_isotopes, long n_gridpoints)
 {
 	long i, j;
 	for(i=0; i<n_isotopes; i++){
 		for(j=0; j<n_gridpoints; j++){
-			nuclide_grids[i][j][0] = ((double)rand()/(double)RAND_MAX); //energy
-			nuclide_grids[i][j][1] = ((double)rand()/(double)RAND_MAX); //total xs
-			nuclide_grids[i][j][2] = ((double)rand()/(double)RAND_MAX); //elastic xs
-			nuclide_grids[i][j][3] = ((double)rand()/(double)RAND_MAX); //absorption xs
-			nuclide_grids[i][j][4] = ((double)rand()/(double)RAND_MAX); //fission xs
-			nuclide_grids[i][j][5] = ((double)rand()/(double)RAND_MAX); //nu fission xs
+      nuclide_grids[i*n_gridpoints*6 + j*6 + 0] = ((double)rand()/(double)RAND_MAX); //energy
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 1] = ((double)rand()/(double)RAND_MAX); //total xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 2] = ((double)rand()/(double)RAND_MAX); //elastic xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 3] = ((double)rand()/(double)RAND_MAX); //absorption xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 4] = ((double)rand()/(double)RAND_MAX); //fission xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 5] = ((double)rand()/(double)RAND_MAX); //nu fission xs
 		}
 	}
 }
 
 // Verification version of this function (tighter control over RNG)
-void generate_grids_v(double *** nuclide_grids, long n_isotopes, long n_gridpoints)
+void generate_grids_v(double * nuclide_grids, long n_isotopes, long n_gridpoints)
 {
 	long i, j;
 	for(i=0; i<n_isotopes; i++){
 		for(j=0; j<n_gridpoints; j++){
-			nuclide_grids[i][j][0] = rn_v(); //energy
-			nuclide_grids[i][j][1] = rn_v(); //total xs
-			nuclide_grids[i][j][2] = rn_v(); //elastic xs
-			nuclide_grids[i][j][3] = rn_v(); //absorption xs
-			nuclide_grids[i][j][4] = rn_v(); //fission xs
-			nuclide_grids[i][j][5] = rn_v(); //nu fission xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 0] = rn_v(); //energy
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 1] = rn_v(); //total xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 2] = rn_v(); //elastic xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 3] = rn_v(); //absorption xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 4] = rn_v(); //fission xs
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 5] = rn_v(); //nu fission xs
 		}
 	}
 }
 
 // Sorts the nuclide grids by energy (lowest -> highest)
-void sort_nuclide_grids(double *** nuclide_grids, long n_isotopes, long n_gridpoints)
+void sort_nuclide_grids(double * nuclide_grids, long n_isotopes, long n_gridpoints)
 {
 	long i, j;
 	int (*cmp) (const void *, const void *);
-	cmp = NGP_compare;
+	cmp = d_compare;
 
 	for(i=0; i<n_isotopes; i++){
-		qsort(&nuclide_grids[i][0], n_gridpoints, sizeof(double*), cmp);
+		qsort(&nuclide_grids[i*n_gridpoints*6], n_gridpoints, sizeof(double)*6, cmp);
 	}
 }
 
 // Allocates unionized energy grid, and assigns union of energy levels
 // from nuclide grids to it.
-double * generate_energy_grid(long n_isotopes, long n_gridpoints, double *** nuclide_grids)
+double * generate_energy_grid(long n_isotopes, long n_gridpoints, double * nuclide_grids)
 {
 	long i, j, n_unionized_grid_points;
 	int mype = 0;
@@ -72,7 +72,7 @@ double * generate_energy_grid(long n_isotopes, long n_gridpoints, double *** nuc
 
 	for(i=0; i<n_isotopes; i++){
 		for(j=0; j<n_gridpoints; j++){
-			energy_grid[i*n_gridpoints + j] = nuclide_grids[i][j][0];
+			energy_grid[i*n_gridpoints + j] = nuclide_grids[i*n_gridpoints*6 + j*6];
 		}
 	}
 	qsort(energy_grid, n_unionized_grid_points, sizeof(double), cmp);
@@ -84,7 +84,7 @@ double * generate_energy_grid(long n_isotopes, long n_gridpoints, double *** nuc
 // pointer from unionized grid to the correct spot in the nuclide grid.
 // This process is time consuming, as the number of binary searches
 // required is:  binary searches = n_gridpoints * n_isotopes^2
-int * generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide_grids, double * energy_grid)
+int * generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *nuclide_grids, double * energy_grid)
 {
 	long i, j;
 	double quarry;
@@ -111,7 +111,7 @@ int * generate_grid_ptrs(long n_isotopes, long n_gridpoints, double *** nuclide_
 		for(j=0; j<n_isotopes; j++){
 			// j is the nuclide i.d.
 			// log n binary search
-			grid_ptrs[n_isotopes*i + j] = binary_search(nuclide_grids[j], quarry, n_gridpoints);
+			grid_ptrs[n_isotopes*i + j] = binary_search(&nuclide_grids[j*n_gridpoints*6], quarry, n_gridpoints);
 		}
 	}
 	if(mype == 0) printf("\n");

@@ -2,7 +2,7 @@
 
 // Calculates the microscopic cross section for a given nuclide & energy
 void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpoints,
-                        double * restrict energy_grid, double *** restrict nuclide_grids,
+                        double * restrict energy_grid, double * restrict nuclide_grids,
                         int * restrict grid_ptrs, int idx, double * restrict xs_vector)
 {	
 	// Variables
@@ -12,12 +12,12 @@ void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpo
 	// pull ptr from energy grid and check to ensure that
 	// we're not reading off the end of the nuclide's grid
 	if(grid_ptrs[n_isotopes*idx + nuc] == n_gridpoints - 1){
-		low = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc] - 1];
-		high = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc]];
+		low = &nuclide_grids[nuc*n_gridpoints*6 + (grid_ptrs[n_isotopes*idx + nuc] - 1)*6];
+		high = &nuclide_grids[nuc*n_gridpoints*6 + (grid_ptrs[n_isotopes*idx + nuc])*6];
 	}
 	else{
-		low = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc]];
-		high = nuclide_grids[nuc][grid_ptrs[n_isotopes*idx + nuc] + 1];
+		low = &nuclide_grids[nuc*n_gridpoints*6 + (grid_ptrs[n_isotopes*idx + nuc])*6];
+		high = &nuclide_grids[nuc*n_gridpoints*6 + (grid_ptrs[n_isotopes*idx + nuc] + 1)*6];
 	}	
 
 	// calculate the re-useable interpolation factor
@@ -54,7 +54,7 @@ void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpo
 // Calculates macroscopic cross section based on a given material & energy 
 void calculate_macro_xs(double p_energy, int mat, long n_isotopes, long n_gridpoints,
 			int * restrict num_nucs, double * restrict concs,
-			double * restrict energy_grid, double *** restrict nuclide_grids,
+			double * restrict energy_grid, double * restrict nuclide_grids,
 			int * restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
 			double * restrict macro_xs_vector)
 {

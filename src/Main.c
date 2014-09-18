@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	//double elapsed_time;
 
 	//Inputs in;
-	double *** nuclide_grids;
+	double *nuclide_grids;
 	double *energy_grid;
 	int *grid_ptrs;
 	int *index_data;
@@ -68,7 +68,8 @@ int main(int argc, char* argv[])
 	if(mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	#endif
 	
-	nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
+	nuclide_grids = 
+    (double *) malloc(in.n_isotopes * in.n_gridpoints * 6 * sizeof(double));
 
 	#ifdef VERIFICATION
 	generate_grids_v(nuclide_grids, in.n_isotopes, in.n_gridpoints);	
