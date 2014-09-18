@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 	#pragma acc data \
 	copy(in, vhash) \
 	copyin(num_nucs[0:in.n_isotopes], concs[0:size_mats], mats[0:size_mats], mats_ptr[0:12], \
-	       energy_grid[0:in.n_isotopes*in.n_gridpoints]) \
+	       energy_grid[0:in.n_isotopes*in.n_gridpoints], \
 	       grid_ptrs[0:in.n_isotopes*in.n_isotopes*in.n_gridpoints], \
 	       nuclide_grids[0:in.n_isotopes*in.n_gridpoints*6]) \
 	create(p_energy, mat, macro_xs_vector, vhash_local, line, seed)
