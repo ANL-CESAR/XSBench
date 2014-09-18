@@ -2,18 +2,18 @@
 # User Options
 #===============================================================================
 
-OPENACC     = yes
-VERIFY      = yes
+OPENACC     = no
+
+VERIFY      = no
 BINARY_DUMP = no
 BINARY_READ = no
 
-#No OpenACC options
 COMPILER    = gnu
 OPTIMIZE    = yes
 DEBUG       = yes
 PROFILE     = no
 MPI         = no
-PAPI        = no
+PAPI        = yes
 VEC_INFO    = no
 BENCHMARK   = no
 
@@ -43,10 +43,16 @@ endif
 # Sets Flags
 #===============================================================================
 
+space := 
+space +=
+comma := ,
+macro_base =
+
 ifeq ($(OPENACC),yes)
 
   OMP ?= 1
-  OPENARCLIB = ${HOME}/openarc/openarcrt
+  OPENARCRTLIB = ${HOME}/openarc/openarcrt
+  OPENARCLIB = ${HOME}/openarc/lib
   XSBENCH_DIR = ${HOME}/XSBench/src
   CUDA_ARCH = sm_20
   CUDA_INCLUDE = -I/usr/local/cuda-6.0/include
@@ -58,7 +64,7 @@ ifeq ($(OPENACC),yes)
 
   CC = g++
   NVCC = nvcc
-  CFLAGS = -DOPENACC -I$(OPENARCLIB) -I$(XSBENCH_DIR) $(CUDA_INCLUDE) $(GNVCC_FLAGS)
+  CFLAGS = -DOPENACC -I$(OPENARCRTLIB) -I$(XSBENCH_DIR) $(CUDA_INCLUDE) $(GNVCC_FLAGS)
 
   ifeq ($(OMP),1)
     LDFLAGS += -lgomp
@@ -68,7 +74,9 @@ ifeq ($(OPENACC),yes)
     ACCRT = openaccrt_cuda
   endif
 
-  LDFLAGS = -lm -L$(OPENARCLIB)/ -l$(ACCRT) $(OPENCL_LIB) $(CUDA_LIB)
+  LDFLAGS = -lm -L$(OPENARCRTLIB)/ -l$(ACCRT) $(OPENCL_LIB) $(CUDA_LIB)
+
+  macro_base = OPENACC
 
 else
 
@@ -141,29 +149,36 @@ endif
 # Verification of results mode
 ifeq ($(VERIFY),yes)
   CFLAGS += -DVERIFICATION
+  macro_base += VERIFICATION
 endif
 
 # Binary dump for file I/O based initialization
 ifeq ($(BINARY_DUMP),yes)
   CFLAGS += -DBINARY_DUMP
+  macro_base += BINARY_DUMP
 endif
 
 # Binary read for file I/O based initialization
 ifeq ($(BINARY_READ),yes)
   CFLAGS += -DBINARY_READ
+  macro_base += BINARY_READ
 endif
 
+macro = $(subst $(space),$(comma),$(macro_base))
 
 #===============================================================================
 # Targets to Build
 #===============================================================================
 ifeq ($(OPENACC),yes)
 
-program: $(cetus_output_cpp) | target_dir
-	cd $(cetus_output); $(NVCC) $(CFLAGS) -o ../$(target)/$(program) $(cpp) $(LDFLAGS); cp openarc_kernel.cu ../$(target); cp $(OPENARCLIB)/binBuilder_cuda ../$(target); cp $(OPENARCLIB)/Timer ../$(target); cd ../
+program: build_cetus_output $(cetus_output_cpp) | target_dir
+	cd $(cetus_output); $(NVCC) $(CFLAGS) -o ../$(target)/$(program) $(cpp) $(LDFLAGS); cp openarc_kernel.cu ../$(target); cp $(OPENARCRTLIB)/binBuilder_cuda ../$(target); cp $(OPENARCRTLIB)/Timer ../$(target); cd ../
 
 target_dir:
 	mkdir -p $(target)
+
+build_cetus_output:
+	java -classpath $(OPENARCLIB)/cetus.jar:$(OPENARCLIB)/antlr.jar openacc.exec.ACC2GPUDriver -macro=$(macro) -verbosity=2 $(source)
 
 clean:
 	rm -f *.o;

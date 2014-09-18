@@ -137,12 +137,24 @@ int main(int argc, char* argv[])
 
 	#ifndef OPENACC
 	omp_start = omp_get_wtime();
+	#else
+	acc_start = timer();
+	#endif
+
+	//initialize papi with one thread (master) here
+	#ifdef PAPI
+	if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
+		fprintf(stderr, "PAPI library init error!\n");
+		exit(1);
+	}
+	#endif	
+
+	#ifndef OPENACC
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed, vhash_local, line, macro_xs_vector) \
 	shared( max_procs, in, energy_grid, nuclide_grids, grid_ptrs, \
 	        mats_ptr, mats, concs, num_nucs, mype, vhash) 
 	#else
-	acc_start = timer();
 	#pragma acc data \
 	copy(in, vhash) \
 	copyin(num_nucs[0:in.n_isotopes], concs[0:size_mats], mats[0:size_mats], mats_ptr[0:12], \
@@ -151,7 +163,17 @@ int main(int argc, char* argv[])
 	       nuclide_grids[0:in.n_isotopes*in.n_gridpoints*6]) \
 	create(p_energy, mat, macro_xs_vector, vhash_local, line, seed)
 	#endif
-	{	
+	{
+		// Initialize parallel PAPI counters
+		#ifdef PAPI
+		int eventset = PAPI_NULL; 
+		int num_papi_events;
+		#pragma omp critical
+		{
+			counter_init(&eventset, &num_papi_events);
+		}
+		#endif
+	
 		#ifndef OPENACC
 		thread = omp_get_thread_num();
 		seed   = (thread+1)*19+17;
@@ -215,15 +237,33 @@ int main(int argc, char* argv[])
 			vhash += vhash_local;
 			#endif
 		}
+
+		// Prints out thread local PAPI counters
+		#ifdef PAPI
+		if( mype == 0 && thread == 0 )
+		{
+			printf("\n");
+			border_print();
+			center_print("PAPI COUNTER RESULTS", 79);
+			border_print();
+			printf("Count          \tSmybol      \tDescription\n");
+		}
+		{
+		#pragma omp barrier
+		}
+		counter_stop(&eventset, num_papi_events);
+		#endif
 	}
+
+	#ifndef PAPI
+	if( mype == 0) printf("\nSimulation complete.\n" );
+	#endif
 
 	#ifndef OPENACC
 	omp_end = omp_get_wtime();
-	if(mype == 0) printf("\nSimulation complete.\n" );
 	print_results(in, mype, omp_end-omp_start, nprocs, vhash);
 	#else
 	acc_end = timer();
-	printf("\nSimulation complete.\n" );
 	print_results(in, mype, acc_end-acc_start, nprocs, vhash);
 	#endif
 

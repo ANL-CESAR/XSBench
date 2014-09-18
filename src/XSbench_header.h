@@ -20,6 +20,11 @@
 #define restrict __restrict__
 #endif
 
+// Papi Header
+#ifdef PAPI
+#include "papi.h"
+#endif
+
 typedef struct{
 	int nthreads;
 	long n_isotopes;
@@ -74,5 +79,9 @@ int * load_mats(int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes);
 double * load_concs(int size_mats);
 double * load_concs_v(int size_mats);
 int pick_mat(unsigned long * seed);
+
+// papi.c funtion prototypes
+void counter_init( int *eventset, int *num_papi_events );
+void counter_stop( int * eventset, int num_papi_events );
 
 #endif
