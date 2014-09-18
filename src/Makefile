@@ -96,6 +96,11 @@ ifeq ($(MPI),yes)
   CFLAGS += -DMPI
 endif
 
+# OpenACC
+ifeq ($(OPENACC),yes)
+  CFLAGS += -DOPENACC
+endif
+
 # Verification of results mode
 ifeq ($(VERIFY),yes)
   CFLAGS += -DVERIFICATION

@@ -39,12 +39,7 @@ void print_CLI_error(void);
 Inputs read_CLI(int argc, char * argv[]);
 
 // XSutils.c function prototypes
-int NGP_compare(const void * a, const void * b);
 int d_compare(const void * a, const void * b);
-double *** gpmatrix(size_t m, size_t n);
-int ** pmatrix(size_t m, size_t n);
-void gpmatrix_free(double *** M);
-void pmatrix_free(double ** M);
 int binary_search(double * A, double quarry, int n);
 double rn(unsigned long * seed);
 double rn_v(void);

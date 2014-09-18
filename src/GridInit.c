@@ -11,7 +11,7 @@ void generate_grids(double * nuclide_grids, long n_isotopes, long n_gridpoints)
 	long i, j;
 	for(i=0; i<n_isotopes; i++){
 		for(j=0; j<n_gridpoints; j++){
-      nuclide_grids[i*n_gridpoints*6 + j*6 + 0] = ((double)rand()/(double)RAND_MAX); //energy
+			nuclide_grids[i*n_gridpoints*6 + j*6 + 0] = ((double)rand()/(double)RAND_MAX); //energy
 			nuclide_grids[i*n_gridpoints*6 + j*6 + 1] = ((double)rand()/(double)RAND_MAX); //total xs
 			nuclide_grids[i*n_gridpoints*6 + j*6 + 2] = ((double)rand()/(double)RAND_MAX); //elastic xs
 			nuclide_grids[i*n_gridpoints*6 + j*6 + 3] = ((double)rand()/(double)RAND_MAX); //absorption xs
