@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-OPENACC     = no
+OPENACC     = yes
 
 VERIFY      = no
 BINARY_DUMP = no
@@ -13,7 +13,7 @@ OPTIMIZE    = yes
 DEBUG       = yes
 PROFILE     = no
 MPI         = no
-PAPI        = yes
+PAPI        = no
 VEC_INFO    = no
 BENCHMARK   = no
 
