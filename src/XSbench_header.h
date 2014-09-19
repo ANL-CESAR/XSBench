@@ -25,23 +25,19 @@
 #include "papi.h"
 #endif
 
-typedef struct{
-	int nthreads;
-	long n_isotopes;
-	long n_gridpoints;
-	int lookups;
-	char * HM;
-} Inputs;
-
 // io.c function prototypes
 void logo(int version);
 void center_print(const char *s, int width);
-void print_results(Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash);
-void print_inputs(Inputs in, int nprocs, int version);
+void print_results( int nthreads, long n_isotopes, long n_gridpoints, 
+    int lookups, char *HM,  int mype, double runtime, int nprocs, 
+    unsigned long long vhash );
+void print_inputs(int nthreads, long n_isotopes, 
+    long n_gridpoints, int lookups, char *HM, int nprocs, int version );
 void border_print(void);
 void fancy_int(long a);
 void print_CLI_error(void);
-Inputs read_CLI(int argc, char * argv[]);
+void read_CLI( int argc, char * argv[], int *nthreads, long *n_isotopes, 
+    long *n_gridpoints, int *lookups, char *HM );
 
 // XSutils.c function prototypes
 int d_compare(const void * a, const void * b);
@@ -49,7 +45,7 @@ int binary_search(double * A, double quarry, int n);
 double rn(unsigned long * seed);
 double rn_v(void);
 unsigned int hash(unsigned char *str, int nbins);
-size_t estimate_mem_usage(Inputs in);
+size_t estimate_mem_usage(long n_isotopes, long n_gridpoints);
 void binary_dump(long n_isotopes, long n_gridpoints, double * nuclide_grids, double * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, double * nuclide_grids, double * energy_grid, int * grid_ptrs);
 double timer();

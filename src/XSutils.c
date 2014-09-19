@@ -72,12 +72,12 @@ unsigned int hash(unsigned char *str, int nbins)
 	return hash % nbins;
 }
 
-size_t estimate_mem_usage(Inputs in)
+size_t estimate_mem_usage(long n_isotopes, long n_gridpoints)
 {
-	size_t single_nuclide_grid = in.n_gridpoints * 6 * sizeof(double);
-	size_t all_nuclide_grids   = in.n_isotopes * single_nuclide_grid;
-	size_t size_GridPoint      = sizeof(double) + in.n_isotopes*sizeof(int);
-	size_t size_UEG            = in.n_isotopes*in.n_gridpoints * size_GridPoint;
+	size_t single_nuclide_grid = n_gridpoints * 6 * sizeof(double);
+	size_t all_nuclide_grids   = n_isotopes * single_nuclide_grid;
+	size_t size_GridPoint      = sizeof(double) + n_isotopes*sizeof(int);
+	size_t size_UEG            = n_isotopes*n_gridpoints * size_GridPoint;
 	size_t memtotal;
 
 	memtotal          = all_nuclide_grids + size_UEG;
