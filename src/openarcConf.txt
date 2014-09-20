@@ -1,0 +1,382 @@
+#####################################################################
+# Sample OpenARC configuration file                                 #
+#     - Any OpenARC configuration parameters can be put here.       #
+#     - Lines starting with '#' will be ignored.                    #
+#     - Add  "-gpuConfFile=thisfilename" to the commandline input.  #
+############################################################################
+# Avaliable OpenARC configuration parameters                               #
+############################################################################
+#Option: AccAnalysisOnly
+#AccAnalysisOnly=N
+#Conduct OpenACC analysis only and exit if option value > 0
+#        =0 disable this option (default)
+#        =1 OpenACC Annotation parsing
+#        =2 OpenACC Annotation parsing + initial code restructuring
+#        =3 OpenACC parsing + code restructuring + OpenACC loop directive preprocessing
+#        =4 option3 + OpenACC annotation analysis
+#AccPrivatization=N
+#Privatize scalar/array variables accessed in compute regions (parallel loops and kernels loops)
+#      =0 disable automatic privatization
+#      =1 enable only scalar privatization (default)
+#      =2 enable both scalar and array variable privatization
+#(this option is always applied unless explicitly disabled by setting the value to 0
+#Option: AccReduction
+#AccReduction=N
+#Perform reduction variable analysis
+#      =0 disable reduction analysis 
+#      =1 enable only scalar reduction analysis (default)
+#      =2 enable array reduction analysis and transformation
+#(this option is always applied unless explicitly disabled by setting the value to 0
+#Option: CUDACompCapability
+#CUDACompCapability=1.1
+#CUDA compute capability of a target GPU
+#Option: MemTrOptOnLoops
+#MemTrOptOnLoops
+#Memory transfer optimization on loops whose bodies contain only parallel regions.
+#Option: UEPRemovalOptLevel
+#UEPRemovalOptLevel=N
+#Optimization level (0-2) to remove upwardly exposed private (UEP) variables (default is 0). This optimization may be unsafe; this should be enabled only if UEP problems occur, andprogrammer should verify the correctness manually.
+#Option: UserDirectiveFile
+#UserDirectiveFile=filename
+#Name of the file that contains user directives. The file should exist in the current directory.
+#Option: addErrorCheckingCode
+#addErrorCheckingCode
+#Add CUDA-error-checking code right after each kernel call (If this option is on, forceSyncKernelCalloption is suppressed, since the error-checking code contains a built-in synchronization call.); used for debugging.
+#Option: addSafetyCheckingCode
+#addSafetyCheckingCode
+#Add GPU-memory-usage-checking code just before each kernel call; used for debugging.
+#Option: assumeNonZeroTripLoops
+#assumeNonZeroTripLoops
+#Assume that all loops have non-zero iterations
+#Option: cudaGlobalMemSize
+#cudaGlobalMemSize=size in bytes
+#Size of CUDA global memory in bytes (default value = 1600000000); used for debugging
+#Option: cudaMaxGridDimSize
+#cudaMaxGridDimSize=number
+#Maximum size of each dimension of a grid of thread blocks ( System max = 65535)
+#Option: cudaSharedMemSize
+#cudaSharedMemSize=size in bytes
+#Size of CUDA shared memory in bytes (default value = 16384); used for debugging
+#Option: debug_parser_input
+#debug_parser_input
+#Print a single preprocessed input file before sending to parser and exit
+#Option: debug_parser_output
+#debug_parser_output
+#Print a parser output file before running any analysis/transformation passes
+#and exit
+#Option: debug_preprocessor_input
+#debug_preprocessor_input
+#Print a single pre-annotated input file before sending to preprocessor and exit
+#Option: defaultNumWorkers
+#defaultNumWorkers=N
+#Default number of workers per gang for compute regions (default value = 64)
+#Option: defaultTuningConfFile
+#defaultTuningConfFile=filename
+#Name of the file that contains default GPU tuning configurations. (Default is gpuTuning.config) If the file does not exist, system-default setting will be used. 
+#Option: disableStatic2GlobalConversion
+#disableStatic2GlobalConversion
+#disable automatic converstion of static variables in procedures except for main into global variables.
+#Option: doNotRemoveUnusedSymbols
+#doNotRemoveUnusedSymbols
+#Do not remove unused local symbols in procedures.
+#Option: dump-options
+#dump-options
+#Create file options.cetus with default options
+#Option: dump-system-options
+#dump-system-options
+#Create system wide file options.cetus with default options
+#Option: enableFaultInjection
+#enableFaultInjection
+#Enable directive-based fault injection; otherwise, fault-injection-related direcitves are ignored
+#Option: expand-all-header
+#expand-all-header
+#Expand all header file #includes into code
+#Option: expand-user-header
+#expand-user-header
+#Expand user (non-standard) header file #includes into code
+#Option: extractTuningParameters
+#extractTuningParameters=filename
+#Extract tuning parameters; output will be stored in the specified file. (Default is TuningOptions.txt)The generated file contains information on tuning parameters applicable to current input program.
+#Option: forceSyncKernelCall
+#forceSyncKernelCall
+#If enabled, cudaThreadSynchronize() call is inserted right after each kernel call to force explicit synchronization; useful for debugging
+#Option: genTuningConfFiles
+#genTuningConfFiles=tuningdir
+#Generate tuning configuration files and/or userdirective files; output will be stored in the specified directory. (Default is tuning_conf)
+#Option: gpuConfFile
+#gpuConfFile=filename
+#Name of the file that contains OpenACC configuration parameters. (Any valid OpenACC-to-GPU compiler flags can be put in the file.) The file should exist in the current directory.
+#Option: gpuMallocOptLevel
+#gpuMallocOptLevel=N
+#GPU Malloc optimization level (0-1) (default is 0)
+#Option: gpuMemTrOptLevel
+#gpuMemTrOptLevel=N
+#CPU-GPU memory transfer optimization level (0-4) (default is 3);if N > 3, aggressive optimizations such as array-name-only analysis will be applied.
+#Option: induction
+#induction
+#Perform induction variable substitution
+#Option: load-options
+#load-options
+#Load options from file options.cetus
+#Option: localRedVarConf
+#localRedVarConf=N
+#Configure how local reduction variables are generated for array type variables; 
+#N = 1 (local array reduction variables are allocated in the GPU shared memory) (default) 
+#N = 0 (Local array reduction variables are allocated in the GPU global memory) 
+#
+#Option: loop-tiling
+#loop-tiling
+#Loop tiling
+#Option: macro
+#macro
+#Sets macros for the specified names with comma-separated list (no space is allowed). e.g., -macro=ARCH=i686,OS=linux
+#Option: maxNumGangs
+#maxNumGangs=N
+#Maximum number of gangs for compute regions; this option will be applied to all gang loops in the program.
+#Option: normalize-loops
+#normalize-loops
+#Normalize for loops so they begin at 0 and have a step of 1
+#Option: normalize-return-stmt
+#normalize-return-stmt
+#Normalize return statements for all procedures
+#Option: outdir
+#outdir=dirname
+#Set the output directory name (default is cetus_output)
+#Option: profile-loops
+#profile-loops=N
+#Inserts loop-profiling calls
+#      =1 every loop          =2 outermost loop
+#      =3 every omp parallel  =4 outermost omp parallel
+#      =5 every omp for       =6 outermost omp for
+#Option: prvtArryCachingOnSM
+#prvtArryCachingOnSM
+#Cache private array variables onto GPU shared memory
+#Option: showInternalAnnotations
+#showInternalAnnotations
+#Show internal annotations added by translator
+#        =0 does not show any OpenACC/internal annotations\n
+#        =1 show only OpenACC annotations (default)
+#        =2 show both OpenACC and acc internal annotations
+#        =3 show all annotations(OpenACC, acc internal, and cetus annotations)
+#(this option can be used for debugging purpose.)
+#Option: shrdArryCachingOnConst
+#shrdArryCachingOnConst
+#Cache R/O shared array variables onto GPU constant memory
+#Option: shrdArryCachingOnTM
+#shrdArryCachingOnTM
+#Cache 1-dimensional, R/O shared array variables onto GPU texture memory
+#Option: shrdArryElmtCachingOnReg
+#shrdArryElmtCachingOnReg
+#Cache shared array elements onto GPU registers; this option may not be used if aliasing between array accesses exists.
+#Option: shrdSclrCachingOnConst
+#shrdSclrCachingOnConst
+#Cache R/O shared scalar variables onto GPU constant memory
+#Option: shrdSclrCachingOnReg
+#shrdSclrCachingOnReg
+#Cache shared scalar variables onto GPU registers
+#Option: shrdSclrCachingOnSM
+#shrdSclrCachingOnSM
+#Cache shared scalar variables onto GPU shared memory
+#Option: tinline
+#tinline=mode=0|1|2|3|4:depth=0|1:pragma=0|1:debug=0|1:foronly=0|1:complement=0|1:functions=foo,bar,...
+#(Experimental) Perform simple subroutine inline expansion tranformation
+#   mode
+#      =0 inline inside main function (default)
+#      =1 inline inside selected functions provided in the "functions" sub-option
+#      =2 inline selected functions provided in the "functions" sub-option, when invoked
+#      =3 inline according to the "inlinein" pragmas
+#      =4 inline according to both "inlinein" and "inline" pragmas
+#   depth
+#      =0 perform inlining recursively i.e. within callees (and their callees) as well (default)
+#      =1 perform 1-level inlining 
+#   pragma
+#      =0 do not honor "noinlinein" and "noinline" pragmas
+#      =1 honor "noinlinein" and "noinline" pragmas (default)
+#   debug
+#      =0 remove inlined (and other) functions if they are no longer executed (default)
+#      =1 do not remove the inlined (and other) functions even if they are no longer executed
+#   foronly
+#      =0 try to inline all function calls depending on other options (default)
+#      =1 try to inline function calls inside for loops only 
+#   complement
+#      =0 consider the functions provided in the command line with "functions" sub-option (default)
+#      =1 consider all functions except the ones provided in the command line with "functions" sub-option
+#   functions
+#      =[comma-separated list] consider the provided functions. 
+#      (Note 1: This sub-option is meaningful for modes 1 and 2 only) 
+#      (Note 2: It is used with "complement" sub-option to determine which functions should be considered.)
+#
+#Option: tsingle-call
+#tsingle-call
+#Transform all statements so they contain at most one function call
+#Option: tsingle-declarator
+#tsingle-declarator
+#Transform all variable declarations so they contain at most one declarator
+#Option: tsingle-return
+#tsingle-return
+#Transform all procedures so they have a single return statement
+#Option: tuningLevel
+#tuningLevel=N
+#Set tuning level when genTuningConfFiles is on; 
+#N = 1 (exhaustive search on program-level tuning options, default), 
+#N = 2 (exhaustive search on kernel-level tuning options)
+#Option: useLoopCollapse
+#useLoopCollapse
+#Apply LoopCollapse optimization in ACC2GPU translation
+#Option: useMallocPitch
+#useMallocPitch
+#Use cudaMallocPitch() in ACC2GPU translation
+#Option: useMatrixTranspose
+#useMatrixTranspose
+#Apply MatrixTranspose optimization in ACC2GPU translation
+#Option: useParallelLoopSwap
+#useParallelLoopSwap
+#Apply ParallelLoopSwap optimization in OpenACC2GPU translation
+#Option: useUnrollingOnReduction
+#useUnrollingOnReduction
+#Apply loop unrolling optimization for in-block reduction in ACC2GPU translation;to apply this opt, number of workers in a gang should be 2^m.
+#Option: verbosity
+#verbosity=N
+#Degree of status messages (0-4) that you wish to see (default is 0)
+#Option: programVerification
+#programVerification=N
+#Perform program verfication for debugging; 
+#N = 1 (verify the correctness of CPU-GPU memory transfers) (default)
+#N = 2 (verify the correctness of GPU kernel translation)
+#Option: verificationOptions
+#verificationOptions=complement=0|1:kernels=kernel1,kernel2,...
+#Set options used for GPU kernel verification (programVerification == 1); 
+#complement = 0 (consider kernels provided in the commandline with "kernels" sub-option)
+#           = 1 (consider all kernels except for those provided in the
+#           commandline with "kernels" sub-option (default))
+#kernels = [comma-separated list] consider the provided kernels.
+#      (Note: It is used with "complement" sub-option to determine which
+#      kernels should be considered.)
+#Option: defaultMarginOfError
+#defaultMarginOfError=E
+#Set the default value of the allowable margin of error for program
+#verification (default E = 1.0e-6)
+#Option: minValueToCheck
+#minValueToCheck=M
+#Set the minimum value for error-checking; data with values lower than this will not be checked.
+#If this option is not provided, all GPU-written data will be checked for kernel verification.
+#Option: SetAccEntryFunction
+#SetAccEntryFunction=filename
+#Name of the entry function, from which all device-related codes will be executed. (Default is main.)
+#Option: addIncludePath
+#addIncludePath=DIR
+#Add the directory DIR to the list of directories to be searched for header files; to add multiple directories, use this option multiple times. (Current directory is included by default.)
+#Option: disableWorkShareLoopCollapsing
+#disableWorkShareLoopCollapsing
+#disable automatic collapsing of work-share loops in compute regions.
+#Option: AccParallelization
+#AccParallelization=N
+ #Find parallelizable loops
+#      =0 disable automatic parallelization analysis (default)
+#      =1 add independent clauses to OpenACC loops if they are parallelizable but don't have any work-sharing clauses
+#Option: SkipGPUTranslation
+#SkipGPUTranslation=N
+#Skip the final GPU translation
+#        =1 exit before the final GPU translation (default)
+#        =2 exit after private variable transformaion
+#        =3 exit after reduction variable transformation
+#Option: ASPENModelGen
+#ASPENModelGen=modelname=name:mode=number:entryfunction=entryfunc:complement=0|1:functions=foo,bar:postprocessing=number
+ #Generate ASPEN model for the input program
+#NOPTIONDESC#
+############################################################################
+# Translation configuration #
+#############################
+#AccAnalysisOnly=4
+#SkipGPUTranslation
+#showInternalAnnotations=3
+##########################
+# Analysis configuration #
+##########################
+#AccPrivatization=1
+#AccReduction=1
+#assumeNonZeroTripLoops
+#
+#MemTrOptOnLoops
+#gpuMallocOptLevel
+#gpuMemTrOptLevel
+#prvtArryCachingOnSM
+#localRedVarConf=0
+#useLoopCollapse
+#useMallocPitch
+#useMatrixTranspose
+#useParallelLoopSwap
+#useUnrollingOnReduction
+######################################
+# Caching optimization configuration #
+######################################
+#shrdArryCachingOnConst
+#shrdArryCachingOnTM
+#shrdArryElmtCachingOnReg
+#shrdSclrCachingOnConst
+#shrdSclrCachingOnReg
+#shrdSclrCachingOnSM
+######################
+# CUDA configuration #
+######################
+#cudaGlobalMemSize
+#cudaMaxGridDimSize
+#cudaSharedMemSize
+#defaultNumWorkers=128
+#maxNumGangs
+#CUDACompCapability
+###########################
+# Debugging configuration #
+###########################
+#programVerification=2
+#verificationOptions=complement=0:kernels=main_kernel0
+#defaultMarginOfError=1.0e-12
+#minValueToCheck=1e-32
+#UEPRemovalOptLevel
+#disableStatic2GlobalConversion
+#addErrorCheckingCode
+#addSafetyCheckingCode
+#forceSyncKernelCall
+#doNotRemoveUnusedSymbols
+#debug_parser_input
+#debug_parser_output
+#debug_preprocessor_input
+#expand-all-header
+#expand-user-header
+#enableFaultInjection
+########################
+# Tuning configuration #
+########################
+#UserDirectiveFile
+#defaultTuningConfFile=gpuTuning.config
+#extractTuningParameters
+#genTuningConfFiles
+#tuningLevel=1
+###############################
+# Misc. Cetus configururation #
+###############################
+#outdir=cetus_output
+#macro=SAVE_OUTPUT=1,I_SIZE=6553601
+#macro=_N_=512,_OPENMP,_OPENACCM=1
+#macro=_N_=512,_OPENACCM=1
+#dump-options
+#dump-system-options
+#induction
+#load-options
+#loop-interchange
+#loop-tiling
+#normalize-loops
+#normalize-return-stmt
+#profile-loops
+#tinline
+#tsingle-call
+#tsingle-declarator
+#tsingle-return
+#verbosity=0
+#SetAccEntryFunction=filename
+#addIncludePath=../../openarcrt
+#disableWorkShareLoopCollapsing
+#AccParallelization=N
+#SkipGPUTranslation=N
+#ASPENModelGen=mode=N
+#NOPTION#

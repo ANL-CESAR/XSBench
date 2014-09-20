@@ -167,8 +167,7 @@ int main(int argc, char* argv[])
          num_nucs[0:n_isotopes], concs[0:size_mats], mats[0:size_mats], mats_ptr[0:12], \
 	       energy_grid[0:n_isotopes*n_gridpoints], \
 	       grid_ptrs[0:n_isotopes*n_isotopes*n_gridpoints], \
-	       nuclide_grids[0:n_isotopes*n_gridpoints*6]) \
-	create(p_energy, mat, macro_xs_vector, vhash_local, line, seed)
+	       nuclide_grids[0:n_isotopes*n_gridpoints*6])
 	#endif
 	{
 		// Initialize parallel PAPI counters
@@ -192,8 +191,9 @@ int main(int argc, char* argv[])
 		#ifndef OPENACC
 		#pragma omp for schedule(dynamic)
 		#else
-		#pragma acc parallel \
-		private(macro_xs_vector, p_energy, mat, seed, vhash_local, line)
+		#pragma acc parallel loop independent \
+		firstprivate(seed) \
+		private(macro_xs_vector, p_energy, mat, vhash_local, line)
 		#endif
 		for(i=0; i<lookups; i++)
 		{
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
 				   macro_xs_vector[2],
 				   macro_xs_vector[3],
 				   macro_xs_vector[4]);
-			vhash_local = hash(line, 10000);
+			vhash_local = hash((unsigned char *)line, 10000);
 			#ifndef OPENACC
 			#pragma omp atomic
 			#endif

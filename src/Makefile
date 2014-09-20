@@ -55,7 +55,8 @@ ifeq ($(OPENACC),yes)
   OPENARCLIB = ${HOME}/openarc/lib
   XSBENCH_DIR = ${HOME}/XSBench/src
   CUDA_ARCH = sm_20
-  CUDA_INCLUDE = -I/usr/local/cuda-6.0/include
+  #CUDA_INCLUDE = -I/usr/local/cuda-6.0/include
+  CUDA_INCLUDE = -I/sw/kfs/cuda/6.0/linux_binary/include
   CUDA_LIB = -lcuda
   GNVCC_FLAGS = -arch $(CUDA_ARCH) -O3
 
@@ -65,13 +66,16 @@ ifeq ($(OPENACC),yes)
   CC = g++
   NVCC = nvcc
   CFLAGS = -DOPENACC -I$(OPENARCRTLIB) -I$(XSBENCH_DIR) $(CUDA_INCLUDE) $(GNVCC_FLAGS)
+  ifeq ($(PROFILE),yes)
+    ACCRTSUFFIX = pf
+  endif
 
   ifeq ($(OMP),1)
     LDFLAGS += -lgomp
-    ACCRT = openaccrtomp_cuda
+    ACCRT = openaccrtomp_cuda$(ACCRTSUFFIX)
     CFLAGS += -Xcompiler -fopenmp
   else
-    ACCRT = openaccrt_cuda
+    ACCRT = openaccrt_cuda$(ACCRTSUFFIX)
   endif
 
   LDFLAGS = -lm -L$(OPENARCRTLIB)/ -l$(ACCRT) $(OPENCL_LIB) $(CUDA_LIB)
@@ -178,7 +182,7 @@ target_dir:
 	mkdir -p $(target)
 
 build_cetus_output:
-	java -classpath $(OPENARCLIB)/cetus.jar:$(OPENARCLIB)/antlr.jar openacc.exec.ACC2GPUDriver -macro=$(macro) -verbosity=2 $(source)
+	java -classpath $(OPENARCLIB)/cetus.jar:$(OPENARCLIB)/antlr.jar openacc.exec.ACC2GPUDriver -macro=$(macro) -verbosity=0 -maxNumGangs=65535 -gpuConfFile=openarcConf.txt $(source)
 
 clean:
 	rm -f *.o;
