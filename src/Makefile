@@ -3,13 +3,13 @@
 #===============================================================================
 
 COMPILER    = gnu
-OPTIMIZE    = yes
-DEBUG       = no
+OPTIMIZE    = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 PAPI        = no
 VEC_INFO    = no
-VERIFY      = yes
+VERIFY      = no
 BENCHMARK   = no
 BINARY_DUMP = no
 BINARY_READ = no
@@ -38,7 +38,7 @@ obj = $(source:.c=.o)
 CFLAGS := -std=gnu99 -Wall
 
 # Linker Flags
-LDFLAGS = -lm
+LDFLAGS = -lm -locca
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)

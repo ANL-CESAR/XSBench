@@ -9,11 +9,11 @@ occaFunction double rn(unsigned long int * seed) {
   return ret;
 }
 
-occaFunction long grid_search( const long n, const double quarry, GridPoint * restrict A) {
-	long lowerLimit = 0;
-	long upperLimit = n-1;
-	long examinationPoint;
-	long length = upperLimit - lowerLimit;
+occaFunction long grid_search( const long int n, const double quarry, GridPoint * restrict A) {
+	long int lowerLimit = 0;
+	long int upperLimit = n-1;
+	long int examinationPoint;
+	long int length = upperLimit - lowerLimit;
 
 	while( length > 1 )
 	{
@@ -31,7 +31,7 @@ occaFunction long grid_search( const long n, const double quarry, GridPoint * re
 	return lowerLimit;
 }
 
-occaFunction int pick_mat( unsigned long * seed ) {
+occaFunction int pick_mat( unsigned long int * seed ) {
 	// I have a nice spreadsheet supporting these numbers. They are
 	// the fractions (by volume) of material in the core. Not a 
 	// *perfect* approximation of where XS lookups are going to occur,
@@ -76,9 +76,9 @@ occaKernel void lookup_kernel(
     int * restrict mats,
     int * restrict mats_idx,
     double * restrict concs,
-    const long total_lookups,
-    const long n_isotopes,
-    const long n_gridpoints,
+    const long int total_lookups,
+    const long int n_isotopes,
+    const long int n_gridpoints,
     ) {
 
   for (int block=0; block<outer_dim; block++; outer0) {
@@ -93,7 +93,7 @@ occaKernel void lookup_kernel(
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
         const int mat = pick_mat(&seed); 
-
+ 
         //====== BEGIN: calculate macro xs
 
         // Initialize macro_xs_vector
@@ -102,7 +102,7 @@ occaKernel void lookup_kernel(
           macro_xs_vector[k] = 0;
 
         // Search for energy on energy grid
-        const long idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
+        const long int idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
 
         // For each nuclide in this material
         for( int j = 0; j < num_nucs[mat]; j++ ) {
