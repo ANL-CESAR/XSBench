@@ -9,24 +9,26 @@ occaFunction double rn(unsigned long int * seed) {
   return ret;
 }
 
-occaFunction int devBasicBinarySearch_index(GridPoint * A, double q, int n)
-{
-  int lowerLimit = 0;
-  int upperLimit = n-1;
-  int examinationPoint;
-  int length = upperLimit - lowerLimit;
+occaFunction long grid_search( const long n, const double quarry, GridPoint * restrict A) {
+	long lowerLimit = 0;
+	long upperLimit = n-1;
+	long examinationPoint;
+	long length = upperLimit - lowerLimit;
 
-  while(length > 1) {
-    examinationPoint = lowerLimit + (length/2); 
-
+	while( length > 1 )
+	{
+		examinationPoint = lowerLimit + ( length / 2 );
+		
     // Some optimizations exist in CUDA XSBench but are not included here
-    if(A[examinationPoint].energy > q) 
-      upperLimit = examinationPoint;
-    else 
-      lowerLimit = examinationPoint;
-    length = upperLimit - lowerLimit;
-  }
-  return lowerLimit;
+		if( A[examinationPoint].energy > quarry )
+			upperLimit = examinationPoint;
+		else
+			lowerLimit = examinationPoint;
+		
+		length = upperLimit - lowerLimit;
+	}
+	
+	return lowerLimit;
 }
 
 occaFunction int pick_mat( unsigned long * seed ) {
@@ -68,11 +70,20 @@ occaFunction int pick_mat( unsigned long * seed ) {
 	return 0;
 }
 
-occaKernel void lookup_kernel() {
+occaKernel void lookup_kernel(
+    double * restrict energy_grid,
+    NuclideGridPoint * restrict nuclide_vector,
+    int * restrict mats,
+    int * restrict mats_idx,
+    double * restrict concs,
+    const long total_lookups,
+    const long n_isotopes,
+    const long n_gridpoints,
+    ) {
 
   for (int block=0; block<outer_dim; block++; outer0) {
 
-    for (int cache_id=0; cache_id<inner_dim; cache_id++; inner0) {
+    for (int thread=0; thread<inner_dim; thread++; inner0) {
 
       // Initialize seed
       unsigned long int seed = 10000*occaInnerId0 + 10*occaOuterId0 + 1;
@@ -80,8 +91,8 @@ occaKernel void lookup_kernel() {
       for (long int i=inner_id; i < total_lookups; i += occaGlobalDim0) {
 
         // Randomly pick energy and material
-        double p_energy = rn(&seed);
-        int mat = pick_mat(&seed); 
+        const double p_energy = rn(&seed);
+        const int mat = pick_mat(&seed); 
 
         //====== BEGIN: calculate macro xs
 
@@ -91,7 +102,7 @@ occaKernel void lookup_kernel() {
           macro_xs_vector[k] = 0;
 
         // Search for energy on energy grid
-        long idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
+        const long idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
 
         // For each nuclide in this material
         for( int j = 0; j < num_nucs[mat]; j++ ) {
@@ -99,19 +110,19 @@ occaKernel void lookup_kernel() {
           //===== BEGIN: calculate micro xs
 
           // Get this nuclide and its concentration
-          int nuc = mats[mat][j];
-          double conc = concs[mat][j];
+          const int nuc     =  mats[mats_idx[mat] + j];
+          const double conc = concs[mats_idx[mat] + j];
 
           // Get pointers to bounding values on nuclide energy grid
           NuclideGridPoint *low, *high;
           if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
-            low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc] - 1];
+            low = &nuclide_grids[ (nuc * n_gridpoints) + (energy_grid[idx].xs_ptrs[nuc] - 1) ];
           else
-            low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
+            low = &nuclide_grids[ (nuc * n_gridpoints) + (energy_grid[idx].xs_ptrs[nuc]) ];
           high = low + 1;
 
           // Get interpolation factors
-          double f = (high->energy - p_energy) / (high->energy - low->energy);
+          const double f = (high->energy - p_energy) / (high->energy - low->energy);
 
           // Interpolate micro xs for all interactions
           double micro_xs_vector[5];
@@ -128,6 +139,8 @@ occaKernel void lookup_kernel() {
             macro_xs_vector[k] += micro_xs_vector[k] * conc;
 
         }
+
+        //===== END: calculate macro xs
       }
     }
   }
