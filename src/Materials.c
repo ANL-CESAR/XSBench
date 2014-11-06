@@ -47,7 +47,7 @@ int * load_mats_ptr(int * num_nucs)
 int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes )
 {
 	int i;
-	int * mats = (int *) malloc( size_mats * sizeof(int *) );
+	int * mats = (int *) malloc( size_mats * sizeof(int ) );
 
 	// Small H-M has 34 fuel nuclides
 	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
@@ -115,7 +115,7 @@ int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes 
 double * load_concs( int size_mats )
 {
 	int i;
-	double * concs = (double *)malloc( size_mats * sizeof( double *) );
+	double * concs = (double *)malloc( size_mats * sizeof( double ) );
 	
 	for( i = 0; i < size_mats; i++ )
 		concs[i] = (double) rand() / (double) RAND_MAX;
@@ -134,7 +134,7 @@ double * load_concs( int size_mats )
 double * load_concs_v( int size_mats )
 {
 	int i;
-	double * concs = (double *)malloc( size_mats * sizeof( double *) );
+	double * concs = (double *)malloc( size_mats * sizeof( double ) );
 	
 	for( i = 0; i < size_mats; i++ )
 		concs[i] = rn_v();
