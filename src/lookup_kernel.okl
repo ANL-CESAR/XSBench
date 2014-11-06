@@ -78,7 +78,7 @@ occaKernel void lookup_kernel(
     double * restrict concs,
     const long int total_lookups,
     const long int n_isotopes,
-    const long int n_gridpoints,
+    const long int n_gridpoints
     ) {
 
   for (int block=0; block<outer_dim; block++; outer0) {
