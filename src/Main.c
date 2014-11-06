@@ -32,7 +32,7 @@ int main( int argc, char* argv[] )
   occaKernel lookup_kernel;
   occaDevice device;
 
-  occaMemory dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector, dev_mats,
+  occaMemory dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector, dev_mats,
              dev_mats_idx, dev_concs;
 
   occaKernelInfo lookupInfo = occaGenKernelInfo();
@@ -142,25 +142,16 @@ int main( int argc, char* argv[] )
   return 0;
 #endif
 
+  dev_num_nucs = occaDeviceMalloc(device, 12*sizeof(int), num_nucs);
   dev_nuclide_vector = occaDeviceMalloc(device,
-      in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint), NULL);
+      in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint), nuclide_grids[0]);
   dev_energy_grid = occaDeviceMalloc(device,
-      in.n_isotopes*in.n_gridpoints*sizeof(GridPoint), NULL);
+      in.n_isotopes*in.n_gridpoints*sizeof(GridPoint), energy_grid);
   dev_grid_ptrs = occaDeviceMalloc(device,
-      in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int), NULL);
-  dev_mats = occaDeviceMalloc(device, size_mats*sizeof(int), NULL);
-  dev_mats_idx = occaDeviceMalloc(device, 12*sizeof(int), NULL);
-  dev_concs = occaDeviceMalloc(device, size_mats*sizeof(double), NULL);
-
-  occaCopyPtrToMem(dev_nuclide_vector, nuclide_grids[0],
-      in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint), 0);
-  occaCopyPtrToMem(dev_energy_grid, energy_grid,
-      in.n_isotopes*in.n_gridpoints*sizeof(GridPoint), 0);
-  occaCopyPtrToMem(dev_grid_ptrs, grid_ptrs,
-      in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int), 0);
-  occaCopyPtrToMem(dev_mats, mats, size_mats*sizeof(int), 0);
-  occaCopyPtrToMem(dev_mats_idx, mats_idx, 12*sizeof(int), 0);
-  occaCopyPtrToMem(dev_concs, concs, size_mats*sizeof(double), 0);
+      in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int), grid_ptrs);
+  dev_mats = occaDeviceMalloc(device, size_mats*sizeof(int), mats);
+  dev_mats_idx = occaDeviceMalloc(device, 12*sizeof(int), mats_idx);
+  dev_concs = occaDeviceMalloc(device, size_mats*sizeof(double), concs);
 
   // =====================================================================
   // Cross Section (XS) Parallel Lookup Simulation Begins
@@ -171,6 +162,7 @@ int main( int argc, char* argv[] )
   gettimeofday(&start, NULL);
 
   occaKernelRun( lookup_kernel,
+      dev_num_nucs,
     dev_energy_grid,
     dev_grid_ptrs,
     dev_nuclide_vector,

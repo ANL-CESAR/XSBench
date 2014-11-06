@@ -1,3 +1,17 @@
+typedef struct{
+	double energy;
+	double total_xs;
+	double elastic_xs;
+	double absorbtion_xs;
+	double fission_xs;
+	double nu_fission_xs;
+} NuclideGridPoint;
+
+typedef struct{
+	double energy;
+	int xs_ptrs;
+} GridPoint;
+
 occaFunction double rn(unsigned long int * seed) {
   double ret;
   unsigned long int n1;
@@ -71,7 +85,9 @@ occaFunction int pick_mat( unsigned long int * seed ) {
 }
 
 occaKernel void lookup_kernel(
-    double * restrict energy_grid,
+    int * num_nucs,
+    GridPoint * restrict energy_grid,
+    int * grid_ptrs,
     NuclideGridPoint * restrict nuclide_vector,
     int * restrict mats,
     int * restrict mats_idx,
@@ -86,9 +102,9 @@ occaKernel void lookup_kernel(
     for (int thread=0; thread<inner_dim; thread++; inner0) {
 
       // Initialize seed
-      unsigned long int seed = 10000*occaInnerId0 + 10*occaOuterId0 + 1;
+      unsigned long int seed = 10000*thread + 10*block + 1;
 
-      for (long int i=inner_id; i < total_lookups; i += occaGlobalDim0) {
+      for (long int i=thread; i < total_lookups; i += inner_dim*outer_dim) {
 
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
@@ -115,10 +131,10 @@ occaKernel void lookup_kernel(
 
           // Get pointers to bounding values on nuclide energy grid
           NuclideGridPoint *low, *high;
-          if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
-            low = &nuclide_grids[ (nuc * n_gridpoints) + (energy_grid[idx].xs_ptrs[nuc] - 1) ];
+          if( grid_ptrs[energy_grid[idx].xs_ptrs + nuc] == n_gridpoints - 1 )
+            low = &nuclide_vector[(nuc * n_gridpoints) + grid_ptrs[energy_grid[idx].xs_ptrs + nuc] - 1];
           else
-            low = &nuclide_grids[ (nuc * n_gridpoints) + (energy_grid[idx].xs_ptrs[nuc]) ];
+            low = &nuclide_vector[(nuc * n_gridpoints) + grid_ptrs[energy_grid[idx].xs_ptrs + nuc]];
           high = low + 1;
 
           // Get interpolation factors
