@@ -105,9 +105,9 @@ int main( int argc, char* argv[] )
   int *mats      = load_mats( num_nucs, mats_idx, size_mats, in.n_isotopes );
 
 #ifdef VERIFICATION
-  double **concs = load_concs_v(num_nucs);
+  double *concs = load_concs_v(size_mats);
 #else
-  double **concs = load_concs(num_nucs);
+  double *concs = load_concs(size_mats);
 #endif
 
 #ifdef BINARY_DUMP

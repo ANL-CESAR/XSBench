@@ -54,7 +54,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 // Calculates macroscopic cross section based on a given material & energy 
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * restrict num_nucs,
-                         double ** restrict concs,
+                         double * restrict concs,
                          GridPoint * restrict energy_grid,
                          NuclideGridPoint ** restrict nuclide_grids,
                          int * restrict mats, int * restrict mats_idx,
@@ -81,7 +81,8 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// in the material, and added to the total macro XS array.
 	for( int j = 0; j < num_nucs[mat]; j++ ) {
 		p_nuc = mats[mats_idx[mat] + j];
-		conc = concs[mat][j];
+		conc = concs[mats_idx[mat] + j];
+
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 		                    n_gridpoints, energy_grid,
 		                    nuclide_grids, idx, xs_vector );

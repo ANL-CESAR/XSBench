@@ -108,16 +108,12 @@ int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes 
 }
 
 // Creates a randomized array of 'concentrations' of nuclides in each mat
-double ** load_concs( int * num_nucs )
+double * load_concs( int size_mats )
 {
-	double ** concs = (double **)malloc( 12 * sizeof( double *) );
+	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
-	for( int i = 0; i < 12; i++ )
-		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
-	
-	for( int i = 0; i < 12; i++ )
-		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i][j] = (double) rand() / (double) RAND_MAX;
+	for( int i = 0; i < size_mats; i++ )
+    concs[i] = (double) rand() / (double) RAND_MAX;
 
 	// test
 	/*
@@ -130,16 +126,12 @@ double ** load_concs( int * num_nucs )
 }
 
 // Verification version of this function (tighter control over RNG)
-double ** load_concs_v( int * num_nucs )
+double * load_concs_v( int size_mats )
 {
-	double ** concs = (double **)malloc( 12 * sizeof( double *) );
+	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
-	for( int i = 0; i < 12; i++ )
-		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
-	
-	for( int i = 0; i < 12; i++ )
-		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i][j] = rn_v();
+	for( int i = 0; i < size_mats; i++ )
+    concs[i] = rn_v();
 
 	// test
 	/*
