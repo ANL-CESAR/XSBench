@@ -30,12 +30,21 @@ int * load_num_nucs(long n_isotopes)
 	return num_nucs;
 }
 
+int * load_mats_idx(int * num_nucs) {
+  int * mats_idx = (int *) malloc(12 * sizeof(int));
+
+  int j = 0;
+  for (int i=0; i<12; i++) {
+    mats_idx[i] = j;
+    j += num_nucs[i];
+  }
+  return mats_idx;
+}
+
 // Assigns an array of nuclide ID's to each material
-int ** load_mats( int * num_nucs, long n_isotopes )
-{
-	int ** mats = (int **) malloc( 12 * sizeof(int *) );
-	for( int i = 0; i < 12; i++ )
-		mats[i] = (int *) malloc(num_nucs[i] * sizeof(int) );
+int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes ) {
+
+	int * mats = (int *) malloc( size_mats * sizeof(int) );
 
 	// Small H-M has 34 fuel nuclides
 	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
@@ -70,22 +79,22 @@ int ** load_mats( int * num_nucs, long n_isotopes )
 	
 	// H-M large v small dependency
 	if( n_isotopes == 68 )
-		memcpy( mats[0],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
+		memcpy( &mats[mats_idx[0]],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
 	else
-		memcpy( mats[0],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
+		memcpy( &mats[mats_idx[0]],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
 	
 	// Copy other materials
-	memcpy( mats[1],  mats1,  num_nucs[1]  * sizeof(int) );	
-	memcpy( mats[2],  mats2,  num_nucs[2]  * sizeof(int) );	
-	memcpy( mats[3],  mats3,  num_nucs[3]  * sizeof(int) );	
-	memcpy( mats[4],  mats4,  num_nucs[4]  * sizeof(int) );	
-	memcpy( mats[5],  mats5,  num_nucs[5]  * sizeof(int) );	
-	memcpy( mats[6],  mats6,  num_nucs[6]  * sizeof(int) );	
-	memcpy( mats[7],  mats7,  num_nucs[7]  * sizeof(int) );	
-	memcpy( mats[8],  mats8,  num_nucs[8]  * sizeof(int) );	
-	memcpy( mats[9],  mats9,  num_nucs[9]  * sizeof(int) );	
-	memcpy( mats[10], mats10, num_nucs[10] * sizeof(int) );	
-	memcpy( mats[11], mats11, num_nucs[11] * sizeof(int) );	
+	memcpy( &mats[mats_idx[1]],  mats1,  num_nucs[1]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[2]],  mats2,  num_nucs[2]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[3]],  mats3,  num_nucs[3]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[4]],  mats4,  num_nucs[4]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[5]],  mats5,  num_nucs[5]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[6]],  mats6,  num_nucs[6]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[7]],  mats7,  num_nucs[7]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[8]],  mats8,  num_nucs[8]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[9]],  mats9,  num_nucs[9]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[10]], mats10, num_nucs[10] * sizeof(int) );	
+	memcpy( &mats[mats_idx[11]], mats11, num_nucs[11] * sizeof(int) );	
 	
 	// test
 	/*

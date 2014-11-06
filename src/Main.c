@@ -93,8 +93,16 @@ int main( int argc, char* argv[] )
   // Get material data
   if( mype == 0 )
     printf("Loading Mats...\n");
+
+  int size_mats;
+  if (in.n_isotopes == 68) 
+    size_mats = 197;
+  else
+    size_mats = 484;
+
   int *num_nucs  = load_num_nucs(in.n_isotopes);
-  int **mats     = load_mats(num_nucs, in.n_isotopes);
+  int *mats_idx  = load_mats_idx(num_nucs);
+  int *mats      = load_mats( num_nucs, mats_idx, size_mats, in.n_isotopes );
 
 #ifdef VERIFICATION
   double **concs = load_concs_v(num_nucs);
@@ -143,7 +151,7 @@ int main( int argc, char* argv[] )
 #pragma omp parallel default(none) \
     private(i, thread, p_energy, mat, seed) \
     shared( max_procs, in, energy_grid, nuclide_grids, \
-        mats, concs, num_nucs, mype, vhash) 
+        mats, mats_idx, concs, num_nucs, mype, vhash) 
     {	
       // Initialize parallel PAPI counters
 #ifdef PAPI
@@ -191,7 +199,7 @@ int main( int argc, char* argv[] )
         // is written over.
         calculate_macro_xs( p_energy, mat, in.n_isotopes,
             in.n_gridpoints, num_nucs, concs,
-            energy_grid, nuclide_grids, mats,
+            energy_grid, nuclide_grids, mats, mats_idx,
             macro_xs_vector );
 
         // Verification hash calculation
