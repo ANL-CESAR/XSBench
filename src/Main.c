@@ -18,7 +18,6 @@ int main( int argc, char* argv[] )
   int i, thread, mat;
   unsigned long seed;
   double omp_start, omp_end, p_energy;
-  unsigned long long vhash = 0;
   int nprocs;
 
   // Timing
@@ -29,10 +28,12 @@ int main( int argc, char* argv[] )
   int platformID = 0;
   int deviceID   = 0;
 
+  unsigned long long * vhash = (unsigned long long *) calloc(outer_dim, sizeof(unsigned long long));
+
   occaKernel lookup_kernel;
   occaDevice device;
 
-  occaMemory dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector, dev_mats,
+  occaMemory dev_vhash, dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector, dev_mats,
              dev_mats_idx, dev_concs;
 
   occaKernelInfo lookupInfo = occaGenKernelInfo();
@@ -142,6 +143,7 @@ int main( int argc, char* argv[] )
   return 0;
 #endif
 
+  dev_vhash = occaDeviceMalloc(device, outer_dim*sizeof(unsigned long long), vhash);
   dev_num_nucs = occaDeviceMalloc(device, 12*sizeof(int), num_nucs);
   dev_nuclide_vector = occaDeviceMalloc(device,
       in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint), nuclide_grids[0]);
@@ -171,18 +173,22 @@ int main( int argc, char* argv[] )
     dev_concs,
     occaLong(in.lookups),
     occaLong(in.n_isotopes),
-    occaLong(in.n_gridpoints)
+    occaLong(in.n_gridpoints),
+    dev_vhash
     );
+
 
   occaDeviceFinish(device);
   gettimeofday(&end, NULL);
   wall_time = (end.tv_sec - start.tv_sec)*1000000 + (end.tv_usec - start.tv_usec);
+
+  occaCopyMemToPtr(vhash, dev_vhash, outer_dim*sizeof(unsigned long long), 0);
   
   printf("\n" );
   printf("Simulation complete.\n" );
 
   // Print / Save Results and Exit
-  print_results( in, mype, wall_time, nprocs, vhash );
+  print_results( in, mype, wall_time, nprocs, 0 ); //last arge should be vhahs
 
 #ifdef BENCHMARK
 }

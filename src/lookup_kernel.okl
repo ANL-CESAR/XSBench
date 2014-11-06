@@ -1,16 +1,18 @@
 typedef struct{
-	double energy;
-	double total_xs;
-	double elastic_xs;
-	double absorbtion_xs;
-	double fission_xs;
-	double nu_fission_xs;
+  double energy;
+  double total_xs;
+  double elastic_xs;
+  double absorbtion_xs;
+  double fission_xs;
+  double nu_fission_xs;
 } NuclideGridPoint;
 
 typedef struct{
-	double energy;
-	int xs_ptrs;
+  double energy;
+  int xs_ptrs;
 } GridPoint;
+
+int sprintf();
 
 occaFunction double rn(unsigned long int * seed) {
   double ret;
@@ -24,64 +26,64 @@ occaFunction double rn(unsigned long int * seed) {
 }
 
 occaFunction long grid_search( const long int n, const double quarry, GridPoint * restrict A) {
-	long int lowerLimit = 0;
-	long int upperLimit = n-1;
-	long int examinationPoint;
-	long int length = upperLimit - lowerLimit;
+  long int lowerLimit = 0;
+  long int upperLimit = n-1;
+  long int examinationPoint;
+  long int length = upperLimit - lowerLimit;
 
-	while( length > 1 )
-	{
-		examinationPoint = lowerLimit + ( length / 2 );
-		
+  while( length > 1 )
+  {
+    examinationPoint = lowerLimit + ( length / 2 );
+
     // Some optimizations exist in CUDA XSBench but are not included here
-		if( A[examinationPoint].energy > quarry )
-			upperLimit = examinationPoint;
-		else
-			lowerLimit = examinationPoint;
-		
-		length = upperLimit - lowerLimit;
-	}
-	
-	return lowerLimit;
+    if( A[examinationPoint].energy > quarry )
+      upperLimit = examinationPoint;
+    else
+      lowerLimit = examinationPoint;
+
+    length = upperLimit - lowerLimit;
+  }
+
+  return lowerLimit;
 }
 
 occaFunction int pick_mat( unsigned long int * seed ) {
-	// I have a nice spreadsheet supporting these numbers. They are
-	// the fractions (by volume) of material in the core. Not a 
-	// *perfect* approximation of where XS lookups are going to occur,
-	// but this will do a good job of biasing the system nonetheless.
+  // I have a nice spreadsheet supporting these numbers. They are
+  // the fractions (by volume) of material in the core. Not a 
+  // *perfect* approximation of where XS lookups are going to occur,
+  // but this will do a good job of biasing the system nonetheless.
 
-	// Also could be argued that doing fractions by weight would be 
-	// a better approximation, but volume does a good enough job for now.
+  // Also could be argued that doing fractions by weight would be 
+  // a better approximation, but volume does a good enough job for now.
 
-	double dist[12];
-	dist[0]  = 0.140;	// fuel
-	dist[1]  = 0.052;	// cladding
-	dist[2]  = 0.275;	// cold, borated water
-	dist[3]  = 0.134;	// hot, borated water
-	dist[4]  = 0.154;	// RPV
-	dist[5]  = 0.064;	// Lower, radial reflector
-	dist[6]  = 0.066;	// Upper reflector / top plate
-	dist[7]  = 0.055;	// bottom plate
-	dist[8]  = 0.008;	// bottom nozzle
-	dist[9]  = 0.015;	// top nozzle
-	dist[10] = 0.025;	// top of fuel assemblies
-	dist[11] = 0.013;	// bottom of fuel assemblies
-	
-	//double roll = (double) rand() / (double) RAND_MAX;
-	const double roll = rn(seed);
+  double dist[12];
+  dist[0]  = 0.140;	// fuel
+  dist[1]  = 0.052;	// cladding
+  dist[2]  = 0.275;	// cold, borated water
+  dist[3]  = 0.134;	// hot, borated water
+  dist[4]  = 0.154;	// RPV
+  dist[5]  = 0.064;	// Lower, radial reflector
+  dist[6]  = 0.066;	// Upper reflector / top plate
+  dist[7]  = 0.055;	// bottom plate
+  dist[8]  = 0.008;	// bottom nozzle
+  dist[9]  = 0.015;	// top nozzle
+  dist[10] = 0.025;	// top of fuel assemblies
+  dist[11] = 0.013;	// bottom of fuel assemblies
 
-	// makes a pick based on the distro
-	for( int i = 0; i < 12; i++ )
-	{
-		double running = 0;
-		for( int j = i; j > 0; j-- )
-			running += dist[j];
-		if( roll < running )
-			return i;
-	}
+  //double roll = (double) rand() / (double) RAND_MAX;
+  const double roll = rn(seed);
 
-	return 0;
+  // makes a pick based on the distro
+  for( int i = 0; i < 12; i++ )
+  {
+    double running = 0;
+    for( int j = i; j > 0; j-- )
+      running += dist[j];
+    if( roll < running )
+      return i;
+  }
+
+  return 0;
 }
 
 occaKernel void lookup_kernel(
@@ -94,22 +96,26 @@ occaKernel void lookup_kernel(
     double * restrict concs,
     const long int total_lookups,
     const long int n_isotopes,
-    const long int n_gridpoints
+    const long int n_gridpoints,
+    unsigned long long *vhash
     ) {
 
   for (int block=0; block<outer_dim; block++; outer0) {
+
+    unsigned long long int vhash_local[inner_dim];
 
     for (int thread=0; thread<inner_dim; thread++; inner0) {
 
       // Initialize seed
       unsigned long int seed = 10000*thread + 10*block + 1;
+      vhash_local[thread] = 0;
 
       for (long int i=thread; i < total_lookups; i += inner_dim*outer_dim) {
 
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
         const int mat = pick_mat(&seed); 
- 
+
         //====== BEGIN: calculate macro xs
 
         // Initialize macro_xs_vector
@@ -156,8 +162,38 @@ occaKernel void lookup_kernel(
 
         }
 
+#ifdef VERIFICATION
+        char line[256];
+        sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+            p_energy, mat,
+            macro_xs_vector[0],
+            macro_xs_vector[1],
+            macro_xs_vector[2],
+            macro_xs_vector[3],
+            macro_xs_vector[4]);
+        vhash_local[thread] += hash(line, 10000);
+#endif
         //===== END: calculate macro xs
       }
+
+      barrier(localMemFence);
+
+      for (int i=inner_dim/2; i != 0; i /= 2) {
+        for (int thread=0; thread<inner_dim; ++thread; inner0) {
+
+          // Naive reduction
+          if (thread < i && thread + i < inner_dim)
+            vhash_local[thread] += vhash_local[thread + i];
+        }
+
+        barrier(localMemFence);
+      }
+      for (int thread=0; thread<inner_dim; ++thread; inner0) {
+        if (thread == 0) 
+          vhash[block] = vhash_local[0];
+      }
+
+
     }
   }
 }
