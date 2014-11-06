@@ -4,6 +4,7 @@
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            GridPoint * restrict energy_grid,
+			   int * restrict grid_ptrs,
                            NuclideGridPoint ** restrict nuclide_grids,
                            int idx, double * restrict xs_vector ){
 	
@@ -13,10 +14,10 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 
 	// pull ptr from energy grid and check to ensure that
 	// we're not reading off the end of the nuclide's grid
-	if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
-		low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc] - 1];
+	if( grid_ptrs[energy_grid[idx].xs_ptrs + nuc] == n_gridpoints - 1 )
+		low = &nuclide_grids[nuc][grid_ptrs[energy_grid[idx].xs_ptrs + nuc] - 1];
 	else
-		low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
+		low = &nuclide_grids[nuc][grid_ptrs[energy_grid[idx].xs_ptrs + nuc]];
 	
 	high = low + 1;
 	
@@ -56,6 +57,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * restrict num_nucs,
                          double ** restrict concs,
                          GridPoint * restrict energy_grid,
+			 int * restrict grid_ptrs,
                          NuclideGridPoint ** restrict nuclide_grids,
                          int ** restrict mats,
                          double * restrict macro_xs_vector ){
@@ -84,7 +86,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		p_nuc = mats[mat][j];
 		conc = concs[mat][j];
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-		                    n_gridpoints, energy_grid,
+		                    n_gridpoints, energy_grid, grid_ptrs,
 		                    nuclide_grids, idx, xs_vector );
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;

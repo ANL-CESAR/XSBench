@@ -10,6 +10,7 @@
 #include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
+#include"occa_c.h"
 
 // Papi Header
 #ifdef PAPI
@@ -33,7 +34,7 @@ typedef struct{
 
 typedef struct{
 	double energy;
-	int * xs_ptrs;
+	int xs_ptrs;
 } GridPoint;
 
 typedef struct{
@@ -64,25 +65,27 @@ void generate_grids_v( NuclideGridPoint ** nuclide_grids,
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
                          long n_gridpoints );
 
+int * generate_ptr_grid(int n_isotopes, int n_gridpoints);
+
 GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
-                                  NuclideGridPoint ** nuclide_grids);
+                                  NuclideGridPoint ** nuclide_grids, int * grid_ptrs);
 
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    long n_isotopes, long n_gridpoints );
+                    int * grid_ptrs, long n_isotopes, long n_gridpoints );
 
 int binary_search( NuclideGridPoint * A, double quarry, int n );
 
 void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
                            long n_gridpoints, int * restrict num_nucs,
-                           double ** restrict concs,
-						   GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids,
-						   int ** restrict mats,
+                           double ** restrict concs, GridPoint * restrict energy_grid,
+                           int * restrict grid_ptrs, 
+			   NuclideGridPoint ** restrict nuclide_grids,
+			   int ** restrict mats,
                            double * restrict macro_xs_vector );
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           GridPoint * restrict energy_grid,
+                           GridPoint * restrict energy_grid, int * restrict grid_ptrs,
                            NuclideGridPoint ** restrict nuclide_grids, int idx,
                            double * restrict xs_vector );
 
@@ -109,7 +112,9 @@ unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
-void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
-void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
+void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
+		 GridPoint * energy_grid, int * grid_ptrs);
+void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
+		 GridPoint * energy_grid, int * grid_ptrs);
 
 #endif

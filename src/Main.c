@@ -67,22 +67,21 @@ int main( int argc, char* argv[] )
 	#endif
 
 	// Prepare Unionized Energy Grid Framework
+	int * grid_ptrs = generate_ptr_grid(in.n_isotopes, in.n_gridpoints);
 	#ifndef BINARY_READ
 	GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-	                          in.n_gridpoints, nuclide_grids ); 	
+	                          in.n_gridpoints, nuclide_grids, grid_ptrs ); 	
 	#else
 	GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
 	                           in.n_gridpoints * sizeof( GridPoint ) );
-	int * index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
-	                   * in.n_isotopes * sizeof(int));
 	for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
-		energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
+		energy_grid[i].xs_ptrs = i*in.n_isotopes;
 	#endif
 
 	// Double Indexing. Filling in energy_grid with pointers to the
 	// nuclide_energy_grids.
 	#ifndef BINARY_READ
-	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
+	set_grid_ptrs( energy_grid, nuclide_grids, grid_ptrs, in.n_isotopes, in.n_gridpoints );
 	#endif
 
 	#ifdef BINARY_READ
@@ -143,7 +142,7 @@ int main( int argc, char* argv[] )
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
 	shared( max_procs, in, energy_grid, nuclide_grids, \
-	        mats, concs, num_nucs, mype, vhash) 
+	        grid_ptrs, mats, concs, num_nucs, mype, vhash) 
 	{	
 		// Initialize parallel PAPI counters
 		#ifdef PAPI
@@ -191,7 +190,7 @@ int main( int argc, char* argv[] )
 			// is written over.
 			calculate_macro_xs( p_energy, mat, in.n_isotopes,
 			                    in.n_gridpoints, num_nucs, concs,
-			                    energy_grid, nuclide_grids, mats,
+			                    energy_grid, grid_ptrs, nuclide_grids, mats,
                                 macro_xs_vector );
 
 			// Verification hash calculation

@@ -58,10 +58,19 @@ void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
 	*/
 }
 
+// allocate pointer grid
+int * generate_ptr_grid(int n_isotopes, int n_gridpoints)
+{
+	int * grid_ptrs = (int *) malloc(n_isotopes * n_isotopes
+					 * n_gridpoints * sizeof(int));
+	return grid_ptrs;
+}
+
 // Allocates unionized energy grid, and assigns union of energy levels
 // from nuclide grids to it.
 GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
-                                  NuclideGridPoint ** nuclide_grids) {
+                                  NuclideGridPoint ** nuclide_grids,
+				  int * grid_ptrs) {
 	int mype = 0;
 
 	#ifdef MPI
@@ -95,11 +104,11 @@ GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
 
 	gpmatrix_free(n_grid_sorted);
 	
-	int * full = (int *) malloc( n_isotopes * n_unionized_grid_points
-	                             * sizeof(int) );
+	//int * full = (int *) malloc( n_isotopes * n_unionized_grid_points
+	//                             * sizeof(int) );
 	
 	for( long i = 0; i < n_unionized_grid_points; i++ )
-		energy_grid[i].xs_ptrs = &full[n_isotopes * i];
+		energy_grid[i].xs_ptrs = n_isotopes * i;
 	
 	// debug error checking
 	/*
@@ -115,7 +124,7 @@ GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
 // This process is time consuming, as the number of binary searches
 // required is:  binary searches = n_gridpoints * n_isotopes^2
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    long n_isotopes, long n_gridpoints )
+                    int * grid_ptrs, long n_isotopes, long n_gridpoints )
 {
 	int mype = 0;
 
@@ -125,7 +134,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	
 	if( mype == 0 ) printf("Assigning pointers to Unionized Energy Grid...\n");
 	#pragma omp parallel for default(none) \
-	shared( energy_grid, nuclide_grids, n_isotopes, n_gridpoints, mype )
+	shared( energy_grid, nuclide_grids, grid_ptrs, n_isotopes, n_gridpoints, mype )
 	for( long i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
 		double quarry = energy_grid[i].energy;
@@ -137,7 +146,7 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 		{
 			// j is the nuclide i.d.
 			// log n binary search
-			energy_grid[i].xs_ptrs[j] = 
+			grid_ptrs[energy_grid[i].xs_ptrs + j] = 
 				binary_search( nuclide_grids[j], quarry, n_gridpoints);
 		}
 	}
