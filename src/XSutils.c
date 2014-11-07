@@ -84,6 +84,18 @@ double rn(unsigned long * seed)
 }
 
 
+unsigned int hash(unsigned char *str, int nbins)
+{
+	unsigned int hash = 5381;
+	int c;
+
+	while (c = *str++)
+		hash = ((hash << 5) + hash) + c;
+
+	return hash % nbins;
+}
+
+
 
 // RNG Used for Verification Option.
 // This one has a static seed (must be set manually in source).
@@ -101,18 +113,6 @@ double rn_v(void)
 	ret = (double) n1 / m;
 	return ret;
 }
-
-unsigned int hash(unsigned char *str, int nbins)
-{
-	unsigned int hash = 5381;
-	int c;
-
-	while (c = *str++)
-		hash = ((hash << 5) + hash) + c;
-
-	return hash % nbins;
-}
-
 size_t estimate_mem_usage( Inputs in )
 {
 	size_t single_nuclide_grid = in.n_gridpoints * sizeof( NuclideGridPoint );

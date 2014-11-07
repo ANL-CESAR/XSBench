@@ -1,3 +1,4 @@
+#include "cuda.h"
 typedef struct{
   double energy;
   double total_xs;
@@ -12,7 +13,7 @@ typedef struct{
   int xs_ptrs;
 } GridPoint;
 
-int sprintf();
+occaDeviceFunction int sprintf(char *, const char *, ...);
 
 occaFunction double rn(unsigned long int * seed) {
   double ret;
@@ -24,6 +25,19 @@ occaFunction double rn(unsigned long int * seed) {
   ret = (double) n1 / m;
   return ret;
 }
+
+
+occaFunction unsigned int hash(unsigned char *str, int nbins)
+{
+	unsigned int hash = 5381;
+	int c;
+
+	while (c = *str++)
+		hash = ((hash << 5) + hash) + c;
+
+	return hash % nbins;
+}
+
 
 occaFunction long grid_search( const long int n, const double quarry, GridPoint * restrict A) {
   long int lowerLimit = 0;
@@ -171,11 +185,12 @@ occaKernel void lookup_kernel(
             macro_xs_vector[2],
             macro_xs_vector[3],
             macro_xs_vector[4]);
-        vhash_local[thread] += hash(line, 10000);
-#endif
+        vhash_local[thread] += hash((unsigned char *) line, 10000);
         //===== END: calculate macro xs
+#endif
       }
 
+#ifdef VERIFICATION
       barrier(localMemFence);
 
       for (int i=inner_dim/2; i != 0; i /= 2) {
@@ -192,7 +207,7 @@ occaKernel void lookup_kernel(
         if (thread == 0) 
           vhash[block] = vhash_local[0];
       }
-
+#endif
 
     }
   }

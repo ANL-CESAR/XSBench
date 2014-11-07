@@ -39,6 +39,9 @@ int main( int argc, char* argv[] )
   occaKernelInfo lookupInfo = occaGenKernelInfo();
   occaKernelInfoAddDefine(lookupInfo, "inner_dim", occaLong(inner_dim));
   occaKernelInfoAddDefine(lookupInfo, "outer_dim", occaLong(outer_dim));
+#ifdef VERIFICATION
+  occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
+#endif
 
   device = occaGetDevice(mode, platformID, deviceID);
   lookup_kernel = occaBuildKernelFromSource(device, "lookup_kernel.okl",
