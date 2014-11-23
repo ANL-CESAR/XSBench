@@ -24,11 +24,13 @@ int main( int argc, char* argv[] )
   struct timeval start, end;
   double wall_time;
 
-  const char *mode = "CUDA";
+  const char *mode = "OpenMP";
   int platformID = 0;
   int deviceID   = 0;
 
   unsigned long long * vhash = (unsigned long long *) calloc(outer_dim, sizeof(unsigned long long));
+
+  unsigned long long sum = 0;
 
   occaKernel lookup_kernel;
   occaDevice device;
@@ -168,17 +170,17 @@ int main( int argc, char* argv[] )
 
   occaKernelRun( lookup_kernel,
       dev_num_nucs,
-    dev_energy_grid,
-    dev_grid_ptrs,
-    dev_nuclide_vector,
-    dev_mats,
-    dev_mats_idx,
-    dev_concs,
-    occaLong(in.lookups),
-    occaLong(in.n_isotopes),
-    occaLong(in.n_gridpoints),
-    dev_vhash
-    );
+      dev_energy_grid,
+      dev_grid_ptrs,
+      dev_nuclide_vector,
+      dev_mats,
+      dev_mats_idx,
+      dev_concs,
+      occaLong(in.lookups),
+      occaLong(in.n_isotopes),
+      occaLong(in.n_gridpoints),
+      dev_vhash
+      );
 
 
   occaDeviceFinish(device);
@@ -186,20 +188,19 @@ int main( int argc, char* argv[] )
   wall_time = (end.tv_sec - start.tv_sec)*1000000 + (end.tv_usec - start.tv_usec);
 
   occaCopyMemToPtr(vhash, dev_vhash, outer_dim*sizeof(unsigned long long), 0);
-  
+
   printf("\n" );
   printf("Simulation complete.\n" );
 
-  // Print / Save Results and Exit
-  print_results( in, mype, wall_time, nprocs, 0 ); //last arge should be vhahs
+  for (int i=0; i<outer_dim; i++)
+    sum += vhash[i];
 
-#ifdef BENCHMARK
-}
-#endif
+  // Print / Save Results and Exit
+  print_results( in, mype, wall_time, nprocs, sum ); //last arge should be vhahs
 
 #ifdef MPI
-MPI_Finalize();
+  MPI_Finalize();
 #endif
 
-return 0;
+  return 0;
 }
