@@ -13,10 +13,10 @@ int main( int argc, char* argv[] )
   // Initialization & Command Line Read-In
   // =====================================================================
   int version = 13;
-  int mype = 0;
   int i;
 
-  int nprocs = -1; //NEED TO CHANGE TO OMP_NUM_THREADS
+  int mype = 0;
+  int nprocs = -1; 
 
   // Timing
   struct timeval start, end;

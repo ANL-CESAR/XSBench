@@ -167,7 +167,10 @@ Inputs read_CLI( int argc, char * argv[] )
 	Inputs input;
 	
 	// defaults to max threads on the system	
-	input.nthreads = omp_get_num_procs();
+  if (getenv("OMP_NUM_THREADS") != NULL)
+    input.nthreads = atoi(getenv("OMP_NUM_THREADS"));
+  else
+    input.nthreads = omp_get_num_procs();
 	
 	// defaults to 355 (corresponding to H-M Large benchmark)
 	input.n_isotopes = 355;
