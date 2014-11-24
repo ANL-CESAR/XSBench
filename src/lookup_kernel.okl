@@ -131,7 +131,6 @@ occaKernel void lookup_kernel(
 
       for (long int i=global_id; i < total_lookups; i += occaGlobalDim0) {
 
-        /*
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
         const int mat = pick_mat(&seed); 
@@ -182,7 +181,6 @@ occaKernel void lookup_kernel(
         inner_V_sum += (mat + p_energy + macro_xs_vector[0] +
             macro_xs_vector[1] + macro_xs_vector[2] + macro_xs_vector[3] +
             macro_xs_vector[4]);
-        */
 
         // Increment number of lookups
         ++inner_L_sum;

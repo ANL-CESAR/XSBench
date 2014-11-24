@@ -75,7 +75,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		#endif
 		#ifdef VERIFICATION
     printf("Lookups on device: %lu\n", L_sum);
-    printf("Verification sum: %0.5f\n", L_sum);
+    printf("Verification sum: %0.5f\n", V_sum / L_sum);
 		#endif
 		border_print();
 

@@ -50,7 +50,7 @@ int main( int argc, char* argv[] )
   //---------------------------------------------------------------------------
 
   //---OCCA declarations--------------------------------------------------------
-  const char *mode = "CUDA";
+  const char *mode = "OpenMP";
   int platformID = 0;
   int deviceID   = 0;
 
