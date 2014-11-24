@@ -112,7 +112,8 @@ double round_double( double input );
 unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
-void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+void print_results( Inputs in, int mype, double runtime, int nprocs,
+	unsigned long int L_sum, double V_sum );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
 		 GridPoint * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,

@@ -14,36 +14,63 @@ int main( int argc, char* argv[] )
   // =====================================================================
   int version = 13;
   int mype = 0;
-  int max_procs = omp_get_num_procs();
-  int i, thread, mat;
-  unsigned long seed;
-  double omp_start, omp_end, p_energy;
-  int nprocs;
+  int i;
+
+  int nprocs = -1; //NEED TO CHANGE TO OMP_NUM_THREADS
 
   // Timing
   struct timeval start, end;
   double wall_time;
 
-  const char *mode = "OpenMP";
+  //---V_sum-------------------------------------------------------------------
+  // These are the sum of the function values, evaluated in kernel.
+  // They are the cumulative result of the random lookups.
+  
+  // Vectors for sums of F(x_i).  Dimensions will be V_sums[0:outer_dim].
+  // In kernel, Each outer unit j will reduce is results to V_sum[i].
+  // In main, we will need to reduce V_sums to get a single V_sum
+  double *V_sums;
+
+  // Sum of all F(x_i) from kernel.  Outside of kernel, V_sums will be reduced
+  // to get V_sum
+  double V_sum = 0;
+  //---------------------------------------------------------------------------
+
+  //---L_sum-------------------------------------------------------------------
+  // These are the number of lookups that are actually done on the device
+  // They are simple counters, implemented as a sanity check.
+
+  // Will be allocated as L_sums[0:outer_dim].  In kernel, each outer unit j
+  // will reduce its results to L_sum[j]
+  unsigned long int *L_sums;
+
+  // Cumulative sum of all counts. Outside of kernel, L_sums will be reduced to
+  // L_sum
+  unsigned long int L_sum = 0;
+  //---------------------------------------------------------------------------
+
+  //---OCCA declarations--------------------------------------------------------
+  const char *mode = "CUDA";
   int platformID = 0;
   int deviceID   = 0;
-
-  unsigned long long * vhash = (unsigned long long *) calloc(outer_dim, sizeof(unsigned long long));
-
-  unsigned long long sum = 0;
 
   occaKernel lookup_kernel;
   occaDevice device;
 
-  occaMemory dev_vhash, dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector, dev_mats,
-             dev_mats_idx, dev_concs;
+  // For XSBench
+  occaMemory dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector,
+             dev_mats, dev_mats_idx, dev_concs;
+
+  // For verification
+  occaMemory dev_V_sums, dev_L_sums;
 
   occaKernelInfo lookupInfo = occaGenKernelInfo();
   occaKernelInfoAddDefine(lookupInfo, "inner_dim", occaLong(inner_dim));
   occaKernelInfoAddDefine(lookupInfo, "outer_dim", occaLong(outer_dim));
 #ifdef VERIFICATION
-  occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
+  // occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
 #endif
+  //---------------------------------------------------------------------------
 
   device = occaGetDevice(mode, platformID, deviceID);
   lookup_kernel = occaBuildKernelFromSource(device, "lookup_kernel.okl",
@@ -67,9 +94,6 @@ int main( int argc, char* argv[] )
 
   // Process CLI Fields -- store in "Inputs" structure
   Inputs in = read_CLI( argc, argv );
-
-  // Set number of OpenMP Threads
-  omp_set_num_threads(in.nthreads); 
 
   // Print-out of Input Summary
   if( mype == 0 )
@@ -148,17 +172,35 @@ int main( int argc, char* argv[] )
   return 0;
 #endif
 
-  dev_vhash = occaDeviceMalloc(device, outer_dim*sizeof(unsigned long long), vhash);
-  dev_num_nucs = occaDeviceMalloc(device, 12*sizeof(int), num_nucs);
+  // =====================================================================
+  // Prepare verification arrays
+  // =====================================================================
+
+  V_sums = (double *) calloc( outer_dim, sizeof(double) );
+  L_sums = (unsigned long int *) calloc( outer_dim, sizeof(unsigned long int) );
+
+  // =====================================================================
+  // OCCA mallocs and memcopies
+  // =====================================================================
+
+  printf("Allocating and copying to device memory...\n");
+  // REMEMBER: memcopy is part of malloc (last arg gets copied to device)
+  dev_num_nucs       = occaDeviceMalloc(device, 12*sizeof(int), num_nucs);
   dev_nuclide_vector = occaDeviceMalloc(device,
-      in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint), nuclide_grids[0]);
-  dev_energy_grid = occaDeviceMalloc(device,
-      in.n_isotopes*in.n_gridpoints*sizeof(GridPoint), energy_grid);
-  dev_grid_ptrs = occaDeviceMalloc(device,
-      in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int), grid_ptrs);
-  dev_mats = occaDeviceMalloc(device, size_mats*sizeof(int), mats);
-  dev_mats_idx = occaDeviceMalloc(device, 12*sizeof(int), mats_idx);
-  dev_concs = occaDeviceMalloc(device, size_mats*sizeof(double), concs);
+                       in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint),
+                       nuclide_grids[0]);
+  dev_energy_grid    = occaDeviceMalloc(device,
+                       in.n_isotopes*in.n_gridpoints*sizeof(GridPoint), 
+                       energy_grid);
+  dev_grid_ptrs      = occaDeviceMalloc(device,
+                       in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int), 
+                       grid_ptrs);
+  dev_mats           = occaDeviceMalloc(device, size_mats*sizeof(int), mats);
+  dev_mats_idx       = occaDeviceMalloc(device, 12*sizeof(int), mats_idx);
+  dev_concs          = occaDeviceMalloc(device, size_mats*sizeof(double), concs);
+  dev_V_sums         = occaDeviceMalloc(device, outer_dim*sizeof(double), V_sums);
+  dev_L_sums         = occaDeviceMalloc(device, outer_dim*sizeof(unsigned long int), L_sums);
+
 
   // =====================================================================
   // Cross Section (XS) Parallel Lookup Simulation Begins
@@ -168,6 +210,7 @@ int main( int argc, char* argv[] )
   occaDeviceFinish(device);
   gettimeofday(&start, NULL);
 
+  printf("Beginning kernel...\n");
   occaKernelRun( lookup_kernel,
       dev_num_nucs,
       dev_energy_grid,
@@ -179,24 +222,29 @@ int main( int argc, char* argv[] )
       occaLong(in.lookups),
       occaLong(in.n_isotopes),
       occaLong(in.n_gridpoints),
-      dev_vhash
+      dev_V_sums,
+      dev_L_sums
       );
-
+  printf("Kernel complete.\n" );
 
   occaDeviceFinish(device);
   gettimeofday(&end, NULL);
-  wall_time = (end.tv_sec - start.tv_sec)*1000000 + (end.tv_usec - start.tv_usec);
+  wall_time = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec)/1000000.;
 
-  occaCopyMemToPtr(vhash, dev_vhash, outer_dim*sizeof(unsigned long long), 0);
+  printf("Copying from device memory...\n");
+  // Device-to-host memcopy
+  occaCopyMemToPtr(V_sums, dev_V_sums, outer_dim*sizeof(double), 0);
+  occaCopyMemToPtr(L_sums, dev_L_sums, outer_dim*sizeof(unsigned long int), 0);
 
-  printf("\n" );
-  printf("Simulation complete.\n" );
+  // Reduce sums
+  for (i=0; i<outer_dim; i++) {
+    V_sum += V_sums[i];
+    L_sum += L_sums[i];
+  }
 
-  for (int i=0; i<outer_dim; i++)
-    sum += vhash[i];
 
   // Print / Save Results and Exit
-  print_results( in, mype, wall_time, nprocs, sum ); //last arge should be vhahs
+  print_results( in, mype, wall_time, nprocs, L_sum, V_sum ); //last arge should be vhahs
 
 #ifdef MPI
   MPI_Finalize();

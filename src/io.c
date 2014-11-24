@@ -37,7 +37,7 @@ void center_print(const char *s, int width)
 }
 
 void print_results( Inputs in, int mype, double runtime, int nprocs,
-	unsigned long long vhash )
+	unsigned long int L_sum, double V_sum )
 {
 	// Calculate Lookups per sec
 	int lookups_per_sec = (int) ((double) in.lookups / runtime);
@@ -74,7 +74,8 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
-		printf("Verification checksum: %llu\n", vhash);
+    printf("Lookups on device: %lu\n", L_sum);
+    printf("Verification sum: %0.5f\n", L_sum);
 		#endif
 		border_print();
 

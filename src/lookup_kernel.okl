@@ -110,27 +110,31 @@ occaKernel void lookup_kernel(
     const long int total_lookups,
     const long int n_isotopes,
     const long int n_gridpoints,
-    unsigned long long *vhash
+    double *V_sums,
+    unsigned long int *L_sums
     ) {
 
-  for (int block=0; block<outer_dim; block++; outer0) {
+  for(int outer_id=0; outer_id<outer_dim; ++outer_id; outer0) {
 
-    unsigned long long int vhash_local[inner_dim];
+    // A cache per outer unit.  Each inner unit i writes to V_sums_cache[i]
+    shared double            V_sums_cache[inner_dim];
+    shared unsigned long int L_sums_cache[inner_dim];
 
-    for (int cache_id=0; cache_id<inner_dim; ++cache_id; inner0) {
+    for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
 
-      // Initialize seed
-      const int inner_id = block*inner_dim + cache_id;
-      unsigned long int seed = 10000*occaInnerId0 + 10*occaOuterId0 + 1;
-      unsigned long long int private_sum = 0;
+      // Variables declared in the scope of an InnerFor loop are register variables
+      const int global_id = outer_id*inner_dim + inner_id;
+      unsigned long int seed = global_id*10000 + 1;
 
-      for (long int i=inner_id; i < total_lookups; i += occaGlobalDim0) {
+      double            inner_V_sum = 0;
+      unsigned long int inner_L_sum = 0;
 
+      for (long int i=global_id; i < total_lookups; i += occaGlobalDim0) {
+
+        /*
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
         const int mat = pick_mat(&seed); 
-
-        //====== BEGIN: calculate macro xs
 
         // Initialize macro_xs_vector
         double macro_xs_vector[5];
@@ -174,45 +178,47 @@ occaKernel void lookup_kernel(
 
         } // materials loop
 
-#ifdef VERIFICATION
-        /* char line[256];
-           sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
-           p_energy, mat,
-           macro_xs_vector[0],
-           macro_xs_vector[1],
-           macro_xs_vector[2],
-           macro_xs_vector[3],
-           macro_xs_vector[4]);
-           vhash_local[thread] += hash((unsigned char *) line, 10000); */
-        private_sum += 1;
-#endif
+        // Accumulate verification sum
+        inner_V_sum += (mat + p_energy + macro_xs_vector[0] +
+            macro_xs_vector[1] + macro_xs_vector[2] + macro_xs_vector[3] +
+            macro_xs_vector[4]);
+        */
+
+        // Increment number of lookups
+        ++inner_L_sum;
+
       } // lookup loop
 
-      vhash_local[cache_id] = private_sum;
+      V_sums_cache[inner_id] = inner_V_sum;
+      L_sums_cache[inner_id] = inner_L_sum;
 
-    } // inner0 loop
-
-#ifdef VERIFICATION
+    } //inner 0
 
     barrier(localMemFence);
 
     for (int i=inner_dim/2; i != 0; i /= 2) {
+      for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
 
-      for (int cache_id=0; cache_id<inner_dim; ++cache_id; inner0) {
         // Naive reduction
-        if (cache_id < i && cache_id + i < inner_dim)
-          vhash_local[cache_id] += vhash_local[cache_id + i];
-      } // inner 0 loop
+        if (inner_id < i && inner_id + i < inner_dim) {
+          V_sums_cache[inner_id] += V_sums_cache[inner_id + i];
+          L_sums_cache[inner_id] += L_sums_cache[inner_id + i];
+        }
+      }
 
       barrier(localMemFence);
-    }
+    } //inner 0
 
-    for (int cache_id=0; cache_id<inner_dim; ++cache_id; inner0) {
-      if (cache_id == 0) 
-        vhash[block] = vhash_local[0];
-    } // inner 0 loop
-#endif
-  } // outer0 loop
+    for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
+      if (inner_id == 0) {
+        V_sums[outer_id] = V_sums_cache[0];
+        L_sums[outer_id] = L_sums_cache[0];
+      }
+    } // inner 0
+
+  } // outer0
+
+
 }
 
 
