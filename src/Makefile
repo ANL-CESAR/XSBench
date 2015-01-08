@@ -35,7 +35,7 @@ obj = $(source:.c=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall
+CFLAGS := -std=gnu99
 
 # Linker Flags
 LDFLAGS = -lm

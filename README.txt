@@ -1,4 +1,12 @@
 ==============================================================================
+About The "flattened" Branch
+==============================================================================
+
+The "flattened" branch replaces some higher-dimensional data structures with
+lower-dimensional structures.  Accellerator ports of XSBench can use these
+changes to make host-to-device memcopies less complicated.  
+
+==============================================================================
                    __   __ ___________                 _                        
                    \ \ / //  ___| ___ \               | |                       
                     \ V / \ `--.| |_/ / ___ _ __   ___| |__                     
