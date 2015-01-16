@@ -35,10 +35,10 @@ obj = $(source:.c=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall
+CFLAGS := -std=gnu99 -Wall 
 
 # Linker Flags
-LDFLAGS = -lm -locca
+LDFLAGS = -lm -L${OCCA_DIR}/lib -locca
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)

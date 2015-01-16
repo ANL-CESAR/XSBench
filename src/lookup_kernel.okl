@@ -38,7 +38,7 @@ occaFunction double rn(unsigned long int * seed) {
  */
 
 
-occaFunction long grid_search( const long int n, const double quarry, GridPoint * restrict A) {
+occaFunction long grid_search_kernel( const long int n, const double quarry, GridPoint * restrict A) {
   long int lowerLimit = 0;
   long int upperLimit = n-1;
   long int examinationPoint;
@@ -62,11 +62,11 @@ occaFunction long grid_search( const long int n, const double quarry, GridPoint 
 
 occaFunction int pick_mat( unsigned long int * seed ) {
   // I have a nice spreadsheet supporting these numbers. They are
-  // the fractions (by volume) of material in the core. Not a 
+  // the fractions (by volume) of material in the core. Not a
   // *perfect* approximation of where XS lookups are going to occur,
   // but this will do a good job of biasing the system nonetheless.
 
-  // Also could be argued that doing fractions by weight would be 
+  // Also could be argued that doing fractions by weight would be
   // a better approximation, but volume does a good enough job for now.
 
   double dist[12];
@@ -133,7 +133,7 @@ occaKernel void lookup_kernel(
 
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
-        const int mat = pick_mat(&seed); 
+        const int mat = pick_mat(&seed);
 
         // Initialize macro_xs_vector
         double macro_xs_vector[5];
@@ -141,7 +141,7 @@ occaKernel void lookup_kernel(
           macro_xs_vector[k] = 0;
 
         // Search for energy on energy grid
-        const long int idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
+        const long int idx = grid_search_kernel(n_isotopes * n_gridpoints, p_energy, energy_grid);
 
         // For each nuclide in this material
         for( int j = 0; j < num_nucs[mat]; j++ ) {
@@ -219,4 +219,33 @@ occaKernel void lookup_kernel(
 
 }
 
+occaKernel void lookup_touch(
+    GridPoint * restrict energy_grid,
+    int * grid_ptrs,
+    NuclideGridPoint * restrict nuclide_vector,
+    const long int n_isotopes,
+    const long int n_gridpoints
+    ) {
 
+  for(int point = 0; point < n_gridpoints; ++point; outer0){
+    for(int isotope = 0; isotope < n_isotopes; ++isotope; inner0){
+      const int n_isotopes2 = (n_isotopes * n_isotopes);
+
+      const int id  = ((point * n_isotopes)  + isotope);
+      const int id2 = ((point * n_isotopes2) + (isotope * n_isotopes));
+
+      energy_grid[id].energy  = 0.0;
+      energy_grid[id].xs_ptrs = 0;
+
+      nuclide_vector[id].energy        = 0.0;
+      nuclide_vector[id].total_xs      = 0.0;
+      nuclide_vector[id].elastic_xs    = 0.0;
+      nuclide_vector[id].absorbtion_xs = 0.0;
+      nuclide_vector[id].fission_xs    = 0.0;
+      nuclide_vector[id].nu_fission_xs = 0.0;
+
+      for(int i = 0; i < n_isotopes; ++i)
+        grid_ptrs[id2 + i] = 0;
+    }
+  }
+}

@@ -5,7 +5,7 @@
 #endif
 
 const long outer_dim = 128;
-const long inner_dim = 128;  
+const long inner_dim = 128;
 
 int main( int argc, char* argv[] )
 {
@@ -16,7 +16,7 @@ int main( int argc, char* argv[] )
   int i;
 
   int mype = 0;
-  int nprocs = -1; 
+  int nprocs = -1;
 
   // Timing
   struct timeval start, end;
@@ -25,7 +25,7 @@ int main( int argc, char* argv[] )
   //---V_sum-------------------------------------------------------------------
   // These are the sum of the function values, evaluated in kernel.
   // They are the cumulative result of the random lookups.
-  
+
   // Vectors for sums of F(x_i).  Dimensions will be V_sums[0:outer_dim].
   // In kernel, Each outer unit j will reduce is results to V_sum[i].
   // In main, we will need to reduce V_sums to get a single V_sum
@@ -54,7 +54,7 @@ int main( int argc, char* argv[] )
   int platformID = 0;
   int deviceID   = 0;
 
-  occaKernel lookup_kernel;
+  occaKernel lookup_touch, lookup_kernel;
   occaDevice device;
 
   // For XSBench
@@ -73,9 +73,10 @@ int main( int argc, char* argv[] )
   //---------------------------------------------------------------------------
 
   device = occaGetDevice(mode, platformID, deviceID);
+  lookup_touch = occaBuildKernelFromSource(device, "lookup_kernel.okl",
+      "lookup_touch", lookupInfo);
   lookup_kernel = occaBuildKernelFromSource(device, "lookup_kernel.okl",
       "lookup_kernel", lookupInfo);
-
 
 #ifdef MPI
   MPI_Status stat;
@@ -111,9 +112,9 @@ int main( int argc, char* argv[] )
   NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 
 #ifdef VERIFICATION
-  generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
+  generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );
 #else
-  generate_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
+  generate_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
 #endif
 
   // Sort grids by energy
@@ -126,7 +127,7 @@ int main( int argc, char* argv[] )
   int * grid_ptrs = generate_ptr_grid(in.n_isotopes, in.n_gridpoints);
 #ifndef BINARY_READ
   GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-      in.n_gridpoints, nuclide_grids, grid_ptrs ); 	
+      in.n_gridpoints, nuclide_grids, grid_ptrs );
 #else
   GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
       in.n_gridpoints * sizeof( GridPoint ) );
@@ -150,7 +151,7 @@ int main( int argc, char* argv[] )
     printf("Loading Mats...\n");
 
   int size_mats;
-  if (in.n_isotopes == 68) 
+  if (in.n_isotopes == 68)
     size_mats = 197;
   else
     size_mats = 484;
@@ -188,19 +189,31 @@ int main( int argc, char* argv[] )
   dev_num_nucs       = occaDeviceMalloc(device, 12*sizeof(int), num_nucs);
   dev_nuclide_vector = occaDeviceMalloc(device,
                        in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint),
-                       nuclide_grids[0]);
+                       NULL);
   dev_energy_grid    = occaDeviceMalloc(device,
-                       in.n_isotopes*in.n_gridpoints*sizeof(GridPoint), 
-                       energy_grid);
+                       in.n_isotopes*in.n_gridpoints*sizeof(GridPoint),
+                       NULL);
   dev_grid_ptrs      = occaDeviceMalloc(device,
-                       in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int), 
-                       grid_ptrs);
+                       in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int),
+                       NULL);
   dev_mats           = occaDeviceMalloc(device, size_mats*sizeof(int), mats);
   dev_mats_idx       = occaDeviceMalloc(device, 12*sizeof(int), mats_idx);
   dev_concs          = occaDeviceMalloc(device, size_mats*sizeof(double), concs);
   dev_V_sums         = occaDeviceMalloc(device, outer_dim*sizeof(double), V_sums);
   dev_L_sums         = occaDeviceMalloc(device, outer_dim*sizeof(unsigned long int), L_sums);
 
+  // Call kernel to apply "proper" first-touch on large arrays
+  occaKernelRun(lookup_touch,
+                dev_energy_grid,
+                dev_grid_ptrs,
+                dev_nuclide_vector,
+                occaLong(in.n_isotopes),
+                occaLong(in.n_gridpoints));
+
+  // Properly initialize arrays
+  occaCopyPtrToMem(dev_nuclide_vector, nuclide_grids[0], occaAutoSize, occaNoOffset);
+  occaCopyPtrToMem(dev_energy_grid   , energy_grid     , occaAutoSize, occaNoOffset);
+  occaCopyPtrToMem(dev_grid_ptrs     , grid_ptrs       , occaAutoSize, occaNoOffset);
 
   // =====================================================================
   // Cross Section (XS) Parallel Lookup Simulation Begins
