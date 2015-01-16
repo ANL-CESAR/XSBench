@@ -35,10 +35,10 @@ obj = $(source:.c=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall
+CFLAGS := -std=gnu99 -Wall -I${OCCA_DIR}/include
 
 # Linker Flags
-LDFLAGS = -lm -locca
+LDFLAGS = -lm -L${OCCA_DIR}/lib -locca
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
@@ -49,7 +49,7 @@ endif
 # Intel Compiler
 ifeq ($(COMPILER),intel)
   CC = icc
-  CFLAGS += -openmp 
+  CFLAGS += -openmp
 endif
 
 # BG/Q gcc Cross-Compiler
