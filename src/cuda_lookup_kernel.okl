@@ -120,7 +120,7 @@ occaKernel void lookup_kernel(
       double            inner_V_sum = 0;
       unsigned long int inner_L_sum = 0;
 
-      for (long int i=global_id; i < total_lookups; i += (outer_dim * inner_dim)) {
+      if(global_id < total_lookups){
 
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
@@ -129,49 +129,45 @@ occaKernel void lookup_kernel(
         // Search for energy on energy grid
         const long int idx = grid_search_kernel(n_isotopes * n_gridpoints, p_energy, energy_grid);
 
-        const int nucs_idx = num_nucs[mat];
-        const int mat_idx  = mats_idx[mat];
+        const int nucs_idx = __ldg(&num_nucs[mat]);
+        const int mat_idx  = __ldg(&mats_idx[mat]);
 
         const int energy_xs_ptrs = energy_grid[idx].xs_ptrs;
 
         // For each nuclide in this material
-        for( int j = 0; j < nucs_idx; j++ ) {
+        for( int j = 0; j < nucs_idx; ++j) {
 
           //===== BEGIN: calculate micro xs
 
           // Get this nuclide and its concentration
-          const int nuc     =  mats[mat_idx + j];
-          const double conc = concs[mat_idx + j];
+          const int nuc     = __ldg(&mats[mat_idx + j]);
+          const double conc = __ldg(&concs[mat_idx + j]);
 
           // Get pointers to bounding values on nuclide energy grid
-          const int grid_ptr = grid_ptrs[energy_xs_ptrs + nuc];
+          const int grid_ptr = __ldg(&grid_ptrs[energy_xs_ptrs + nuc]);
 
           const long int low_nuclide_idx = ((nuc * n_gridpoints) +
                                             grid_ptr             -
                                             (grid_ptr == (n_gridpoints - 1)));
 
-          const NuclideGridPoint * const low  = (nuclide_vector + low_nuclide_idx + 0);
-          const NuclideGridPoint * const high = (nuclide_vector + low_nuclide_idx + 1);
+          const double2 * const base = (double2*) (nuclide_vector + low_nuclide_idx);
+
+          // Low
+          const double2 b1 = __ldg(base + 0);
+          const double2 b2 = __ldg(base + 1);
+          const double2 b3 = __ldg(base + 2);
+
+          // High
+          const double2 b4 = __ldg(base + 3);
+          const double2 b5 = __ldg(base + 4);
+          const double2 b6 = __ldg(base + 5);
+
+          const double f = (b4.x - p_energy) / (b4.x - b1.x);
 
           // Interpolate micro xs for all interactions
-          const double low_energy = low->energy;
-          const double low_xs_sum = (low->total_xs      +
-                                     low->elastic_xs    +
-                                     low->absorbtion_xs +
-                                     low->fission_xs    +
-                                     low->nu_fission_xs);
+          inner_V_sum += conc * ((      f) * (b1.y + b2.x + b2.y + b3.x + b3.y) +
+                                 (1.0 - f) * (b4.y + b5.x + b5.y + b6.x + b6.y));
 
-          const double high_energy = high->energy;
-          const double high_xs_sum = (high->total_xs      +
-                                      high->elastic_xs    +
-                                      high->absorbtion_xs +
-                                      high->fission_xs    +
-                                      high->nu_fission_xs);
-
-          // Get interpolation factors
-          const double f = (high_energy - p_energy) / (high_energy - low_energy);
-
-          inner_V_sum += conc * (high_xs_sum - f * (high_xs_sum - low_xs_sum));
 
         } // materials loop
 
