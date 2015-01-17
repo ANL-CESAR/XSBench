@@ -61,12 +61,10 @@ int main( int argc, char* argv[] )
 
   //---OCCA declarations--------------------------------------------------------
 #if USING_OPENMP
-  const char *mode = "OpenMP";
+  const char *device_infos = "mode = OpenMP";
 #elif USING_CUDA
-  const char *mode = "CUDA";
+  const char *device_infos = "mode = CUDA, deviceID = 0";
 #endif
-  int platformID = 0;
-  int deviceID   = 0;
 
   occaKernel lookup_touch, lookup_kernel;
   occaDevice device;
@@ -86,7 +84,7 @@ int main( int argc, char* argv[] )
 #endif
   //---------------------------------------------------------------------------
 
-  device = occaGetDevice(mode, platformID, deviceID);
+  device = occaGetDevice(device_infos);
 
 #if USING_OPENMP
   lookup_touch = occaBuildKernelFromSource(device, "lookup_kernel.okl",
