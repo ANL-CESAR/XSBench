@@ -78,7 +78,7 @@ int binary_search( NuclideGridPoint * A, double quarry, int n );
 void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
                            long n_gridpoints, int * restrict num_nucs,
                            double * restrict concs, GridPoint * restrict energy_grid,
-                           int * restrict grid_ptrs, 
+                           int * restrict grid_ptrs,
 			   NuclideGridPoint ** restrict nuclide_grids,
 			   int * restrict mats, int * restrict mats_ix,
                            double * restrict macro_xs_vector );
@@ -104,7 +104,7 @@ void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
-		       long n_gridpoints );	
+		       long n_gridpoints );
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 double rn_v(void);
@@ -112,8 +112,7 @@ double round_double( double input );
 unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
-void print_results( Inputs in, int mype, double runtime, int nprocs,
-	unsigned long int L_sum, double V_sum );
+void print_results( Inputs in, int mype, double runtime, int nprocs, double V_sum );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
 		 GridPoint * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,

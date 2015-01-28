@@ -36,12 +36,11 @@ void center_print(const char *s, int width)
 	fputs("\n", stdout);
 }
 
-void print_results( Inputs in, int mype, double runtime, int nprocs,
-	unsigned long int L_sum, double V_sum )
+void print_results( Inputs in, int mype, double runtime, int nprocs, double V_sum )
 {
 	// Calculate Lookups per sec
 	int lookups_per_sec = (int) ((double) in.lookups / runtime);
-	
+
 	// If running in MPI, reduce timing statistics and calculate average
 	#ifdef MPI
 	int total_lookups = 0;
@@ -49,7 +48,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 	MPI_Reduce(&lookups_per_sec, &total_lookups, 1, MPI_INT,
 	           MPI_SUM, 0, MPI_COMM_WORLD);
 	#endif
-	
+
 	// Print output
 	if( mype == 0 )
 	{
@@ -74,8 +73,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
-    printf("Lookups on device: %lu\n", L_sum);
-    printf("Verification sum: %0.5f\n", V_sum / L_sum);
+    printf("Verification sum: %0.5f\n", V_sum / in.lookups);
 		#endif
 		border_print();
 
@@ -165,34 +163,34 @@ void print_CLI_error(void)
 Inputs read_CLI( int argc, char * argv[] )
 {
 	Inputs input;
-	
-	// defaults to max threads on the system	
+
+	// defaults to max threads on the system
   if (getenv("OMP_NUM_THREADS") != NULL)
     input.nthreads = atoi(getenv("OMP_NUM_THREADS"));
   else
     input.nthreads = omp_get_num_procs();
-	
+
 	// defaults to 355 (corresponding to H-M Large benchmark)
 	input.n_isotopes = 355;
-	
+
 	// defaults to 11303 (corresponding to H-M Large benchmark)
 	input.n_gridpoints = 11303;
-	
+
 	// defaults to 15,000,000
 	input.lookups = 15000000;
-	
+
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
-	input.HM[0] = 'l' ; 
-	input.HM[1] = 'a' ; 
-	input.HM[2] = 'r' ; 
-	input.HM[3] = 'g' ; 
-	input.HM[4] = 'e' ; 
+	input.HM[0] = 'l' ;
+	input.HM[1] = 'a' ;
+	input.HM[2] = 'r' ;
+	input.HM[3] = 'g' ;
+	input.HM[4] = 'e' ;
 	input.HM[5] = '\0';
-	
+
 	// Check if user sets these
 	int user_g = 0;
-	
+
 	// Collect Raw Input
 	for( int i = 1; i < argc; i++ )
 	{
@@ -208,7 +206,7 @@ Inputs read_CLI( int argc, char * argv[] )
 		}
 		// n_gridpoints (-g)
 		else if( strcmp(arg, "-g") == 0 )
-		{	
+		{
 			if( ++i < argc )
 			{
 				user_g = 1;
@@ -227,7 +225,7 @@ Inputs read_CLI( int argc, char * argv[] )
 		}
 		// HM (-s)
 		else if( strcmp(arg, "-s") == 0 )
-		{	
+		{
 			if( ++i < argc )
 				input.HM = argv[i];
 			else
@@ -242,11 +240,11 @@ Inputs read_CLI( int argc, char * argv[] )
 	// Validate nthreads
 	if( input.nthreads < 1 )
 		print_CLI_error();
-	
+
 	// Validate n_isotopes
 	if( input.n_isotopes < 1 )
 		print_CLI_error();
-	
+
 	// Validate n_gridpoints
 	if( input.n_gridpoints < 1 )
 		print_CLI_error();
@@ -254,14 +252,14 @@ Inputs read_CLI( int argc, char * argv[] )
 	// Validate lookups
 	if( input.lookups < 1 )
 		print_CLI_error();
-	
+
 	// Validate HM size
 	if( strcasecmp(input.HM, "small") != 0 &&
 		strcasecmp(input.HM, "large") != 0 &&
 		strcasecmp(input.HM, "XL") != 0 &&
 		strcasecmp(input.HM, "XXL") != 0 )
 		print_CLI_error();
-	
+
 	// Set HM size specific parameters
 	// (defaults to large)
 	if( strcasecmp(input.HM, "small") == 0 )

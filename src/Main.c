@@ -12,9 +12,9 @@ const long outer_dim = 128;
 const long inner_dim = 128;
 #elif USING_CUDA
  const long outer_dim = 468751; const long inner_dim = 32;
-// const long outer_dim = 234376; const long inner_dim = 64;
-// const long outer_dim = 156251; const long inner_dim = 96;
-// const long outer_dim = 117188; const long inner_dim = 128;
+/* const long outer_dim = 234376; const long inner_dim = 64; */
+/* const long outer_dim = 156251; const long inner_dim = 96; */
+/* const long outer_dim = 117188; const long inner_dim = 128; */
 #endif
 
 int main( int argc, char* argv[] )
@@ -43,20 +43,7 @@ int main( int argc, char* argv[] )
 
   // Sum of all F(x_i) from kernel.  Outside of kernel, V_sums will be reduced
   // to get V_sum
-  double V_sum = 0;
-  //---------------------------------------------------------------------------
-
-  //---L_sum-------------------------------------------------------------------
-  // These are the number of lookups that are actually done on the device
-  // They are simple counters, implemented as a sanity check.
-
-  // Will be allocated as L_sums[0:outer_dim].  In kernel, each outer unit j
-  // will reduce its results to L_sum[j]
-  unsigned long int *L_sums;
-
-  // Cumulative sum of all counts. Outside of kernel, L_sums will be reduced to
-  // L_sum
-  unsigned long int L_sum = 0;
+  double V_sum[5] = {0, 0, 0, 0, 0};
   //---------------------------------------------------------------------------
 
   //---OCCA declarations--------------------------------------------------------
@@ -74,7 +61,7 @@ int main( int argc, char* argv[] )
              dev_mats, dev_mats_idx, dev_concs;
 
   // For verification
-  occaMemory dev_V_sums, dev_L_sums;
+  occaMemory dev_V_sums;
 
   occaKernelInfo lookupInfo = occaGenKernelInfo();
   occaKernelInfoAddDefine(lookupInfo, "inner_dim", occaLong(inner_dim));
@@ -87,15 +74,19 @@ int main( int argc, char* argv[] )
   device = occaGetDevice(device_infos);
 
 #if USING_OPENMP
-  lookup_touch = occaBuildKernelFromSource(device, "lookup_kernel.okl",
-                                           "lookup_touch", lookupInfo);
-  lookup_kernel = occaBuildKernelFromSource(device, "lookup_kernel.okl",
-                                            "lookup_kernel", lookupInfo);
+  lookup_touch = occaBuildKernelFromSource(device,
+                                           "lookup_kernel.okl","lookup_touch",
+                                           lookupInfo);
+  lookup_kernel = occaBuildKernelFromSource(device,
+                                            "lookup_kernel.okl", "lookup_kernel",
+                                            lookupInfo);
 #elif USING_CUDA
-  lookup_touch = occaBuildKernelFromSource(device, "cuda_lookup_kernel.okl",
-                                           "lookup_touch", lookupInfo);
-  lookup_kernel = occaBuildKernelFromSource(device, "cuda_lookup_kernel.okl",
-                                            "lookup_kernel", lookupInfo);
+  lookup_touch = occaBuildKernelFromSource(device,
+                                           "cuda_lookup_kernel.okl", "lookup_touch",
+                                           lookupInfo);
+  lookup_kernel = occaBuildKernelFromSource(device,
+                                            "cuda_lookup_kernel.okl", "lookup_kernel",
+                                            lookupInfo);
 #endif
 
 #ifdef MPI
@@ -197,8 +188,7 @@ int main( int argc, char* argv[] )
   // Prepare verification arrays
   // =====================================================================
 
-  V_sums = (double *) calloc( outer_dim, sizeof(double) );
-  L_sums = (unsigned long int *) calloc( outer_dim, sizeof(unsigned long int) );
+  V_sums = (double *) calloc( 5 * outer_dim, sizeof(double) );
 
   // =====================================================================
   // OCCA mallocs and memcopies
@@ -219,8 +209,7 @@ int main( int argc, char* argv[] )
   dev_mats           = occaDeviceMalloc(device, size_mats*sizeof(int), mats);
   dev_mats_idx       = occaDeviceMalloc(device, 12*sizeof(int), mats_idx);
   dev_concs          = occaDeviceMalloc(device, size_mats*sizeof(double), concs);
-  dev_V_sums         = occaDeviceMalloc(device, outer_dim*sizeof(double), V_sums);
-  dev_L_sums         = occaDeviceMalloc(device, outer_dim*sizeof(unsigned long int), L_sums);
+  dev_V_sums         = occaDeviceMalloc(device, 5*outer_dim*sizeof(double), V_sums);
 
   // Call kernel to apply "proper" first-touch on large arrays
   occaKernelRun(lookup_touch,
@@ -255,8 +244,7 @@ int main( int argc, char* argv[] )
       occaLong(in.lookups),
       occaLong(in.n_isotopes),
       occaLong(in.n_gridpoints),
-      dev_V_sums,
-      dev_L_sums
+      dev_V_sums
       );
   printf("Kernel complete.\n" );
 
@@ -266,18 +254,25 @@ int main( int argc, char* argv[] )
 
   printf("Copying from device memory...\n");
   // Device-to-host memcopy
-  occaCopyMemToPtr(V_sums, dev_V_sums, outer_dim*sizeof(double), 0);
-  occaCopyMemToPtr(L_sums, dev_L_sums, outer_dim*sizeof(unsigned long int), 0);
+  occaCopyMemToPtr(V_sums, dev_V_sums, 5*outer_dim*sizeof(double), 0);
 
   // Reduce sums
-  for (i=0; i<outer_dim; i++) {
-    V_sum += V_sums[i];
-    L_sum += L_sums[i];
+  for(i = 0; i < (outer_dim); ++i){
+    V_sum[0] += V_sums[5*i + 0];
+    V_sum[1] += V_sums[5*i + 1];
+    V_sum[2] += V_sums[5*i + 2];
+    V_sum[3] += V_sums[5*i + 3];
+    V_sum[4] += V_sums[5*i + 4];
   }
 
+  const double V_total_sum = ( V_sum[0] +
+                               V_sum[1] +
+                               V_sum[2] +
+                               V_sum[3] +
+                               V_sum[4] );
 
   // Print / Save Results and Exit
-  print_results( in, mype, wall_time, nprocs, L_sum, V_sum ); //last arge should be vhahs
+  print_results( in, mype, wall_time, nprocs, V_total_sum ); //last arge should be vhahs
 
 #ifdef MPI
   MPI_Finalize();

@@ -101,15 +101,14 @@ occaKernel void lookup_kernel(
     const long int total_lookups,
     const long int n_isotopes,
     const long int n_gridpoints,
-    double            * restrict V_sums,
-    unsigned long int * restrict L_sums
+    double * restrict V_sums
     ) {
 
   for(int outer_id=0; outer_id<outer_dim; ++outer_id; outer0) {
 
     // A cache per outer unit.  Each inner unit i writes to V_sums_cache[i]
-    shared double            V_sums_cache[inner_dim];
-    shared unsigned long int L_sums_cache[inner_dim];
+    shared double V_sums_cache[5 * inner_dim];
+    double inner_V_sum[5];
 
     for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
 
@@ -117,8 +116,11 @@ occaKernel void lookup_kernel(
       const int global_id = outer_id*inner_dim + inner_id;
       unsigned long int seed = global_id*10000 + 1;
 
-      double            inner_V_sum = 0;
-      unsigned long int inner_L_sum = 0;
+      inner_V_sum[0] = 0;
+      inner_V_sum[1] = 0;
+      inner_V_sum[2] = 0;
+      inner_V_sum[3] = 0;
+      inner_V_sum[4] = 0;
 
       if(global_id < total_lookups){
 
@@ -165,22 +167,20 @@ occaKernel void lookup_kernel(
           const double f = (b4.x - p_energy) / (b4.x - b1.x);
 
           // Interpolate micro xs for all interactions
-          inner_V_sum += conc * ((      f) * (b1.y + b2.x + b2.y + b3.x + b3.y) +
-                                 (1.0 - f) * (b4.y + b5.x + b5.y + b6.x + b6.y));
-
-
+          inner_V_sum[0] += conc * (b4.y - f * (b4.y - b1.y));
+          inner_V_sum[1] += conc * (b5.x - f * (b5.x - b2.x));
+          inner_V_sum[2] += conc * (b5.y - f * (b5.y - b2.y));
+          inner_V_sum[3] += conc * (b6.x - f * (b6.x - b3.x));
+          inner_V_sum[4] += conc * (b6.y - f * (b6.y - b3.y));
         } // materials loop
-
-        // Accumulate verification sum
-        inner_V_sum += (mat + p_energy);
-
-        // Increment number of lookups
-        ++inner_L_sum;
 
       } // lookup loop
 
-      V_sums_cache[inner_id] = inner_V_sum;
-      L_sums_cache[inner_id] = inner_L_sum;
+      V_sums_cache[5*inner_id + 0] = inner_V_sum[0];
+      V_sums_cache[5*inner_id + 1] = inner_V_sum[1];
+      V_sums_cache[5*inner_id + 2] = inner_V_sum[2];
+      V_sums_cache[5*inner_id + 3] = inner_V_sum[3];
+      V_sums_cache[5*inner_id + 4] = inner_V_sum[4];
 
     } //inner 0
 
@@ -191,8 +191,11 @@ occaKernel void lookup_kernel(
 
         // Naive reduction
         if (inner_id < i && inner_id + i < inner_dim) {
-          V_sums_cache[inner_id] += V_sums_cache[inner_id + i];
-          L_sums_cache[inner_id] += L_sums_cache[inner_id + i];
+          V_sums_cache[5*inner_id + 0] += V_sums_cache[5*(inner_id + i) + 0];
+          V_sums_cache[5*inner_id + 1] += V_sums_cache[5*(inner_id + i) + 1];
+          V_sums_cache[5*inner_id + 2] += V_sums_cache[5*(inner_id + i) + 2];
+          V_sums_cache[5*inner_id + 3] += V_sums_cache[5*(inner_id + i) + 3];
+          V_sums_cache[5*inner_id + 4] += V_sums_cache[5*(inner_id + i) + 4];
         }
       }
 
@@ -201,8 +204,11 @@ occaKernel void lookup_kernel(
 
     for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
       if (inner_id == 0) {
-        V_sums[outer_id] = V_sums_cache[0];
-        L_sums[outer_id] = L_sums_cache[0];
+        V_sums[5*outer_id + 0] = V_sums_cache[0];
+        V_sums[5*outer_id + 1] = V_sums_cache[1];
+        V_sums[5*outer_id + 2] = V_sums_cache[2];
+        V_sums[5*outer_id + 3] = V_sums_cache[3];
+        V_sums[5*outer_id + 4] = V_sums_cache[4];
       }
     } // inner 0
 
