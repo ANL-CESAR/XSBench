@@ -107,7 +107,6 @@ occaKernel void lookup_kernel(
   for(int outer_id=0; outer_id<outer_dim; ++outer_id; outer0) {
 
     // A cache per outer unit.  Each inner unit i writes to V_sums_cache[i]
-    shared double V_sums_cache[5 * inner_dim];
     double inner_V_sum[5];
 
     for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
@@ -137,9 +136,10 @@ occaKernel void lookup_kernel(
         const int energy_xs_ptrs = energy_grid[idx].xs_ptrs;
 
         // For each nuclide in this material
-        for( int j = 0; j < nucs_idx; ++j) {
+        for(int j = 0; j < nucs_idx; j += 2) {
 
           //===== BEGIN: calculate micro xs
+          double2 b[12];
 
           // Get this nuclide and its concentration
           const int nuc     = __ldg(&mats[mat_idx + j]);
@@ -148,68 +148,79 @@ occaKernel void lookup_kernel(
           // Get pointers to bounding values on nuclide energy grid
           const int grid_ptr = __ldg(&grid_ptrs[energy_xs_ptrs + nuc]);
 
-          const long int low_nuclide_idx = ((nuc * n_gridpoints) +
-                                            grid_ptr             -
-                                            (grid_ptr == (n_gridpoints - 1)));
+          const double2 * const base = (double2*) (nuclide_vector +
+                                                   (nuc * n_gridpoints) +
+                                                   grid_ptr             -
+                                                   (grid_ptr == (n_gridpoints - 1)));
 
-          const double2 * const base = (double2*) (nuclide_vector + low_nuclide_idx);
+          double conc2;
+          const double2 * base2;
+
+          const bool doTwoOps = (j < (nucs_idx - 1));
+
+          if(doTwoOps){
+            // Get this nuclide and its concentration
+            const int nuc2 = __ldg(&mats[mat_idx + j + 1]);
+            conc2          = __ldg(&concs[mat_idx + j + 1]);
+
+            // Get pointers to bounding values on nuclide energy grid
+            const int grid_ptr2 = __ldg(&grid_ptrs[energy_xs_ptrs + nuc2]);
+
+            base2 = (double2*) (nuclide_vector +
+                                (nuc2 * n_gridpoints) +
+                                grid_ptr2             -
+                                (grid_ptr2 == (n_gridpoints - 1)));
+          }
 
           // Low
-          const double2 b1 = __ldg(base + 0);
-          const double2 b2 = __ldg(base + 1);
-          const double2 b3 = __ldg(base + 2);
+          b[0] = __ldg(base + 0);
+          b[1] = __ldg(base + 1);
+          b[2] = __ldg(base + 2);
 
           // High
-          const double2 b4 = __ldg(base + 3);
-          const double2 b5 = __ldg(base + 4);
-          const double2 b6 = __ldg(base + 5);
+          b[3] = __ldg(base + 3);
+          b[4] = __ldg(base + 4);
+          b[5] = __ldg(base + 5);
 
-          const double f = (b4.x - p_energy) / (b4.x - b1.x);
+          if(doTwoOps){
+            // Low
+            b[6] = __ldg(base2 + 0);
+            b[7] = __ldg(base2 + 1);
+            b[8] = __ldg(base2 + 2);
+
+            // High
+            b[9]  = __ldg(base2 + 3);
+            b[10] = __ldg(base2 + 4);
+            b[11] = __ldg(base2 + 5);
+          }
+
+          const double f = (b[3].x - p_energy) / (b[3].x - b[0].x);
 
           // Interpolate micro xs for all interactions
-          inner_V_sum[0] += conc * (b4.y - f * (b4.y - b1.y));
-          inner_V_sum[1] += conc * (b5.x - f * (b5.x - b2.x));
-          inner_V_sum[2] += conc * (b5.y - f * (b5.y - b2.y));
-          inner_V_sum[3] += conc * (b6.x - f * (b6.x - b3.x));
-          inner_V_sum[4] += conc * (b6.y - f * (b6.y - b3.y));
+          inner_V_sum[0] += conc * (b[3].y - f * (b[3].y - b[0].y));
+          inner_V_sum[1] += conc * (b[4].x - f * (b[4].x - b[1].x));
+          inner_V_sum[2] += conc * (b[4].y - f * (b[4].y - b[1].y));
+          inner_V_sum[3] += conc * (b[5].x - f * (b[5].x - b[2].x));
+          inner_V_sum[4] += conc * (b[5].y - f * (b[5].y - b[2].y));
+
+          if(doTwoOps){
+            const double f2 = (b[9].x - p_energy) / (b[9].x - b[6].x);
+
+            // Interpolate micro xs for all interactions
+            inner_V_sum[0] += conc2 * (b[9].y  - f2 * (b[9].y  - b[6].y));
+            inner_V_sum[1] += conc2 * (b[10].x - f2 * (b[10].x - b[7].x));
+            inner_V_sum[2] += conc2 * (b[10].y - f2 * (b[10].y - b[7].y));
+            inner_V_sum[3] += conc2 * (b[11].x - f2 * (b[11].x - b[8].x));
+            inner_V_sum[4] += conc2 * (b[11].y - f2 * (b[11].y - b[8].y));
+          }
         } // materials loop
 
+        V_sums[5*global_id + 0] = inner_V_sum[0];
+        V_sums[5*global_id + 1] = inner_V_sum[1];
+        V_sums[5*global_id + 2] = inner_V_sum[2];
+        V_sums[5*global_id + 3] = inner_V_sum[3];
+        V_sums[5*global_id + 4] = inner_V_sum[4];
       } // lookup loop
-
-      V_sums_cache[5*inner_id + 0] = inner_V_sum[0];
-      V_sums_cache[5*inner_id + 1] = inner_V_sum[1];
-      V_sums_cache[5*inner_id + 2] = inner_V_sum[2];
-      V_sums_cache[5*inner_id + 3] = inner_V_sum[3];
-      V_sums_cache[5*inner_id + 4] = inner_V_sum[4];
-
-    } //inner 0
-
-    barrier(localMemFence);
-
-    for (int i=inner_dim/2; i != 0; i /= 2) {
-      for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
-
-        // Naive reduction
-        if (inner_id < i && inner_id + i < inner_dim) {
-          V_sums_cache[5*inner_id + 0] += V_sums_cache[5*(inner_id + i) + 0];
-          V_sums_cache[5*inner_id + 1] += V_sums_cache[5*(inner_id + i) + 1];
-          V_sums_cache[5*inner_id + 2] += V_sums_cache[5*(inner_id + i) + 2];
-          V_sums_cache[5*inner_id + 3] += V_sums_cache[5*(inner_id + i) + 3];
-          V_sums_cache[5*inner_id + 4] += V_sums_cache[5*(inner_id + i) + 4];
-        }
-      }
-
-      barrier(localMemFence);
-    } //inner 0
-
-    for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
-      if (inner_id == 0) {
-        V_sums[5*outer_id + 0] = V_sums_cache[0];
-        V_sums[5*outer_id + 1] = V_sums_cache[1];
-        V_sums[5*outer_id + 2] = V_sums_cache[2];
-        V_sums[5*outer_id + 3] = V_sums_cache[3];
-        V_sums[5*outer_id + 4] = V_sums_cache[4];
-      }
     } // inner 0
 
   } // outer0

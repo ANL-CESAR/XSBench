@@ -11,7 +11,8 @@
 const long outer_dim = 128;
 const long inner_dim = 128;
 #elif USING_CUDA
- const long outer_dim = 468751; const long inner_dim = 32;
+ /* const long outer_dim = 937500; const long inner_dim = 16; */
+ const long outer_dim = 468750; const long inner_dim = 32;
 /* const long outer_dim = 234376; const long inner_dim = 64; */
 /* const long outer_dim = 156251; const long inner_dim = 96; */
 /* const long outer_dim = 117188; const long inner_dim = 128; */
@@ -188,7 +189,7 @@ int main( int argc, char* argv[] )
   // Prepare verification arrays
   // =====================================================================
 
-  V_sums = (double *) calloc( 5 * outer_dim, sizeof(double) );
+  V_sums = (double *) calloc( 5 * in.lookups, sizeof(double) );
 
   // =====================================================================
   // OCCA mallocs and memcopies
@@ -209,7 +210,7 @@ int main( int argc, char* argv[] )
   dev_mats           = occaDeviceMalloc(device, size_mats*sizeof(int), mats);
   dev_mats_idx       = occaDeviceMalloc(device, 12*sizeof(int), mats_idx);
   dev_concs          = occaDeviceMalloc(device, size_mats*sizeof(double), concs);
-  dev_V_sums         = occaDeviceMalloc(device, 5*outer_dim*sizeof(double), V_sums);
+  dev_V_sums         = occaDeviceMalloc(device, 5*in.lookups*sizeof(double), V_sums);
 
   // Call kernel to apply "proper" first-touch on large arrays
   occaKernelRun(lookup_touch,
@@ -254,10 +255,10 @@ int main( int argc, char* argv[] )
 
   printf("Copying from device memory...\n");
   // Device-to-host memcopy
-  occaCopyMemToPtr(V_sums, dev_V_sums, 5*outer_dim*sizeof(double), 0);
+  occaCopyMemToPtr(V_sums, dev_V_sums, 5*in.lookups*sizeof(double), 0);
 
   // Reduce sums
-  for(i = 0; i < (outer_dim); ++i){
+  for(i = 0; i < in.lookups; ++i){
     V_sum[0] += V_sums[5*i + 0];
     V_sum[1] += V_sums[5*i + 1];
     V_sum[2] += V_sums[5*i + 2];
