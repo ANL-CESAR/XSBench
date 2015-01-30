@@ -1,3 +1,7 @@
+#if !OCCA_USING_CUDA
+#  define __ldg(PTR) *(PTR)
+#endif
+
 typedef struct{
   double energy;
   double total_xs;
@@ -106,7 +110,6 @@ occaKernel void lookup_kernel(
 
   for(int outer_id=0; outer_id<outer_dim; ++outer_id; outer0) {
 
-    // A cache per outer unit.  Each inner unit i writes to V_sums_cache[i]
     double inner_V_sum[5];
 
     for (int inner_id=0; inner_id<inner_dim; ++inner_id; inner0) {
@@ -122,7 +125,6 @@ occaKernel void lookup_kernel(
       inner_V_sum[4] = 0;
 
       if(global_id < total_lookups){
-
         // Randomly pick energy and material
         const double p_energy = rn(&seed);
         const int mat         = pick_mat(&seed);

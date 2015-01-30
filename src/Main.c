@@ -4,18 +4,26 @@
 #include<mpi.h>
 #endif
 
-#define USING_OPENMP 0
-#define USING_CUDA   !(USING_OPENMP)
+#define USING_HYBRID 1
+#define USING_OPENMP 1
+#define USING_CUDA   0
 
-#if USING_OPENMP
-const long outer_dim = 128;
-const long inner_dim = 128;
-#elif USING_CUDA
- /* const long outer_dim = 937500; const long inner_dim = 16; */
+#if USING_HYBRID
+// const long outer_dim = 937500; const long inner_dim = 16;
  const long outer_dim = 468750; const long inner_dim = 32;
-/* const long outer_dim = 234376; const long inner_dim = 64; */
-/* const long outer_dim = 156251; const long inner_dim = 96; */
-/* const long outer_dim = 117188; const long inner_dim = 128; */
+// const long outer_dim = 234376; const long inner_dim = 64;
+// const long outer_dim = 156251; const long inner_dim = 96;
+// const long outer_dim = 117188; const long inner_dim = 128;
+#elif USING_OPENMP
+const long outer_dim = 468750; const long inner_dim = 32;
+// const long outer_dim = 128;
+// const long inner_dim = 128;
+#elif USING_CUDA
+// const long outer_dim = 937500; const long inner_dim = 16;
+ const long outer_dim = 468750; const long inner_dim = 32;
+// const long outer_dim = 234376; const long inner_dim = 64;
+// const long outer_dim = 156251; const long inner_dim = 96;
+// const long outer_dim = 117188; const long inner_dim = 128;
 #endif
 
 int main( int argc, char* argv[] )
@@ -74,19 +82,19 @@ int main( int argc, char* argv[] )
 
   device = occaGetDevice(device_infos);
 
-#if USING_OPENMP
+#if USING_HYBRID || USING_CUDA
   lookup_touch = occaBuildKernelFromSource(device,
-                                           "lookup_kernel.okl","lookup_touch",
+                                           "hybridLookupKernel.okl","lookup_touch",
                                            lookupInfo);
   lookup_kernel = occaBuildKernelFromSource(device,
-                                            "lookup_kernel.okl", "lookup_kernel",
+                                            "hybridLookupKernel.okl", "lookup_kernel",
                                             lookupInfo);
-#elif USING_CUDA
+#elif USING_OPENMP
   lookup_touch = occaBuildKernelFromSource(device,
-                                           "cuda_lookup_kernel.okl", "lookup_touch",
+                                           "cpuLookupKernel.okl", "lookup_touch",
                                            lookupInfo);
   lookup_kernel = occaBuildKernelFromSource(device,
-                                            "cuda_lookup_kernel.okl", "lookup_kernel",
+                                            "cpuLookupKernel.okl", "lookup_kernel",
                                             lookupInfo);
 #endif
 
@@ -197,6 +205,8 @@ int main( int argc, char* argv[] )
 
   printf("Allocating and copying to device memory...\n");
   // REMEMBER: memcopy is part of malloc (last arg gets copied to device)
+
+#if USING_CUDA
   dev_num_nucs       = occaDeviceMalloc(device, 12*sizeof(int), num_nucs);
   dev_nuclide_vector = occaDeviceMalloc(device,
                        in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint),
@@ -224,6 +234,19 @@ int main( int argc, char* argv[] )
   occaCopyPtrToMem(dev_nuclide_vector, nuclide_grids[0], occaAutoSize, occaNoOffset);
   occaCopyPtrToMem(dev_energy_grid   , energy_grid     , occaAutoSize, occaNoOffset);
   occaCopyPtrToMem(dev_grid_ptrs     , grid_ptrs       , occaAutoSize, occaNoOffset);
+#elif USING_OPENMP
+  dev_num_nucs       = occaDeviceWrapMemory(device, num_nucs, 12*sizeof(int));
+  dev_nuclide_vector = occaDeviceWrapMemory(device, nuclide_grids[0],
+                                            in.n_isotopes*in.n_gridpoints*sizeof(NuclideGridPoint));
+  dev_energy_grid    = occaDeviceWrapMemory(device, energy_grid,
+                                            in.n_isotopes*in.n_gridpoints*sizeof(GridPoint));
+  dev_grid_ptrs      = occaDeviceWrapMemory(device, grid_ptrs,
+                                            in.n_isotopes*in.n_isotopes*in.n_gridpoints*sizeof(int));
+  dev_mats           = occaDeviceWrapMemory(device, mats    , size_mats*sizeof(int));
+  dev_mats_idx       = occaDeviceWrapMemory(device, mats_idx, 12*sizeof(int));
+  dev_concs          = occaDeviceWrapMemory(device, concs   , size_mats*sizeof(double));
+  dev_V_sums         = occaDeviceWrapMemory(device, V_sums  , 5*in.lookups*sizeof(double));
+#endif
 
   // =====================================================================
   // Cross Section (XS) Parallel Lookup Simulation Begins
