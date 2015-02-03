@@ -31,7 +31,7 @@ int main( int argc, char* argv[] )
   // =====================================================================
   // Initialization & Command Line Read-In
   // =====================================================================
-  int version = 13;
+  int version = 1;
   int i;
 
   int mype = 0;
