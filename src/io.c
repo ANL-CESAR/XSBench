@@ -162,7 +162,7 @@ void print_CLI_error(void)
   exit(4);
 }
 
-Inputs read_CLI( int argc, char * argv[] )
+Inputs read_CLI( int argc, char *const argv[] )
 {
   Inputs input;
 
@@ -183,58 +183,26 @@ Inputs read_CLI( int argc, char * argv[] )
 
   // defaults to H-M Large benchmark
   input.HM = (char *) malloc( 6 * sizeof(char) );
-  input.HM[0] = 'l' ;
-  input.HM[1] = 'a' ;
-  input.HM[2] = 'r' ;
-  input.HM[3] = 'g' ;
-  input.HM[4] = 'e' ;
-  input.HM[5] = '\0';
+  strcpy(input.HM, "large");
 
   // Check if user sets these
   int user_g = 0;
 
-  // Collect Raw Input
-  for( int i = 1; i < argc; i++ )
-  {
-    char * arg = argv[i];
-
-    // nthreads (-t)
-    if( strcmp(arg, "-t") == 0 )
-    {
-      if( ++i < argc )
-        input.nthreads = atoi(argv[i]);
-      else
+  // Get input
+  int opt;
+  while ((opt = getopt(argc, argv, ":t:s:g:l:")) != -1) {
+    switch (opt) {
+      case 't': 
+        input.nthreads = atoi(optarg);                 break;
+      case 's': 
+        free(input.HM); input.HM = optarg;             break;
+      case 'g': 
+        user_g = 1; input.n_gridpoints = atol(optarg); break;
+      case 'l': 
+        input.lookups = atoi(optarg);                  break;
+      default:  
         print_CLI_error();
     }
-    // n_gridpoints (-g)
-    else if( strcmp(arg, "-g") == 0 )
-    {
-      if( ++i < argc )
-      {
-        user_g = 1;
-        input.n_gridpoints = atol(argv[i]);
-      }
-      else
-        print_CLI_error();
-    }
-    // lookups (-l)
-    else if( strcmp(arg, "-l") == 0 )
-    {
-      if( ++i < argc )
-        input.lookups = atoi(argv[i]);
-      else
-        print_CLI_error();
-    }
-    // HM (-s)
-    else if( strcmp(arg, "-s") == 0 )
-    {
-      if( ++i < argc )
-        input.HM = argv[i];
-      else
-        print_CLI_error();
-    }
-    else
-      print_CLI_error();
   }
 
   // Validate Input

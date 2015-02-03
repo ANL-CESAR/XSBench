@@ -105,7 +105,7 @@ void do_flops(void);
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
 		       long n_gridpoints );
-Inputs read_CLI( int argc, char * argv[] );
+Inputs read_CLI( int argc, char *const argv[] );
 void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
