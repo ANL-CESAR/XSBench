@@ -7,10 +7,9 @@
 int main( int argc, char* argv[] )
 {
   // =====================================================================
-  // Initialization & Command Line Read-In
+  // Declarations
   // =====================================================================
-  int version = 1;
-  int i;
+  int version = 1;  
 
   int mype = 0;
   int nprocs = -1;
@@ -32,37 +31,19 @@ int main( int argc, char* argv[] )
   // to get V_sum
   double V_sum[5] = {0, 0, 0, 0, 0};
   //---------------------------------------------------------------------------
-  // Process CLI Fields -- store in "Inputs" structure
-  Inputs in = read_CLI( argc, argv );
 
-  // Print-out of Input Summary
-  if( mype == 0 )
-    print_inputs( in, nprocs, version );
-
-  //---OCCA declarations--------------------------------------------------------
-
+  occaKernelInfo lookupInfo;
   occaKernel lookup_touch, lookup_kernel;
   occaDevice device;
 
-  // For XSBench
   occaMemory dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector,
              dev_mats, dev_mats_idx, dev_concs;
 
-  // For verification
   occaMemory dev_V_sums;
 
-  occaKernelInfo lookupInfo = occaGenKernelInfo();
-  occaKernelInfoAddDefine(lookupInfo, "inner_dim", occaLong(in.inner_dim));
-  occaKernelInfoAddDefine(lookupInfo, "outer_dim", occaLong(in.outer_dim));
-#ifdef VERIFICATION
-  // occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
-#endif
-  //---------------------------------------------------------------------------
-
-  device = occaGetDevice(in.device_info);
-
-  lookup_touch = occaBuildKernelFromSource(device, "hybridLookupKernel.okl","lookup_touch", lookupInfo);
-  lookup_kernel = occaBuildKernelFromSource(device, in.kernel, "lookup_kernel", lookupInfo);
+  // =====================================================================
+  // Initialize MPI
+  // =====================================================================
 
 #ifdef MPI
   MPI_Status stat;
@@ -71,6 +52,35 @@ int main( int argc, char* argv[] )
   MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 #endif
 
+  // =====================================================================
+  // Read command-line input
+  // =====================================================================
+
+  // Process CLI Fields and print summary
+  Inputs in = read_CLI( argc, argv );
+  if( mype == 0 )
+    print_inputs( in, nprocs, version );
+
+  // =====================================================================
+  // Initialize OCCA
+  // =====================================================================
+
+  lookupInfo = occaGenKernelInfo();
+  occaKernelInfoAddDefine(lookupInfo, "inner_dim", occaLong(in.inner_dim));
+  occaKernelInfoAddDefine(lookupInfo, "outer_dim", occaLong(in.outer_dim));
+#ifdef VERIFICATION
+  // occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
+#endif
+
+  device = occaGetDevice(in.device_info);
+
+  lookup_touch = occaBuildKernelFromSource(device, "hybridLookupKernel.okl","lookup_touch", lookupInfo);
+  lookup_kernel = occaBuildKernelFromSource(device, in.kernel, "lookup_kernel", lookupInfo);
+
+  // =====================================================================
+  // Initialize RNG
+  // =====================================================================
+
   // rand() is only used in the serial initialization stages.
   // A custom RNG is used in parallel portions.
 #ifdef VERIFICATION
@@ -78,7 +88,6 @@ int main( int argc, char* argv[] )
 #else
   srand(time(NULL));
 #endif
-
 
   // =====================================================================
   // Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -154,13 +163,13 @@ int main( int argc, char* argv[] )
 #endif
 
   // =====================================================================
-  // Prepare verification arrays
+  // Initialize verification arrays
   // =====================================================================
 
   V_sums = (double *) calloc( 5 * in.lookups, sizeof(double) );
 
   // =====================================================================
-  // OCCA mallocs and memcopies
+  // Allocate OCCA memory
   // =====================================================================
 
   printf("Allocating and copying to device memory...\n");
@@ -237,12 +246,16 @@ int main( int argc, char* argv[] )
   gettimeofday(&end, NULL);
   wall_time = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec)/1000000.;
 
+  // =====================================================================
+  // Finalize and verify
+  // =====================================================================
+
   printf("Copying from device memory...\n");
   // Device-to-host memcopy
   occaCopyMemToPtr(V_sums, dev_V_sums, 5*in.lookups*sizeof(double), 0);
 
   // Reduce sums
-  for(i = 0; i < in.lookups; ++i){
+  for(int i = 0; i < in.lookups; ++i){
     V_sum[0] += V_sums[5*i + 0];
     V_sum[1] += V_sums[5*i + 1];
     V_sum[2] += V_sums[5*i + 2];
