@@ -59,7 +59,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs, double V_su
     border_print();
 
     // Print the results
-    printf("Threads:     %d\n", in.nthreads);
+    printf("Threads:     %d\n", in.n_threads);
 #ifdef MPI
     printf("MPI ranks:   %d\n", nprocs);
 #endif
@@ -83,7 +83,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs, double V_su
     if( SAVE )
     {
       FILE * out = fopen( "results.txt", "a" );
-      fprintf(out, "%d\t%d\n", in.nthreads, lookups_per_sec);
+      fprintf(out, "%d\t%d\n", in.n_threads, lookups_per_sec);
       fclose(out);
     }
   }
@@ -109,10 +109,10 @@ void print_inputs(Inputs in, int nprocs, int version )
   printf("XS Lookups:                   "); fancy_int(in.lookups);
 #ifdef MPI
   printf("MPI Ranks:                    %d\n", nprocs);
-  printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
+  printf("OMP Threads per MPI Rank:     %d\n", in.n_threads);
   printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
 #else
-  printf("Threads:                      %d\n", in.nthreads);
+  printf("Threads:                      %d\n", in.n_threads);
   printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 #endif
   border_print();
@@ -168,9 +168,9 @@ Inputs read_CLI( int argc, char *const argv[] )
 
   // defaults to max threads on the system
   if (getenv("OMP_NUM_THREADS") != NULL)
-    input.nthreads = atoi(getenv("OMP_NUM_THREADS"));
+    input.n_threads = atoi(getenv("OMP_NUM_THREADS"));
   else
-    input.nthreads = omp_get_num_procs();
+    input.n_threads = omp_get_num_procs();
 
   // defaults to 355 (corresponding to H-M Large benchmark)
   input.n_isotopes = 355;
@@ -182,45 +182,39 @@ Inputs read_CLI( int argc, char *const argv[] )
   input.lookups = 15000000;
 
   // defaults to H-M Large benchmark
-  input.HM = (char *) malloc( 6 * sizeof(char) );
+  input.HM = (char *) malloc(128 * sizeof(char));
   strcpy(input.HM, "large");
 
-  // Check if user sets these
-  int user_g = 0;
+  // defaults to OpenMP mode
+  input.mode = (char *) malloc(128 * sizeof(char));
+  strcpy(input.mode, "mode = OpenMP");
+
+  // defaults to hybrid kernel
+  input.kernel = (char *) malloc(128 * sizeof(char));
+  strcpy(input.kernel, "hybridLookupKernel.okl");
+
+  // Check if user sets gridpoints
+  bool user_g = false;
 
   // Get input
   int opt;
-  while ((opt = getopt(argc, argv, ":t:s:g:l:")) != -1) {
+  while ((opt = getopt(argc, argv, ":t:l:g:o:i:s:m:k:")) != -1) {
     switch (opt) {
-      case 't': 
-        input.nthreads = atoi(optarg);                 break;
-      case 's': 
-        free(input.HM); input.HM = optarg;             break;
-      case 'g': 
-        user_g = 1; input.n_gridpoints = atol(optarg); break;
-      case 'l': 
-        input.lookups = atoi(optarg);                  break;
-      default:  
-        print_CLI_error();
+      case 't': input.n_threads = atoi(optarg); break;
+      case 'l': input.lookups = atoi(optarg); break;
+      case 'g': input.n_gridpoints = atol(optarg); user_g = 1; break;
+      case 'o': input.outer_dim = atol(optarg); break;
+      case 'i': input.inner_dim = atol(optarg); break;
+      case 's': free(input.HM); input.HM = optarg; break;
+      case 'm': free(input.mode); input.mode = optarg; break;
+      case 'k': free(input.kernel); input.kernel = optarg; break;
+      default:  print_CLI_error();
     }
   }
 
-  // Validate Input
-
-  // Validate nthreads
-  if( input.nthreads < 1 )
-    print_CLI_error();
-
-  // Validate n_isotopes
-  if( input.n_isotopes < 1 )
-    print_CLI_error();
-
-  // Validate n_gridpoints
-  if( input.n_gridpoints < 1 )
-    print_CLI_error();
-
-  // Validate lookups
-  if( input.lookups < 1 )
+  // Validate numerical input
+  if( (input.n_threads < 1) | (input.lookups < 1) | (input.n_gridpoints < 1) |
+      (input.outer_dim < 1) | (input.inner_dim < 1))
     print_CLI_error();
 
   // Validate HM size
@@ -234,9 +228,9 @@ Inputs read_CLI( int argc, char *const argv[] )
   // (defaults to large)
   if( strcasecmp(input.HM, "small") == 0 )
     input.n_isotopes = 68;
-  else if( strcasecmp(input.HM, "XL") == 0 && user_g == 0 )
+  else if( strcasecmp(input.HM, "XL") == 0 && user_g == false )
     input.n_gridpoints = 238847; // sized to make 120 GB XS data
-  else if( strcasecmp(input.HM, "XXL") == 0 && user_g == 0 )
+  else if( strcasecmp(input.HM, "XXL") == 0 && user_g == false )
     input.n_gridpoints = 238847 * 2.1; // 252 GB XS data
 
   // Return input struct

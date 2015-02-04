@@ -3,6 +3,7 @@
 
 #include<stdio.h>
 #include<stdlib.h>
+#include<stdbool.h>
 #include<time.h>
 #include<string.h>
 #include<strings.h>
@@ -24,25 +25,29 @@
 
 // Structures
 typedef struct{
-	double energy;
-	double total_xs;
-	double elastic_xs;
-	double absorbtion_xs;
-	double fission_xs;
-	double nu_fission_xs;
+  double energy;
+  double total_xs;
+  double elastic_xs;
+  double absorbtion_xs;
+  double fission_xs;
+  double nu_fission_xs;
 } NuclideGridPoint;
 
 typedef struct{
-	double energy;
-	int xs_ptrs;
+  double energy;
+  int xs_ptrs;
 } GridPoint;
 
 typedef struct{
-	int nthreads;
-	long n_isotopes;
-	long n_gridpoints;
-	int lookups;
-	char * HM;
+  int  n_threads;    // Number of OpenMP threads
+  long n_isotopes;   // Number of isotopes
+  long n_gridpoints; // Number of energy gridpoints
+  int  lookups;      // Number of lookups to do
+  char * HM;         // Name of benchmark
+  char * mode;       // OCCA mode
+  char * kernel;     // OCCA kernel
+  long outer_dim;    // OCCA outer dimension
+  long inner_dim;    // OCCA inner dimension
 } Inputs;
 
 // Function Prototypes
@@ -58,36 +63,36 @@ void gpmatrix_free( NuclideGridPoint ** M );
 int NGP_compare( const void * a, const void * b );
 
 void generate_grids( NuclideGridPoint ** nuclide_grids,
-                     long n_isotopes, long n_gridpoints );
+    long n_isotopes, long n_gridpoints );
 void generate_grids_v( NuclideGridPoint ** nuclide_grids,
-                     long n_isotopes, long n_gridpoints );
+    long n_isotopes, long n_gridpoints );
 
 void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
-                         long n_gridpoints );
+    long n_gridpoints );
 
 int * generate_ptr_grid(int n_isotopes, int n_gridpoints);
 
 GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
-                                  NuclideGridPoint ** nuclide_grids, int * grid_ptrs);
+    NuclideGridPoint ** nuclide_grids, int * grid_ptrs);
 
 void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    int * grid_ptrs, long n_isotopes, long n_gridpoints );
+    int * grid_ptrs, long n_isotopes, long n_gridpoints );
 
 int binary_search( NuclideGridPoint * A, double quarry, int n );
 
 void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
-                           long n_gridpoints, int * restrict num_nucs,
-                           double * restrict concs, GridPoint * restrict energy_grid,
-                           int * restrict grid_ptrs,
-			   NuclideGridPoint ** restrict nuclide_grids,
-			   int * restrict mats, int * restrict mats_ix,
-                           double * restrict macro_xs_vector );
+    long n_gridpoints, int * restrict num_nucs,
+    double * restrict concs, GridPoint * restrict energy_grid,
+    int * restrict grid_ptrs,
+    NuclideGridPoint ** restrict nuclide_grids,
+    int * restrict mats, int * restrict mats_ix,
+    double * restrict macro_xs_vector );
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
-                           long n_gridpoints,
-                           GridPoint * restrict energy_grid, int * restrict grid_ptrs,
-                           NuclideGridPoint ** restrict nuclide_grids, int idx,
-                           double * restrict xs_vector );
+    long n_gridpoints,
+    GridPoint * restrict energy_grid, int * restrict grid_ptrs,
+    NuclideGridPoint ** restrict nuclide_grids, int idx,
+    double * restrict xs_vector );
 
 long grid_search( long n, double quarry, GridPoint * A);
 
@@ -103,8 +108,8 @@ void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
 void do_loads( int nuc,
-               NuclideGridPoint ** restrict nuclide_grids,
-		       long n_gridpoints );
+    NuclideGridPoint ** restrict nuclide_grids,
+    long n_gridpoints );
 Inputs read_CLI( int argc, char *const argv[] );
 void print_CLI_error(void);
 double rn_v(void);
@@ -114,8 +119,8 @@ size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, double V_sum );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
-		 GridPoint * energy_grid, int * grid_ptrs);
+    GridPoint * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
-		 GridPoint * energy_grid, int * grid_ptrs);
+    GridPoint * energy_grid, int * grid_ptrs);
 
 #endif
