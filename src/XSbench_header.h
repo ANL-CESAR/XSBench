@@ -39,15 +39,17 @@ typedef struct{
 } GridPoint;
 
 typedef struct{
-  int  n_threads;    // Number of OpenMP threads
-  long n_isotopes;   // Number of isotopes
-  long n_gridpoints; // Number of energy gridpoints
-  int  lookups;      // Number of lookups to do
-  char * HM;         // Name of benchmark
-  char * mode;       // OCCA mode
-  char * kernel;     // OCCA kernel
-  long outer_dim;    // OCCA outer dimension
-  long inner_dim;    // OCCA inner dimension
+  int  n_threads;     // Number of OpenMP threads
+  long n_isotopes;    // Number of isotopes
+  long n_gridpoints;  // Number of energy gridpoints
+  int  lookups;       // Number of lookups to do
+  char * HM;          // Name of benchmark
+  char * mode;        // OCCA mode
+  int  device_id;     // OCCA deviceID
+  char * device_info; // OCCA deviceInfo
+  char * kernel;      // OCCA kernel
+  long outer_dim;     // OCCA outer dimension
+  long inner_dim;     // OCCA inner dimension
 } Inputs;
 
 // Function Prototypes
