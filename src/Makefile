@@ -9,6 +9,8 @@ PROFILE     = no
 MPI         = no
 VEC_INFO    = no
 VERIFY      = no
+BINARY_DUMP = no
+BINARY_READ = no
 
 #===============================================================================
 # Program name & source code list

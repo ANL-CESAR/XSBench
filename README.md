@@ -51,6 +51,10 @@ The XSBench driver may be compiled with `make`.  The makefile
 * `DEBUG  = ( yes | no ):` Sets the -g flag.
 * `PROFILE = ( yes | no );` Sets the -pg flag.
 * `VERIFY = ( yes | no ):` Enables verification mode.  See [Verification](#verification), below.
+* `BINARY_DUMP = ( yes | no ):`  Writes cross-sections to file.  See [Binary
+  dump/read](#binary dump/read), below.
+* `BINARY_READ = ( yes | no ):` Reads cross-sections from file.  See [Binary
+  dump/read](#binary dump/read), below.
 
 The XSBench kernel is compiled at runtime using the environment variabls:
 `$OCCA_OPENMP_COMPILER`, `$OCCA_OPENMP_COMPILER_FLAGS`, `$OCCA_CUDA_COMPILER`,
@@ -63,7 +67,7 @@ in `src/Main.c`.  Future versions will allow the mode to be set at runtime.
 
 #### Synopsis
 
-`./XSBench [-t <threads>] [-s 'small'|'large'|'XL'|'XXL'] [-g <gridpoints>] [-l <lookups>]`
+`./XSBench [-t <threads>] [-s 'small'|'large'|'XL'|'XXL'] [-g <gridpoints>] [-l <lookups>] [-m <OCCA mode>] [-d <OCCA device ID>] [-o <OCCA outer dimension>] [-i <OCCA inner dimension>] [-k <OCCA kernel>]`
 
 #### Options
 
@@ -110,6 +114,26 @@ in `src/Main.c`.  Future versions will allow the mode to be set at runtime.
   extending the run will decrease the percentage of runtime spent on
   initialization.
 
+- `-m <OCCA mode>`
+
+  Sets the OCCA compilation mode (OpenMP, CUDA, OpenCL, etc.).  Defaults to OpenMP.
+
+- `-d <OCCA device ID>`
+
+  Sets the ID for the device used by OCCA.  Defaults to 0.  
+
+- `-o <OCCA outer dimension>`
+
+  Size of the OCCA outer dimension. Defaults to 468750.
+
+- `-i <OCCA inner dimension>`
+
+  Size of the OCCA inner dimension.  Defaults to 32.
+
+- `-k <OCCA kernel>`
+
+  The OKL source file used to compile the main lookup kernel.  Defaults to hybridLookupKernel.okl
+
 #### Verification
 
   If compiled in verification mode \(see [Compilation](#compilation)\), a weak test for
@@ -121,6 +145,19 @@ in `src/Main.c`.  Future versions will allow the mode to be set at runtime.
   number stream is not reproducible and because the floating-point arithmatic
   is non-associative.  Future versions will produce a deterministic integer
   checksum.  
+
+#### Binary dump/read
+
+  If compiled in `BINARY_DUMP` mode \(see [Compilation](#compilation)\),
+  XSBench writes a binary file containing a randomized data set of cross
+  sections. This can be used in tandem with the binary read mode to skip
+  generation of cross section data every time the program is run.
+
+  If compiled in `BINARY_READ` mode \(see [Compilation](#compilation)\),
+  XSBench reads the binary file created by the binary dump mode as a (usually)
+  much faster substitution for randomly generating XS data on-the-fly. This mode
+  is particularly useful if running on simulators where walltime minimization is
+  extremely critical for logistical reasons.
 
 ## References
 
