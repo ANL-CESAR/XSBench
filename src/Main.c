@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
   // =====================================================================
   // Declarations
   // =====================================================================
-  int version = 1;  
+  int version = 1;
 
   int mype = 0;
   int nprocs = -1;
@@ -70,13 +70,10 @@ int main( int argc, char* argv[] )
   // occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
 #endif
 
-  occaDeviceInfo device_info;
-  // occaDeviceInfoAppendType(device_info, "deviceID", occaInt(in.device_id));
-  // occaDeviceInfoAppendType(device_info, "deviceID", occaInt(in.device_id));
-  // occaDeviceInfoAppend(device_info, "mode", in.mode);
-  // occaDeviceInfoAppend(device_info, "deviceID", in.device_id);
-  //occaDevice device = occaGetDeviceFromInfo(device_info);
-  occaDevice device = occaGetDevice(in.device_info);
+  occaDeviceInfo device_info = occaCreateDeviceInfo();
+  occaDeviceInfoAppend(device_info    , "mode"    , in.mode);
+  occaDeviceInfoAppendType(device_info, "deviceID", occaInt(in.device_id));
+  occaDevice device = occaGetDeviceFromInfo(device_info);
 
 
   lookup_touch = occaBuildKernelFromSource(device, "hybridLookupKernel.okl","lookup_touch", lookupInfo);

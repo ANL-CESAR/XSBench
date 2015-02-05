@@ -9,7 +9,7 @@ void logo(int version)
 {
   border_print();
   printf(
-      "        ____  _______________        _  _______ ____                  __   \n"  
+      "        ____  _______________        _  _______ ____                  __   \n"
       "       / __ \\/ ____/ ____/   |      | |/ / ___// __ )___  ____  _____/ /_  \n"
       "      / / / / /   / /   / /| |______|   /\\__ \\/ __  / _ \\/ __ \\/ ___/ __ \\ \n"
       "     / /_/ / /___/ /___/ ___ /_____/   |___/ / /_/ /  __/ / / / /__/ / / / \n"
@@ -96,7 +96,9 @@ void print_inputs(Inputs in, int nprocs, int version )
   logo(version);
   center_print("INPUT SUMMARY", 79);
   border_print();
-  printf("OCCA device info:             %s\n", in.device_info);
+  printf("OCCA mode:                    %s\n", in.mode);
+  printf("OCCA platform info:           %d\n", in.platform_id);
+  printf("OCCA device info:             %d\n", in.device_id);
   printf("OCCA kernel:                  %s\n", in.kernel);
   printf("OCCA inner dimension:         "); fancy_int(in.inner_dim);
   printf("OCCA outer dimension:         "); fancy_int(in.outer_dim);
@@ -187,7 +189,7 @@ Inputs read_CLI( int argc, char *const argv[] )
   input.n_gridpoints = 11303;
   // defaults to 15,000,000
   input.lookups = 15000000;
-  
+
   input.outer_dim = 468750;
   input.inner_dim = 32;
 
@@ -203,32 +205,31 @@ Inputs read_CLI( int argc, char *const argv[] )
   input.kernel = (char *) malloc(128 * sizeof(char));
   strcpy(input.kernel, "hybridLookupKernel.okl");
 
-  // defaults to device_id 0
-  input.device_id = 0;
+  // defaults to platform_id = 0, device_id 0
+  input.platform_id = 0;
+  input.device_id   = 0;
 
   // Check if user sets gridpoints
   bool user_g = false;
 
   // Get input
   int opt;
-  while ((opt = getopt(argc, argv, ":t:l:g:o:i:d:s:m:k:")) != -1) {
+  while ((opt = getopt(argc, argv, ":t:l:g:o:i:p:d:s:m:k:")) != -1) {
+    printf("optarg = %s\n", optarg);
     switch (opt) {
-      case 't': input.n_threads = atoi(optarg); break;
-      case 'l': input.lookups = atoi(optarg); break;
+      case 't': input.n_threads    = atoi(optarg);             break;
+      case 'l': input.lookups      = atoi(optarg);             break;
       case 'g': input.n_gridpoints = atol(optarg); user_g = 1; break;
-      case 'o': input.outer_dim = atol(optarg); break;
-      case 'i': input.inner_dim = atol(optarg); break;
-      case 'd': input.device_id = atoi(optarg); break;
-      case 's': free(input.HM); input.HM = optarg; break;
-      case 'm': free(input.mode); input.mode = optarg; break;
-      case 'k': free(input.kernel); input.kernel = optarg; break;
+      case 'o': input.outer_dim    = atol(optarg);             break;
+      case 'i': input.inner_dim    = atol(optarg);             break;
+      case 'p': input.platform_id  = atoi(optarg);             break;
+      case 'd': input.device_id    = atoi(optarg);             break;
+      case 's': free(input.HM);     input.HM     = optarg;     break;
+      case 'm': free(input.mode);   input.mode   = optarg;     break;
+      case 'k': free(input.kernel); input.kernel = optarg;     break;
       default:  print_CLI_error();
     }
   }
-
-  // Construct device_info string
-  input.device_info = (char *) malloc(256 * sizeof(char));
-  sprintf(input.device_info, "mode = %s, deviceID = %d", input.mode, input.device_id);
 
   // Validate numerical input
   if( (input.n_threads < 1) | (input.lookups < 1) | (input.n_gridpoints < 1) |
