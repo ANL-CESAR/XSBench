@@ -32,9 +32,7 @@ int main( int argc, char* argv[] )
   double V_sum[5] = {0, 0, 0, 0, 0};
   //---------------------------------------------------------------------------
 
-  occaKernelInfo lookupInfo;
   occaKernel lookup_touch, lookup_kernel;
-  occaDevice device;
 
   occaMemory dev_num_nucs, dev_energy_grid, dev_grid_ptrs, dev_nuclide_vector,
              dev_mats, dev_mats_idx, dev_concs;
@@ -65,14 +63,21 @@ int main( int argc, char* argv[] )
   // Initialize OCCA
   // =====================================================================
 
-  lookupInfo = occaGenKernelInfo();
+  occaKernelInfo lookupInfo = occaCreateKernelInfo();
   occaKernelInfoAddDefine(lookupInfo, "inner_dim", occaLong(in.inner_dim));
   occaKernelInfoAddDefine(lookupInfo, "outer_dim", occaLong(in.outer_dim));
 #ifdef VERIFICATION
   // occaKernelInfoAddDefine(lookupInfo, "VERIFICATION", occaInt(1));
 #endif
 
-  device = occaGetDevice(in.device_info);
+  occaDeviceInfo device_info;
+  // occaDeviceInfoAppendType(device_info, "deviceID", occaInt(in.device_id));
+  // occaDeviceInfoAppendType(device_info, "deviceID", occaInt(in.device_id));
+  // occaDeviceInfoAppend(device_info, "mode", in.mode);
+  // occaDeviceInfoAppend(device_info, "deviceID", in.device_id);
+  //occaDevice device = occaGetDeviceFromInfo(device_info);
+  occaDevice device = occaGetDevice(in.device_info);
+
 
   lookup_touch = occaBuildKernelFromSource(device, "hybridLookupKernel.okl","lookup_touch", lookupInfo);
   lookup_kernel = occaBuildKernelFromSource(device, in.kernel, "lookup_kernel", lookupInfo);

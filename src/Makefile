@@ -3,8 +3,8 @@
 #===============================================================================
 
 COMPILER    = gnu
-OPTIMIZE    = yes
-DEBUG       = no
+OPTIMIZE    = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 VEC_INFO    = no
