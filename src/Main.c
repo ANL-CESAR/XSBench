@@ -71,8 +71,9 @@ int main( int argc, char* argv[] )
 #endif
 
   occaDeviceInfo device_info = occaCreateDeviceInfo();
-  occaDeviceInfoAppend(device_info    , "mode"    , in.mode);
-  occaDeviceInfoAppendType(device_info, "deviceID", occaInt(in.device_id));
+  occaDeviceInfoAppend(device_info    , "mode"    ,   in.mode);
+  occaDeviceInfoAppendType(device_info, "deviceID",   occaInt(in.device_id));
+  occaDeviceInfoAppendType(device_info, "platformID", occaInt(in.platform_id));
   occaDevice device = occaGetDeviceFromInfo(device_info);
 
 

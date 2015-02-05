@@ -167,6 +167,7 @@ void print_CLI_error(void)
   printf("  -i <inner_dim>   OCCA inner dimension\n");
   printf("  -m <mode>        OCCA mode\n");
   printf("  -d <device_id>   OCCA device ID\n");
+  printf("  -p <platform_id> OCCA platform ID\n");
   printf("  -k <kernel>      Source file for OCCA XS lookup kernel\n");
   printf("Default is equivalent to: -s large -l 15000000\n");
   printf("See readme for full description of default run values\n");

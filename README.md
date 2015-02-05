@@ -67,7 +67,7 @@ in `src/Main.c`.  Future versions will allow the mode to be set at runtime.
 
 #### Synopsis
 
-`./XSBench [-t <threads>] [-s 'small'|'large'|'XL'|'XXL'] [-g <gridpoints>] [-l <lookups>] [-m <OCCA mode>] [-d <OCCA device ID>] [-o <OCCA outer dimension>] [-i <OCCA inner dimension>] [-k <OCCA kernel>]`
+`./XSBench [-t <threads>] [-s 'small'|'large'|'XL'|'XXL'] [-g <gridpoints>] [-l <lookups>] [-m <OCCA mode>] [-d <OCCA device ID>] [-p <OCCA platform ID>] [-o <OCCA outer dimension>] [-i <OCCA inner dimension>] [-k <OCCA kernel>]`
 
 #### Options
 
@@ -121,6 +121,10 @@ in `src/Main.c`.  Future versions will allow the mode to be set at runtime.
 - `-d <OCCA device ID>`
 
   Sets the ID for the device used by OCCA.  Defaults to 0.  
+
+- `-p <OCCA platform ID>`
+
+  Sets the ID for the platform used by OCCA.  Defaults to 0.  
 
 - `-o <OCCA outer dimension>`
 
