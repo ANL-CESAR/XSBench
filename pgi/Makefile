@@ -62,7 +62,8 @@ ifeq ($(COMPILER),pgi)
     CFLAGS += -mp -Minfo=mp
   endif
   ifeq ($(ACC),yes)
-    CFLAGS += -acc -Minfo=accel -Mextract -Minline
+    #CFLAGS += -acc -Minfo=accel -Mextract -Minline
+    CFLAGS += -acc -Minfo=accel -DOPENACC
   endif
 endif
 
