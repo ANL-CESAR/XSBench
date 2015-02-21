@@ -25,7 +25,6 @@ program = XSBench
 source = \
 Main.c \
 io.c \
-CalculateXS.c \
 GridInit.c \
 XSutils.c \
 Materials.c
@@ -138,6 +137,8 @@ endif
 
 $(program): $(obj) XSbench_header.h
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
+
+Main.o: Main.c io.o GridInit.o XSutils.o Materials.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

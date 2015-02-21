@@ -42,6 +42,7 @@ void read_CLI( int argc, char * argv[], int *nthreads, long *n_isotopes,
 // XSutils.c function prototypes
 int d_compare(const void * a, const void * b);
 int binary_search(double * A, double quarry, int n);
+#pragma acc routine seq
 double rn(unsigned long * seed);
 double rn_v(void);
 unsigned int hash(unsigned char *str, int nbins);
@@ -58,15 +59,15 @@ double * generate_energy_grid(long n_isotopes, long n_gridpoints, double * nucli
 int * generate_grid_ptrs(long n_isotopes, long n_gridpoints, double * nuclide_grids, double * energy_grid);
 
 // CalculateXS.c function prototypes
-void calculate_macro_xs(double p_energy, int mat, long n_isotopes, long n_gridpoints,
-			int * restrict num_nucs, double * restrict concs,
-			double * restrict energy_grid, double * restrict nuclide_grids,
-			int * restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
-			double * restrict macro_xs_vector);
-void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpoints,
-			double * restrict energy_grid, double * restrict nuclide_grids,
-			int * restrict grid_ptrs, int idx, double * restrict xs_vector);
-long grid_search(long n, double quarry, double * A);
+// void calculate_macro_xs(double p_energy, int mat, long n_isotopes, long n_gridpoints,
+// 			int * restrict num_nucs, double * restrict concs,
+// 			double * restrict energy_grid, double * restrict nuclide_grids,
+// 			int * restrict grid_ptrs, int * restrict mats, int * restrict mats_ptr,
+// 			double * restrict macro_xs_vector);
+// void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpoints,
+// 			double * restrict energy_grid, double * restrict nuclide_grids,
+// 			int * restrict grid_ptrs, int idx, double * restrict xs_vector);
+// long grid_search(long n, double quarry, double * A);
 
 // Materials.c function prototypes
 int * load_num_nucs(long n_isotopes);
@@ -74,7 +75,7 @@ int * load_mats_ptr(int * num_nucs);
 int * load_mats(int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes);
 double * load_concs(int size_mats);
 double * load_concs_v(int size_mats);
-int pick_mat(unsigned long * seed);
+//int pick_mat(unsigned long * seed);
 
 // papi.c funtion prototypes
 void counter_init( int *eventset, int *num_papi_events );

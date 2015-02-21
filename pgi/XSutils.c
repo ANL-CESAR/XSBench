@@ -41,7 +41,8 @@ double rn(unsigned long * seed)
 	unsigned long n1;
 	unsigned long a = 16807;
 	unsigned long m = 2147483647;
-	n1 = ( a * (*seed) ) % m;
+	// n1 = unsigned ( a * (*seed) ) % m;
+	n1 = (unsigned) ( a * (*seed) ) % (unsigned) m;
 	*seed = n1;
 	ret = (double) n1 / m;
 	return ret;
