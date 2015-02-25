@@ -70,22 +70,22 @@ int main( int argc, char* argv[] )
   sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
 #endif
 
-	// Prepare Unionized Energy Grid Framework
-	int * grid_ptrs = generate_ptr_grid(in.n_isotopes, in.n_gridpoints);
-	#ifndef BINARY_READ
-	GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-	                          in.n_gridpoints, nuclide_grids, grid_ptrs ); 	
-	#else
-	GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
-	                           in.n_gridpoints * sizeof( GridPoint ) );
-	for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
-		energy_grid[i].xs_ptrs = i*in.n_isotopes;
-	#endif
+  // Prepare Unionized Energy Grid Framework
+  int * grid_ptrs = generate_ptr_grid(in.n_isotopes, in.n_gridpoints);
+#ifndef BINARY_READ
+  GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
+      in.n_gridpoints, nuclide_grids, grid_ptrs ); 	
+#else
+  GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
+      in.n_gridpoints * sizeof( GridPoint ) );
+  for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
+    energy_grid[i].xs_ptrs = i*in.n_isotopes;
+#endif
 
   // Double Indexing. Filling in energy_grid with pointers to the
   // nuclide_energy_grids.
 #ifndef BINARY_READ
-	set_grid_ptrs( energy_grid, nuclide_grids, grid_ptrs, in.n_isotopes, in.n_gridpoints );
+  set_grid_ptrs( energy_grid, nuclide_grids, grid_ptrs, in.n_isotopes, in.n_gridpoints );
 #endif
 
 #ifdef BINARY_READ
@@ -125,102 +125,106 @@ int main( int argc, char* argv[] )
   // =====================================================================
 
 
-    if( mype == 0 )
-    {
-      printf("\n");
-      border_print();
-      center_print("SIMULATION", 79);
-      border_print();
-    }
+  if( mype == 0 )
+  {
+    printf("\n");
+    border_print();
+    center_print("SIMULATION", 79);
+    border_print();
+  }
 
-#ifndef ACC
-    tick = omp_get_wtime();
+#ifdef ACC
+  tick = timer();
+#else
+  tick = omp_get_wtime();
 #endif
 
 
-    // OpenMP compiler directives - declaring variables as shared or private
+  // OpenMP compiler directives - declaring variables as shared or private
 #ifndef ACC
 #pragma omp parallel default(none) \
-    private(i, thread, p_energy, mat, seed) \
-    shared( max_procs, in, energy_grid, nuclide_grids, \
-        grid_ptrs, mats, mats_idx, concs, num_nucs, mype, vhash) 
+  private(i, thread, p_energy, mat, seed) \
+  shared( max_procs, in, energy_grid, nuclide_grids, \
+      grid_ptrs, mats, mats_idx, concs, num_nucs, mype, vhash) 
 #endif
-    {	
+  {	
 
-      double macro_xs_vector[5];
+    double macro_xs_vector[5];
 
-      // Initialize RNG seeds for threads
+    // Initialize RNG seeds for threads
 #ifndef ACC
-      thread = omp_get_thread_num();
-      seed   = (thread+1)*19+17;
+    thread = omp_get_thread_num();
+    seed   = (thread+1)*19+17;
 #endif
 
-      // XS Lookup Loop
+    // XS Lookup Loop
 #ifndef ACC
 #pragma omp for schedule(dynamic)
 #endif
-      for( i = 0; i < in.lookups; i++ )
-      {
-        // Status text
-        if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
-          printf("\rCalculating XS's... (%.0lf%% completed)",
-              (i / ( (double)in.lookups / (double) in.nthreads ))
-              / (double) in.nthreads * 100.0);
+    for( i = 0; i < in.lookups; i++ )
+    {
+      // Status text
+      if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
+        printf("\rCalculating XS's... (%.0lf%% completed)",
+            (i / ( (double)in.lookups / (double) in.nthreads ))
+            / (double) in.nthreads * 100.0);
 
-        // Randomly pick an energy and material for the particle
+      // Randomly pick an energy and material for the particle
 #ifdef VERIFICATION
 #ifndef ACC
 #pragma omp critical
-        {
-          p_energy = rn_v();
-          mat      = pick_mat(rn_v()); 
-        }
+      {
+        p_energy = rn_v();
+        mat      = pick_mat(rn_v()); 
+      }
 #endif
 #else
-        p_energy = rn(&seed);
-        mat      = pick_mat(rn(&seed)); 
+      p_energy = rn(&seed);
+      mat      = pick_mat(rn(&seed)); 
 #endif
 
-        // debugging
-        //printf("E = %lf mat = %d\n", p_energy, mat);
+      // debugging
+      //printf("E = %lf mat = %d\n", p_energy, mat);
 
-        // This returns the macro_xs_vector, but we're not going
-        // to do anything with it in this program, so return value
-        // is written over.
-        calculate_macro_xs( p_energy, mat, in.n_isotopes,
-            in.n_gridpoints, num_nucs, concs,
-            energy_grid, grid_ptrs, nuclide_grids, mats, mats_idx,
-            macro_xs_vector );
+      // This returns the macro_xs_vector, but we're not going
+      // to do anything with it in this program, so return value
+      // is written over.
+      calculate_macro_xs( p_energy, mat, in.n_isotopes,
+          in.n_gridpoints, num_nucs, concs,
+          energy_grid, grid_ptrs, nuclide_grids, mats, mats_idx,
+          macro_xs_vector );
 
-        // Verification hash calculation
-        // This method provides a consistent hash accross
-        // architectures and compilers.
+      // Verification hash calculation
+      // This method provides a consistent hash accross
+      // architectures and compilers.
 #ifdef VERIFICATION
-        char line[256];
-        sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
-            p_energy, mat,
-            macro_xs_vector[0],
-            macro_xs_vector[1],
-            macro_xs_vector[2],
-            macro_xs_vector[3],
-            macro_xs_vector[4]);
-        unsigned long long vhash_local = hash(line, 10000);
+      char line[256];
+      sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+          p_energy, mat,
+          macro_xs_vector[0],
+          macro_xs_vector[1],
+          macro_xs_vector[2],
+          macro_xs_vector[3],
+          macro_xs_vector[4]);
+      unsigned long long vhash_local = hash(line, 10000);
 #ifndef ACC
 #pragma omp atomic
 #endif
-        vhash += vhash_local;
+      vhash += vhash_local;
 #endif
-      }
-
-
     }
 
-#ifndef ACC
-    tock = omp_get_wtime();
+
+  }
+
+#ifdef ACC
+  tock = timer();
+#else
+  tock = omp_get_wtime();
 #endif
 
-    // Print / Save Results and Exit
-    print_results( in, mype, tock-tick, nprocs, vhash );
+  // Print / Save Results and Exit
+  print_results( in, mype, tock-tick, nprocs, vhash );
 
 
 #ifdef MPI

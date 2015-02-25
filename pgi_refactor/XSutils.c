@@ -169,3 +169,10 @@ void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide
 	fclose(fp);
 
 }
+
+double timer()
+{
+	struct timeval time;
+	gettimeofday(&time, 0);
+	return time.tv_sec + time.tv_usec / 1000000.0;
+}

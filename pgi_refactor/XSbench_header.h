@@ -117,5 +117,6 @@ void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide
 		 GridPoint * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
 		 GridPoint * energy_grid, int * grid_ptrs);
+double timer();
 
 #endif
