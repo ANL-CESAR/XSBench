@@ -7,6 +7,7 @@ OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
+ACC         = no
 PAPI        = no
 VEC_INFO    = no
 VERIFY      = yes
@@ -54,7 +55,11 @@ endif
 
 ifeq ($(COMPILER),pgi)
   CC = pgcc
-  CFLAGS = -c99 -mp -Minfo=mp
+  ifeq ($(ACC),yes)
+    CFLAGS = -c99 -acc -Minfo=accel -DACC
+  else
+    CFLAGS = -c99 -mp -Minfo=mp
+  endif
 endif
 
 # BG/Q gcc Cross-Compiler

@@ -11,10 +11,12 @@ int main( int argc, char* argv[] )
   // =====================================================================
   int version = 13;
   int mype = 0;
+#ifndef ACC
   int max_procs = omp_get_num_procs();
+#endif
   int i, thread, mat;
   unsigned long seed;
-  double omp_start, omp_end, p_energy;
+  double tick, tock, p_energy;
   unsigned long long vhash = 0;
   int nprocs;
 
@@ -36,8 +38,10 @@ int main( int argc, char* argv[] )
   // Process CLI Fields -- store in "Inputs" structure
   Inputs in = read_CLI( argc, argv );
 
+#ifndef ACC
   // Set number of OpenMP Threads
   omp_set_num_threads(in.nthreads); 
+#endif
 
   // Print-out of Input Summary
   if( mype == 0 )
@@ -120,13 +124,6 @@ int main( int argc, char* argv[] )
   // Cross Section (XS) Parallel Lookup Simulation Begins
   // =====================================================================
 
-  // Outer benchmark loop can loop through all possible # of threads
-#ifdef BENCHMARK
-  for( int bench_n = 1; bench_n <=omp_get_num_procs(); bench_n++ )
-  {
-    in.nthreads = bench_n;
-    omp_set_num_threads(in.nthreads);
-#endif
 
     if( mype == 0 )
     {
@@ -136,40 +133,32 @@ int main( int argc, char* argv[] )
       border_print();
     }
 
-    omp_start = omp_get_wtime();
+#ifndef ACC
+    tick = omp_get_wtime();
+#endif
 
-    //initialize papi with one thread (master) here
-#ifdef PAPI
-    if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
-      fprintf(stderr, "PAPI library init error!\n");
-      exit(1);
-    }
-#endif	
 
     // OpenMP compiler directives - declaring variables as shared or private
+#ifndef ACC
 #pragma omp parallel default(none) \
     private(i, thread, p_energy, mat, seed) \
     shared( max_procs, in, energy_grid, nuclide_grids, \
         grid_ptrs, mats, mats_idx, concs, num_nucs, mype, vhash) 
-    {	
-      // Initialize parallel PAPI counters
-#ifdef PAPI
-      int eventset = PAPI_NULL; 
-      int num_papi_events;
-#pragma omp critical
-      {
-        counter_init(&eventset, &num_papi_events);
-      }
 #endif
+    {	
 
       double macro_xs_vector[5];
 
       // Initialize RNG seeds for threads
+#ifndef ACC
       thread = omp_get_thread_num();
       seed   = (thread+1)*19+17;
+#endif
 
       // XS Lookup Loop
+#ifndef ACC
 #pragma omp for schedule(dynamic)
+#endif
       for( i = 0; i < in.lookups; i++ )
       {
         // Status text
@@ -180,11 +169,13 @@ int main( int argc, char* argv[] )
 
         // Randomly pick an energy and material for the particle
 #ifdef VERIFICATION
+#ifndef ACC
 #pragma omp critical
         {
           p_energy = rn_v();
           mat      = pick_mat(rn_v()); 
         }
+#endif
 #else
         p_energy = rn(&seed);
         mat      = pick_mat(rn(&seed)); 
@@ -214,45 +205,23 @@ int main( int argc, char* argv[] )
             macro_xs_vector[3],
             macro_xs_vector[4]);
         unsigned long long vhash_local = hash(line, 10000);
+#ifndef ACC
 #pragma omp atomic
+#endif
         vhash += vhash_local;
 #endif
       }
 
-      // Prints out thread local PAPI counters
-#ifdef PAPI
-      if( mype == 0 && thread == 0 )
-      {
-        printf("\n");
-        border_print();
-        center_print("PAPI COUNTER RESULTS", 79);
-        border_print();
-        printf("Count          \tSmybol      \tDescription\n");
-      }
-      {
-#pragma omp barrier
-      }
-      counter_stop(&eventset, num_papi_events);
-#endif
 
     }
 
-#ifndef PAPI
-    if( mype == 0)	
-    {	
-      printf("\n" );
-      printf("Simulation complete.\n" );
-    }
+#ifndef ACC
+    tock = omp_get_wtime();
 #endif
-
-    omp_end = omp_get_wtime();
 
     // Print / Save Results and Exit
-    print_results( in, mype, omp_end-omp_start, nprocs, vhash );
+    print_results( in, mype, tock-tick, nprocs, vhash );
 
-#ifdef BENCHMARK
-  }
-#endif
 
 #ifdef MPI
   MPI_Finalize();
