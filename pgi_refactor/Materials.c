@@ -144,7 +144,7 @@ double * load_concs_v( int size_mats )
 }
 
 // picks a material based on a probabilistic distribution
-int pick_mat( unsigned long * seed )
+int pick_mat(double roll)
 {
 	// I have a nice spreadsheet supporting these numbers. They are
 	// the fractions (by volume) of material in the core. Not a 
@@ -168,13 +168,6 @@ int pick_mat( unsigned long * seed )
 	dist[10] = 0.025;	// top of fuel assemblies
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
-	//double roll = (double) rand() / (double) RAND_MAX;
-	#ifdef VERIFICATION
-	double roll = rn_v();
-	#else
-	double roll = rn(seed);
-	#endif
-
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )
 	{

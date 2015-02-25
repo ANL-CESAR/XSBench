@@ -96,7 +96,7 @@ int * load_mats_idx(int * num_nucs);
 int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes );
 double * load_concs( int size_mats );
 double * load_concs_v( int size_mats );
-int pick_mat(unsigned long * seed);
+int pick_mat(double roll);
 double rn(unsigned long * seed);
 int rn_int(unsigned long * seed);
 void counter_stop( int * eventset, int num_papi_events );

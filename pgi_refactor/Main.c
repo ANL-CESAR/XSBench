@@ -183,11 +183,11 @@ int main( int argc, char* argv[] )
 #pragma omp critical
         {
           p_energy = rn_v();
-          mat      = pick_mat(&seed); 
+          mat      = pick_mat(rn_v()); 
         }
 #else
         p_energy = rn(&seed);
-        mat      = pick_mat(&seed); 
+        mat      = pick_mat(rn(&seed)); 
 #endif
 
         // debugging
