@@ -8,10 +8,8 @@ DEBUG       = no
 PROFILE     = no
 MPI         = no
 ACC         = no
-PAPI        = no
 VEC_INFO    = no
 VERIFY      = yes
-BENCHMARK   = no
 BINARY_DUMP = no
 BINARY_READ = no
 

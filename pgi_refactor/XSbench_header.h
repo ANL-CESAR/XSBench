@@ -105,14 +105,18 @@ void do_flops(void);
 void do_loads( int nuc,
                NuclideGridPoint ** restrict nuclide_grids,
 		       long n_gridpoints );	
-Inputs read_CLI( int argc, char * argv[] );
+void read_CLI( int argc, char * argv[], int *nthreads, long *n_isotopes, long
+    *n_gridpoints, int *lookups, char *HM );
 void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
 unsigned int hash(unsigned char *str, int nbins);
-size_t estimate_mem_usage( Inputs in );
-void print_inputs(Inputs in, int nprocs, int version);
-void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+size_t estimate_mem_usage(long n_isotopes, long n_gridpoints);
+void print_inputs(int nthreads, long n_isotopes, 
+    long n_gridpoints, int lookups, char *HM, int nprocs, int version );
+void print_results( int nthreads, long n_isotopes, long n_gridpoints, int
+    lookups, char *HM,  int mype, double runtime, int nprocs, unsigned long
+    long vhash );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
 		 GridPoint * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,

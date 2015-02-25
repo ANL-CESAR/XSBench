@@ -20,6 +20,13 @@ int main( int argc, char* argv[] )
   unsigned long long vhash = 0;
   int nprocs;
 
+  //Inputs
+  int nthreads;
+  long n_isotopes;
+  long n_gridpoints;
+  int lookups;
+  char HM[6];
+
 #ifdef MPI
   MPI_Status stat;
   MPI_Init(&argc, &argv);
@@ -35,17 +42,17 @@ int main( int argc, char* argv[] )
   srand(time(NULL));
 #endif
 
-  // Process CLI Fields -- store in "Inputs" structure
-  Inputs in = read_CLI( argc, argv );
+  // Process CLI Fields
+  read_CLI(argc, argv, &nthreads, &n_isotopes, &n_gridpoints, &lookups, HM);
 
 #ifndef ACC
   // Set number of OpenMP Threads
-  omp_set_num_threads(in.nthreads); 
+  omp_set_num_threads(nthreads); 
 #endif
 
   // Print-out of Input Summary
   if( mype == 0 )
-    print_inputs( in, nprocs, version );
+    print_inputs(nthreads, n_isotopes, n_gridpoints, lookups, HM, nprocs, version);
 
   // =====================================================================
   // Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -56,41 +63,41 @@ int main( int argc, char* argv[] )
   if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
 #endif
 
-  NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
+  NuclideGridPoint ** nuclide_grids = gpmatrix(n_isotopes,n_gridpoints);
 
 #ifdef VERIFICATION
-  generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
+  generate_grids_v( nuclide_grids, n_isotopes, n_gridpoints );	
 #else
-  generate_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
+  generate_grids( nuclide_grids, n_isotopes, n_gridpoints );	
 #endif
 
   // Sort grids by energy
 #ifndef BINARY_READ
   if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
-  sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
+  sort_nuclide_grids( nuclide_grids, n_isotopes, n_gridpoints );
 #endif
 
   // Prepare Unionized Energy Grid Framework
-  int * grid_ptrs = generate_ptr_grid(in.n_isotopes, in.n_gridpoints);
+  int * grid_ptrs = generate_ptr_grid(n_isotopes, n_gridpoints);
 #ifndef BINARY_READ
-  GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-      in.n_gridpoints, nuclide_grids, grid_ptrs ); 	
+  GridPoint * energy_grid = generate_energy_grid( n_isotopes,
+      n_gridpoints, nuclide_grids, grid_ptrs ); 	
 #else
-  GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
-      in.n_gridpoints * sizeof( GridPoint ) );
-  for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
-    energy_grid[i].xs_ptrs = i*in.n_isotopes;
+  GridPoint * energy_grid = (GridPoint *)malloc( n_isotopes *
+      n_gridpoints * sizeof( GridPoint ) );
+  for( i = 0; i < n_isotopes*n_gridpoints; i++ )
+    energy_grid[i].xs_ptrs = i*n_isotopes;
 #endif
 
   // Double Indexing. Filling in energy_grid with pointers to the
   // nuclide_energy_grids.
 #ifndef BINARY_READ
-  set_grid_ptrs( energy_grid, nuclide_grids, grid_ptrs, in.n_isotopes, in.n_gridpoints );
+  set_grid_ptrs( energy_grid, nuclide_grids, grid_ptrs, n_isotopes, n_gridpoints );
 #endif
 
 #ifdef BINARY_READ
   if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
-  binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
+  binary_read(n_isotopes, n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
 #endif
 
   // Get material data
@@ -98,14 +105,14 @@ int main( int argc, char* argv[] )
     printf("Loading Mats...\n");
 
   int size_mats;
-  if (in.n_isotopes == 68) 
+  if (n_isotopes == 68) 
     size_mats = 197;
   else
     size_mats = 484;
 
-  int *num_nucs  = load_num_nucs(in.n_isotopes);
+  int *num_nucs  = load_num_nucs(n_isotopes);
   int *mats_idx  = load_mats_idx(num_nucs);
-  int *mats      = load_mats( num_nucs, mats_idx, size_mats, in.n_isotopes );
+  int *mats      = load_mats( num_nucs, mats_idx, size_mats, n_isotopes );
 
 #ifdef VERIFICATION
   double *concs = load_concs_v(size_mats);
@@ -115,7 +122,7 @@ int main( int argc, char* argv[] )
 
 #ifdef BINARY_DUMP
   if( mype == 0 ) printf("Dumping data to binary file...\n");
-  binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
+  binary_dump(n_isotopes, n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
   if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
   return 0;
 #endif
@@ -141,11 +148,15 @@ int main( int argc, char* argv[] )
 
 
   // OpenMP compiler directives - declaring variables as shared or private
-#ifndef ACC
+#ifdef ACC
+#pragma acc data \
+  copy() \
+  copyin()
+#else
 #pragma omp parallel default(none) \
   private(i, thread, p_energy, mat, seed) \
-  shared( max_procs, in, energy_grid, nuclide_grids, \
-      grid_ptrs, mats, mats_idx, concs, num_nucs, mype, vhash) 
+  shared( max_procs, nthreads, n_isotopes, n_gridpoints, lookups, energy_grid, \
+      nuclide_grids, grid_ptrs, mats, mats_idx, concs, num_nucs, mype, vhash) 
 #endif
   {	
 
@@ -158,16 +169,20 @@ int main( int argc, char* argv[] )
 #endif
 
     // XS Lookup Loop
-#ifndef ACC
+#ifdef ACC
+#pragma acc parallel for
+#else
 #pragma omp for schedule(dynamic)
 #endif
-    for( i = 0; i < in.lookups; i++ )
+    for( i = 0; i < lookups; i++ )
     {
       // Status text
+#ifndef ACC
       if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
         printf("\rCalculating XS's... (%.0lf%% completed)",
-            (i / ( (double)in.lookups / (double) in.nthreads ))
-            / (double) in.nthreads * 100.0);
+            (i / ( (double)lookups / (double) nthreads ))
+            / (double) nthreads * 100.0);
+#endif
 
       // Randomly pick an energy and material for the particle
 #ifdef VERIFICATION
@@ -189,8 +204,8 @@ int main( int argc, char* argv[] )
       // This returns the macro_xs_vector, but we're not going
       // to do anything with it in this program, so return value
       // is written over.
-      calculate_macro_xs( p_energy, mat, in.n_isotopes,
-          in.n_gridpoints, num_nucs, concs,
+      calculate_macro_xs( p_energy, mat, n_isotopes,
+          n_gridpoints, num_nucs, concs,
           energy_grid, grid_ptrs, nuclide_grids, mats, mats_idx,
           macro_xs_vector );
 
@@ -224,7 +239,7 @@ int main( int argc, char* argv[] )
 #endif
 
   // Print / Save Results and Exit
-  print_results( in, mype, tock-tick, nprocs, vhash );
+  print_results(nthreads, n_isotopes, n_gridpoints, lookups, HM, mype, tock-tick, nprocs, vhash);
 
 
 #ifdef MPI
