@@ -150,13 +150,36 @@ int main( int argc, char* argv[] )
   // OpenMP compiler directives - declaring variables as shared or private
 #ifdef ACC
 #pragma acc data \
-  copy() \
-  copyin()
+  copy(vhash) \
+  copyin( \
+      n_isotopes, \
+      n_gridpoints, \
+      lookups, \
+      energy_grid[0:n_isotopes*n_gridpoints], \
+      nuclide_grids[0:n_isotopes*n_gridpoints], \
+      grid_ptrs[0:n_isotopes*n_isotopes*n_gridpoints], \
+      mats[0:size_mats], \
+      mats_idx[0:12], \
+      concs[0:size_mats], \
+      num_nucs[0:12] )
 #else
 #pragma omp parallel default(none) \
   private(i, thread, p_energy, mat, seed) \
-  shared( max_procs, nthreads, n_isotopes, n_gridpoints, lookups, energy_grid, \
-      nuclide_grids, grid_ptrs, mats, mats_idx, concs, num_nucs, mype, vhash) 
+  shared( \
+    max_procs, \
+    nthreads, \
+    n_isotopes, \
+    n_gridpoints, \
+    lookups, \
+    energy_grid, \
+    nuclide_grids, \
+    grid_ptrs, \
+    mats, \
+    mats_idx, \
+    concs, \
+    num_nucs, \
+    mype, \
+    vhash ) 
 #endif
   {	
 
