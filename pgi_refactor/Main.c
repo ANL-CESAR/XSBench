@@ -40,10 +40,10 @@ int main( int argc, char* argv[] )
 
   // Process CLI Fields -- store in "Inputs" structure
   Inputs in = read_CLI( argc, argv );
-  int nthreads = in.nthreads;
-  long n_isotopes = in.n_isotopes;
-  long n_gridpoints = in.n_gridpoints;
-  int lookups = in.lookups;
+  const int nthreads = in.nthreads;
+  const long n_isotopes = in.n_isotopes;
+  const long n_gridpoints = in.n_gridpoints; //why not a const?
+  const int lookups = in.lookups;
 
 #ifndef ACC
   // Set number of OpenMP Threads
@@ -64,8 +64,8 @@ int main( int argc, char* argv[] )
 #endif
 
   // allocate nuclide_grids[0:n_isotopes][0:n_gridpoints]
-  NuclideGridPoint (* restrict nuclide_grids)[n_gridpoints] = 
-    (NuclideGridPoint (*)[n_gridpoints]) 
+  NuclideGridPoint (* restrict nuclide_grids)[(long) n_gridpoints] = 
+    (NuclideGridPoint (*)[(long) n_gridpoints]) 
     malloc(n_isotopes * n_gridpoints * sizeof(NuclideGridPoint));
 
 #ifdef VERIFICATION
