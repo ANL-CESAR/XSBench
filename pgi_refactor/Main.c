@@ -159,7 +159,7 @@ int main( int argc, char* argv[] )
       n_gridpoints, \
       lookups, \
       energy_grid[0:n_isotopes*n_gridpoints], \
-      nuclide_grids[0:n_isotopes*n_gridpoints], \
+      nuclide_grids[0:n_isotopes][0:n_gridpoints], \
       grid_ptrs[0:n_isotopes*n_isotopes*n_gridpoints], \
       mats[0:size_mats], \
       mats_idx[0:12], \

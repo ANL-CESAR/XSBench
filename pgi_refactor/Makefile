@@ -4,7 +4,7 @@
 
 COMPILER    = pgi
 OPTIMIZE    = yes
-DEBUG       = yes
+DEBUG       = no
 PROFILE     = no
 MPI         = no
 ACC         = no

@@ -22,6 +22,13 @@
 #define DEBUG 1
 #define SAVE 1
 
+// Data type for RNG; necessary because NUKMOD is unsupported in PGI kernels
+#ifdef ACC
+#define RNG_INT unsigned
+#else
+#define RNG_INT unsigned long
+#endif
+
 // Structures
 typedef struct{
 	double energy;
@@ -92,6 +99,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
     NuclideGridPoint (* restrict nuclide_grids)[n_gridpoints],
     int idx, double * restrict xs_vector );
 
+#pragma acc routine seq
 long grid_search( long n, double quarry, GridPoint * A);
 
 int * load_num_nucs(long n_isotopes);
@@ -99,9 +107,10 @@ int * load_mats_idx(int * num_nucs);
 int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes );
 double * load_concs( int size_mats );
 double * load_concs_v( int size_mats );
+#pragma acc routine seq
 int pick_mat(double roll);
-double rn(unsigned long * seed);
-int rn_int(unsigned long * seed);
+#pragma acc routine seq
+double rn(RNG_INT * seed);
 void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
