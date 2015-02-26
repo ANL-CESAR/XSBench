@@ -15,7 +15,9 @@ Contact Information
 Organization:     Center for Exascale Simulation of Advanced Reactors (CESAR)
                   Argonne National Laboratory
 
-Development Lead: John Tramm <jtramm@mcs.anl.gov>
+Development Lead: John Tramm   <jtramm@anl.gov>
+                  Ron Rahaman  <rahaman@anl.gov>
+                  Amanda Lund  <alund@anl.gov>
 
 ==============================================================================
 What is XSBench?
