@@ -16,6 +16,28 @@ NuclideGridPoint ** gpmatrix(size_t m, size_t n)
 	return M;
 }
 
+double *** d3tensor(size_t p, size_t q, size_t r)
+{
+	int i,j,k;
+
+  double ***rows;
+  double  **columns;
+  double   *elements;
+
+  elements = (double *)   malloc(p * q * r * sizeof(double));
+  columns  = (double **)  malloc(p * q * sizeof(double *));
+  rows     = (double ***) malloc(p * sizeof(double **));
+
+  for (i=0; i<p; i++) {
+    for (j=0; j<q; j++) {
+      columns[i*q + j] = elements + i*q + j*r;
+    }
+    rows[i] = columns + i*q;
+  }
+
+  return rows;
+}
+
 // Frees nuclide matrix
 void gpmatrix_free( NuclideGridPoint ** M )
 {
