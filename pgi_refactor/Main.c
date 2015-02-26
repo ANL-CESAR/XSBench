@@ -21,11 +21,6 @@ int main( int argc, char* argv[] )
   int nprocs;
   double roll;
 
-  //Inputs
-  int nthreads;
-  long n_isotopes;
-  long n_gridpoints;
-  int lookups;
   char HM[6];
 
 #ifdef MPI
@@ -43,8 +38,12 @@ int main( int argc, char* argv[] )
   srand(time(NULL));
 #endif
 
-  // Process CLI Fields
-  read_CLI(argc, argv, &nthreads, &n_isotopes, &n_gridpoints, &lookups, HM);
+  // Process CLI Fields -- store in "Inputs" structure
+  Inputs in = read_CLI( argc, argv );
+  int nthreads = in.nthreads;
+  long n_isotopes = in.n_isotopes;
+  long n_gridpoints = in.n_gridpoints;
+  int lookups = in.lookups;
 
 #ifndef ACC
   // Set number of OpenMP Threads
@@ -53,7 +52,7 @@ int main( int argc, char* argv[] )
 
   // Print-out of Input Summary
   if( mype == 0 )
-    print_inputs(nthreads, n_isotopes, n_gridpoints, lookups, HM, nprocs, version);
+    print_inputs( in, nprocs, version );
 
   // =====================================================================
   // Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -403,7 +402,7 @@ int main( int argc, char* argv[] )
 #endif
 
   // Print / Save Results and Exit
-  print_results(nthreads, n_isotopes, n_gridpoints, lookups, HM, mype, tock-tick, nprocs, vhash);
+  print_results( in, mype, tock-tick, nprocs, vhash );
 
 
 #ifdef MPI
