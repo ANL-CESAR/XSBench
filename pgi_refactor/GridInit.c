@@ -7,8 +7,9 @@
 // Generates randomized energy grid for each nuclide
 // Note that this is done as part of initialization (serial), so
 // rand() is used.
-void generate_grids( NuclideGridPoint ** nuclide_grids,
-                     long n_isotopes, long n_gridpoints ) {
+void generate_grids( long n_isotopes, long n_gridpoints, 
+    NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
+{
 	for( long i = 0; i < n_isotopes; i++ )
 		for( long j = 0; j < n_gridpoints; j++ )
 		{
@@ -22,8 +23,9 @@ void generate_grids( NuclideGridPoint ** nuclide_grids,
 }
 
 // Verification version of this function (tighter control over RNG)
-void generate_grids_v( NuclideGridPoint ** nuclide_grids,
-                     long n_isotopes, long n_gridpoints ) {
+void generate_grids_v( long n_isotopes, long n_gridpoints, 
+    NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
+{
 	for( long i = 0; i < n_isotopes; i++ )
 		for( long j = 0; j < n_gridpoints; j++ )
 		{
@@ -37,8 +39,8 @@ void generate_grids_v( NuclideGridPoint ** nuclide_grids,
 }
 
 // Sorts the nuclide grids by energy (lowest -> highest)
-void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
-                         long n_gridpoints )
+void sort_nuclide_grids( long n_isotopes, long n_gridpoints, 
+    NuclideGridPoint (*nuclide_grids)[n_gridpoints])
 {
 	int (*cmp) (const void *, const void *);
 	cmp = NGP_compare;
@@ -68,9 +70,9 @@ int * generate_ptr_grid(int n_isotopes, int n_gridpoints)
 
 // Allocates unionized energy grid, and assigns union of energy levels
 // from nuclide grids to it.
-GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
-                                  NuclideGridPoint ** nuclide_grids,
-				  int * grid_ptrs) {
+GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints, 
+    NuclideGridPoint (*nuclide_grids)[n_gridpoints], int * grid_ptrs) 
+{
 	int mype = 0;
 
 	#ifdef MPI
@@ -123,8 +125,8 @@ GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
 // pointer from unionized grid to the correct spot in the nuclide grid.
 // This process is time consuming, as the number of binary searches
 // required is:  binary searches = n_gridpoints * n_isotopes^2
-void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    int * grid_ptrs, long n_isotopes, long n_gridpoints )
+void set_grid_ptrs( GridPoint * energy_grid, int * grid_ptrs, long n_isotopes,
+    long n_gridpoints, NuclideGridPoint (*nuclide_grids)[n_gridpoints])
 {
 	int mype = 0;
 

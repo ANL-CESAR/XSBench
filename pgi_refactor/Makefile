@@ -4,7 +4,7 @@
 
 COMPILER    = pgi
 OPTIMIZE    = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 ACC         = no
@@ -53,10 +53,11 @@ endif
 
 ifeq ($(COMPILER),pgi)
   CC = pgcc
+  CFLAGS = -Minform=warn
   ifeq ($(ACC),yes)
-    CFLAGS = -c99 -acc -Minfo=accel -DACC
+    CFLAGS += -c99 -acc -Minfo=accel -DACC
   else
-    CFLAGS = -c99 -mp -Minfo=mp
+    CFLAGS += -c99 -mp -Minfo=mp
   endif
 endif
 
