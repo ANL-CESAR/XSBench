@@ -3,8 +3,8 @@
 #===============================================================================
 
 COMPILER    = pgi
-OPTIMIZE    = yes
-DEBUG       = no
+OPTIMIZE    = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 ACC         = no

@@ -10,7 +10,7 @@
 #include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
-#include"occa_c.h"
+#include<assert.h>
 
 // Papi Header
 #ifdef PAPI
@@ -107,7 +107,6 @@ int * load_mats_idx(int * num_nucs);
 int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes );
 double * load_concs( int size_mats );
 double * load_concs_v( int size_mats );
-#pragma acc routine seq
 int pick_mat(double roll);
 #pragma acc routine seq
 double rn(RNG_INT * seed);

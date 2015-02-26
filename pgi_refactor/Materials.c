@@ -154,6 +154,7 @@ int pick_mat(double roll)
 	// Also could be argued that doing fractions by weight would be 
 	// a better approximation, but volume does a good enough job for now.
 
+  int mat;
 	double dist[12];
 	dist[0]  = 0.140;	// fuel
 	dist[1]  = 0.052;	// cladding
@@ -169,14 +170,26 @@ int pick_mat(double roll)
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
 	// makes a pick based on the distro
-	for( int i = 0; i < 12; i++ )
-	{
-		double running = 0;
-		for( int j = i; j > 0; j-- )
-			running += dist[j];
-		if( roll < running )
-			return i;
-	}
+	// for( int i = 0; i < 12; i++ )
+	// {
+	// 	double running = 0;
+	// 	for( int j = i; j > 0; j-- )
+	// 		running += dist[j];
+	// 	if( roll < running )
+	// 		return i;
+	// }
 
-	return 0;
+	// return 0;
+
+  for( mat = 0; mat < 12; mat++ )
+  {
+    double running = 0;
+    for(int j = mat; j > 0; j-- )
+      running += dist[j];
+    if( roll < running )
+      break;
+  }
+  mat = mat % 12;
+
+  return mat;
 }

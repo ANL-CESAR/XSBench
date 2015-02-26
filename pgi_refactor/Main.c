@@ -19,6 +19,7 @@ int main( int argc, char* argv[] )
   double tick, tock, p_energy;
   unsigned long long vhash = 0;
   int nprocs;
+  double roll;
 
   //Inputs
   int nthreads;
@@ -167,7 +168,7 @@ int main( int argc, char* argv[] )
       num_nucs[0:12] )
 #else
 #pragma omp parallel default(none) \
-  private(i, thread, p_energy, mat, seed) \
+  private(i, thread, p_energy, mat, seed, roll) \
   shared( \
       max_procs, \
       nthreads, \
@@ -182,7 +183,7 @@ int main( int argc, char* argv[] )
       concs, \
       num_nucs, \
       mype, \
-      vhash ) 
+      vhash) 
 #endif
   {	
 
@@ -196,7 +197,7 @@ int main( int argc, char* argv[] )
 
     // XS Lookup Loop
 #ifdef ACC
-#pragma acc parallel for
+#pragma acc parallel for private(seed)
 #else
 #pragma omp for schedule(dynamic)
 #endif
@@ -210,19 +211,72 @@ int main( int argc, char* argv[] )
             / (double) nthreads * 100.0);
 #endif
 
+#ifdef ACC
+    seed   = (i+1)*19+17;
+#endif
+
       // Randomly pick an energy and material for the particle
 #ifdef VERIFICATION
 #ifndef ACC
 #pragma omp critical
       {
         p_energy = rn_v();
-        mat      = pick_mat(rn_v()); 
+        roll = rn_v();
       }
 #endif
 #else
       p_energy = rn(&seed);
-      mat      = pick_mat(rn(&seed)); 
+      roll = rn(&seed);
 #endif
+      // INLINE:  pick_mat(mat_roll)
+      {
+        // I have a nice spreadsheet supporting these numbers. They are
+        // the fractions (by volume) of material in the core. Not a 
+        // *perfect* approximation of where XS lookups are going to occur,
+        // but this will do a good job of biasing the system nonetheless.
+
+        // Also could be argued that doing fractions by weight would be 
+        // a better approximation, but volume does a good enough job for now.
+
+        double dist[12];
+        dist[0]  = 0.140;	// fuel
+        dist[1]  = 0.052;	// cladding
+        dist[2]  = 0.275;	// cold, borated water
+        dist[3]  = 0.134;	// hot, borated water
+        dist[4]  = 0.154;	// RPV
+        dist[5]  = 0.064;	// Lower, radial reflector
+        dist[6]  = 0.066;	// Upper reflector / top plate
+        dist[7]  = 0.055;	// bottom plate
+        dist[8]  = 0.008;	// bottom nozzle
+        dist[9]  = 0.015;	// top nozzle
+        dist[10] = 0.025;	// top of fuel assemblies
+        dist[11] = 0.013;	// bottom of fuel assemblies
+
+        // makes a pick based on the distro
+        // for( int i = 0; i < 12; i++ )
+        // {
+        // 	double running = 0;
+        // 	for( int j = i; j > 0; j-- )
+        // 		running += dist[j];
+        // 	if( roll < running )
+        // 		return i;
+        // }
+
+        // return 0;
+
+        for( mat = 0; mat < 12; mat++ )
+        {
+          double running = 0;
+          for(int j = mat; j > 0; j-- )
+            running += dist[j];
+          if( roll < running )
+            break;
+        }
+        mat = mat % 12;
+      }
+
+      assert(mat < 12);
+      assert(mat >= 0);
 
       // debugging
       //printf("E = %lf mat = %d\n", p_energy, mat);
