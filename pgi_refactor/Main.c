@@ -23,6 +23,23 @@ int main( int argc, char* argv[] )
 
   char HM[6];
 
+  double dist[12] = {
+    0.140,	// fuel
+    0.052,	// cladding
+    0.275,	// cold, borated water
+    0.134,	// hot, borated water
+    0.154,	// RPV
+    0.064,	// Lower, radial reflector
+    0.066,	// Upper reflector / top plate
+    0.055,	// bottom plate
+    0.008,	// bottom nozzle
+    0.015,	// top nozzle
+    0.025,	// top of fuel assemblies
+    0.013 	// bottom of fuel assemblies
+  };
+
+  double macro_xs_vector[5];
+
 #ifdef MPI
   MPI_Status stat;
   MPI_Init(&argc, &argv);
@@ -164,10 +181,19 @@ int main( int argc, char* argv[] )
       mats[0:size_mats], \
       mats_idx[0:12], \
       concs[0:size_mats], \
-      num_nucs[0:12] )
+      num_nucs[0:12], \
+      dist[0:12] ) \
+  create( macro_xs_vector[0:5])
 #else
 #pragma omp parallel default(none) \
-  private(i, thread, p_energy, mat, seed, roll) \
+  private(\
+      i, \
+      thread, \
+      p_energy, \
+      mat, \
+      seed, \
+      roll, \
+      macro_xs_vector) \
   shared( \
       max_procs, \
       nthreads, \
@@ -182,11 +208,10 @@ int main( int argc, char* argv[] )
       concs, \
       num_nucs, \
       mype, \
-      vhash) 
+      vhash, \
+      dist) 
 #endif
   {	
-
-    double macro_xs_vector[5];
 
     // Initialize RNG seeds for threads
 #ifndef ACC
@@ -195,12 +220,13 @@ int main( int argc, char* argv[] )
 #endif
 
     // XS Lookup Loop
+    const int _lookups = lookups;
 #ifdef ACC
-#pragma acc parallel for private(seed)
+#pragma acc parallel for private(seed, macro_xs_vector, mat)
 #else
 #pragma omp for schedule(dynamic)
 #endif
-    for( i = 0; i < lookups; i++ )
+    for( i = 0; i < _lookups; i++ )
     {
       // Status text
 #ifndef ACC
@@ -211,7 +237,7 @@ int main( int argc, char* argv[] )
 #endif
 
 #ifdef ACC
-    seed   = (i+1)*19+17;
+      seed   = (i+1)*19+17;
 #endif
 
       // Randomly pick an energy and material for the particle
@@ -229,40 +255,6 @@ int main( int argc, char* argv[] )
 #endif
       // INLINE:  pick_mat(mat_roll)
       {
-        // I have a nice spreadsheet supporting these numbers. They are
-        // the fractions (by volume) of material in the core. Not a 
-        // *perfect* approximation of where XS lookups are going to occur,
-        // but this will do a good job of biasing the system nonetheless.
-
-        // Also could be argued that doing fractions by weight would be 
-        // a better approximation, but volume does a good enough job for now.
-
-        double dist[12];
-        dist[0]  = 0.140;	// fuel
-        dist[1]  = 0.052;	// cladding
-        dist[2]  = 0.275;	// cold, borated water
-        dist[3]  = 0.134;	// hot, borated water
-        dist[4]  = 0.154;	// RPV
-        dist[5]  = 0.064;	// Lower, radial reflector
-        dist[6]  = 0.066;	// Upper reflector / top plate
-        dist[7]  = 0.055;	// bottom plate
-        dist[8]  = 0.008;	// bottom nozzle
-        dist[9]  = 0.015;	// top nozzle
-        dist[10] = 0.025;	// top of fuel assemblies
-        dist[11] = 0.013;	// bottom of fuel assemblies
-
-        // makes a pick based on the distro
-        // for( int i = 0; i < 12; i++ )
-        // {
-        // 	double running = 0;
-        // 	for( int j = i; j > 0; j-- )
-        // 		running += dist[j];
-        // 	if( roll < running )
-        // 		return i;
-        // }
-
-        // return 0;
-
         for( mat = 0; mat < 12; mat++ )
         {
           double running = 0;
@@ -305,6 +297,7 @@ int main( int argc, char* argv[] )
         // looked up & interpolatied (via calculate_micro_xs). Then, the
         // micro XS is multiplied by the concentration of that nuclide
         // in the material, and added to the total macro XS array.
+#pragma acc for private(xs_vector, p_nuc, conc)
         for( int j = 0; j < num_nucs[mat]; j++ ) {
           p_nuc = mats[mats_idx[mat] + j];
           conc = concs[mats_idx[mat] + j];
@@ -361,12 +354,6 @@ int main( int argc, char* argv[] )
             macro_xs_vector[k] += xs_vector[k] * conc;
         }
 
-        //test
-        /*
-           for( int k = 0; k < 5; k++ )
-           printf("Energy: %lf, Material: %d, XSVector[%d]: %lf\n",
-           p_energy, mat, k, macro_xs_vector[k]);
-           */
       }
 
       // Verification hash calculation

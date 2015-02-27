@@ -4,12 +4,12 @@
 
 COMPILER    = pgi
 OPTIMIZE    = no
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
-ACC         = yes
+ACC         = no
 VEC_INFO    = no
-VERIFY      = no
+VERIFY      = yes
 BINARY_DUMP = no
 BINARY_READ = no
 
