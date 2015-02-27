@@ -15,7 +15,7 @@ int main( int argc, char* argv[] )
   int max_procs = omp_get_num_procs();
 #endif
   int i, thread, mat;
-  unsigned long seed;
+  RNG_INT seed;
   double tick, tock, p_energy;
   unsigned long long vhash = 0;
   int nprocs;
@@ -273,9 +273,6 @@ int main( int argc, char* argv[] )
         }
         mat = mat % 12;
       }
-
-      assert(mat < 12);
-      assert(mat >= 0);
 
       // debugging
       //printf("E = %lf mat = %d\n", p_energy, mat);

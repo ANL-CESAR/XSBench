@@ -10,7 +10,6 @@
 #include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
-#include<assert.h>
 
 // Papi Header
 #ifdef PAPI
