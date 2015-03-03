@@ -97,6 +97,11 @@ GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
 	
 	int * full = (int *) malloc( n_isotopes * n_unionized_grid_points
 	                             * sizeof(int) );
+	if( full == NULL )
+	{
+		fprintf(stderr,"ERROR - Out Of Memory!\n");
+		exit(1);
+	}
 	
 	for( long i = 0; i < n_unionized_grid_points; i++ )
 		energy_grid[i].xs_ptrs = &full[n_isotopes * i];
