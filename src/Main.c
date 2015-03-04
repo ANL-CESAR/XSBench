@@ -156,6 +156,7 @@ int main( int argc, char* argv[] )
 		#endif
 
 		double macro_xs_vector[5];
+		double * xs = (double *) calloc(5, sizeof(double));
 
 		// Initialize RNG seeds for threads
 		thread = omp_get_thread_num();
@@ -193,6 +194,11 @@ int main( int argc, char* argv[] )
 			                    in.n_gridpoints, num_nucs, concs,
 			                    energy_grid, nuclide_grids, mats,
                                 macro_xs_vector );
+			
+			// Copy results from above function call onto heap
+			// so that compiler cannot optimize function out
+			// (only occurs if -flto flag is used)
+			memcpy(xs, macro_xs_vector, 5*sizeof(double));
 
 			// Verification hash calculation
 			// This method provides a consistent hash accross
