@@ -3,11 +3,11 @@
 // Calculates the microscopic cross section for a given nuclide & energy
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           GridPoint * restrict energy_grid,
-			   int * restrict grid_ptrs,
-                           NuclideGridPoint ** restrict nuclide_grids,
-                           int idx, double * restrict xs_vector ){
-	
+                           GridPoint * __restrict__ energy_grid,
+			   int * __restrict__ grid_ptrs,
+                           NuclideGridPoint ** __restrict__ nuclide_grids,
+                           int idx, double * __restrict__ xs_vector ){
+
 	// Variables
 	double f;
 	NuclideGridPoint * low, * high;
@@ -18,29 +18,29 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		low = &nuclide_grids[nuc][grid_ptrs[energy_grid[idx].xs_ptrs + nuc] - 1];
 	else
 		low = &nuclide_grids[nuc][grid_ptrs[energy_grid[idx].xs_ptrs + nuc]];
-	
+
 	high = low + 1;
-	
+
 	// calculate the re-useable interpolation factor
 	f = (high->energy - p_energy) / (high->energy - low->energy);
 
 	// Total XS
 	xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
-	
+
 	// Elastic XS
 	xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
-	
+
 	// Absorbtion XS
 	xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
-	
+
 	// Fission XS
 	xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
-	
+
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-	
+
 	//test
-	/*	
+	/*
 	if( omp_get_thread_num() == 0 )
 	{
 		printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
@@ -49,21 +49,21 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		printf("total_xs = %lf\n\n", xs_vector[1]);
 	}
 	*/
-	
+
 }
 
-// Calculates macroscopic cross section based on a given material & energy 
+// Calculates macroscopic cross section based on a given material & energy
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int * restrict num_nucs,
-                         double * restrict concs,
-                         GridPoint * restrict energy_grid,
-			 int * restrict grid_ptrs,
-                         NuclideGridPoint ** restrict nuclide_grids,
-                         int * restrict mats, int * restrict mats_idx,
-                         double * restrict macro_xs_vector ){
+                         long n_gridpoints, int * __restrict__ num_nucs,
+                         double * __restrict__ concs,
+                         GridPoint * __restrict__ energy_grid,
+			 int * __restrict__ grid_ptrs,
+                         NuclideGridPoint ** __restrict__ nuclide_grids,
+                         int * __restrict__ mats, int * __restrict__ mats_idx,
+                         double * __restrict__ macro_xs_vector ){
 	double xs_vector[5];
 	int p_nuc; // the nuclide we are looking up
-	long idx = 0;	
+	long idx = 0;
 	double conc; // the concentration of the nuclide in the material
 
 	// cleans out macro_xs_vector
@@ -72,8 +72,8 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 
 	// binary search for energy on unionized energy grid (UEG)
 	idx = grid_search( n_isotopes * n_gridpoints, p_energy,
-	                   energy_grid);	
-	
+	                   energy_grid);
+
 	// Once we find the pointer array on the UEG, we can pull the data
 	// from the respective nuclide grids, as well as the nuclide
 	// concentration data for the material
@@ -91,7 +91,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-	
+
 	//test
 	/*
 	for( int k = 0; k < 5; k++ )
@@ -113,14 +113,14 @@ long grid_search( long n, double quarry, GridPoint * A)
 	while( length > 1 )
 	{
 		examinationPoint = lowerLimit + ( length / 2 );
-		
+
 		if( A[examinationPoint].energy > quarry )
 			upperLimit = examinationPoint;
 		else
 			lowerLimit = examinationPoint;
-		
+
 		length = upperLimit - lowerLimit;
 	}
-	
+
 	return lowerLimit;
 }

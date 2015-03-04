@@ -83,18 +83,18 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 int binary_search( NuclideGridPoint * A, double quarry, int n );
 
 void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
-    long n_gridpoints, int * restrict num_nucs,
-    double * restrict concs, GridPoint * restrict energy_grid,
-    int * restrict grid_ptrs,
-    NuclideGridPoint ** restrict nuclide_grids,
-    int * restrict mats, int * restrict mats_ix,
-    double * restrict macro_xs_vector );
+    long n_gridpoints, int * __restrict__ num_nucs,
+    double * __restrict__ concs, GridPoint * __restrict__ energy_grid,
+    int * __restrict__ grid_ptrs,
+    NuclideGridPoint ** __restrict__ nuclide_grids,
+    int * __restrict__ mats, int * __restrict__ mats_ix,
+    double * __restrict__ macro_xs_vector );
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
     long n_gridpoints,
-    GridPoint * restrict energy_grid, int * restrict grid_ptrs,
-    NuclideGridPoint ** restrict nuclide_grids, int idx,
-    double * restrict xs_vector );
+    GridPoint * __restrict__ energy_grid, int * __restrict__ grid_ptrs,
+    NuclideGridPoint ** __restrict__ nuclide_grids, int idx,
+    double * __restrict__ xs_vector );
 
 long grid_search( long n, double quarry, GridPoint * A);
 
@@ -110,7 +110,7 @@ void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
 void do_flops(void);
 void do_loads( int nuc,
-    NuclideGridPoint ** restrict nuclide_grids,
+    NuclideGridPoint ** __restrict__ nuclide_grids,
     long n_gridpoints );
 Inputs read_CLI( int argc, char *const argv[] );
 void print_CLI_error(void);

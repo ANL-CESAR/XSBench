@@ -16,6 +16,8 @@ BINARY_READ = no
 # Program name & source code list
 #===============================================================================
 
+include ${OCCA_DIR}/scripts/makefile
+
 program = XSBench
 
 source = \
@@ -41,6 +43,7 @@ LDFLAGS = -lm -L${OCCA_DIR}/lib -locca
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
+  CXX = g++
   CFLAGS += -fopenmp
 endif
 
@@ -120,10 +123,10 @@ endif
 #===============================================================================
 
 $(program): $(obj) XSbench_header.h
-	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
+	$(CXX) $(CFLAGS) $(obj) -o $@ $(LDFLAGS) $(flags)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS) -c $< -o $@  $(flags)
 
 clean:
 	rm -rf $(program) $(obj)
