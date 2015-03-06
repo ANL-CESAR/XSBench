@@ -76,9 +76,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 #ifdef VERIFICATION
     printf("Verification checksum: %llu\n", vhash);
 #endif
-#ifdef ACC
     printf("Verification value: %0.4f\n", vhash/in.lookups);
-#endif
     border_print();
 
     // For bechmarking, output lookup/s data to file

@@ -188,8 +188,7 @@ int main( int argc, char* argv[] )
   {
 
 #ifdef ACC
-#pragma acc parallel \
-    reduction(+:vhash)
+#pragma acc kernels 
 #else
 #pragma omp parallel \
     default(none) \
@@ -229,7 +228,7 @@ int main( int argc, char* argv[] )
       // XS Lookup Loop
       const int _lookups = lookups;
 #ifdef ACC
-#pragma acc for private(seed, macro_xs_vector, mat)
+#pragma acc loop gang private(seed, macro_xs_vector, mat) reduction(+:vhash)
 #else
 #pragma omp for schedule(dynamic)
 #endif
@@ -244,7 +243,7 @@ int main( int argc, char* argv[] )
 #endif
 
 #ifdef ACC
-        seed   = (i+1)*19+17;
+        seed   = ((i % 5000) +1)*19+17;
 #endif
 
         // Randomly pick an energy and material for the particle
@@ -301,7 +300,7 @@ int main( int argc, char* argv[] )
           // looked up & interpolatied (via calculate_micro_xs). Then, the
           // micro XS is multiplied by the concentration of that nuclide
           // in the material, and added to the total macro XS array.
-#pragma acc for private(xs_vector, p_nuc, conc)
+#pragma acc loop worker private(xs_vector, p_nuc, conc)
           for( int j = 0; j < num_nucs[mat]; j++ ) {
 
             p_nuc = mats[mats_idx[mat] + j];
@@ -355,9 +354,8 @@ int main( int argc, char* argv[] )
         // This method provides a consistent hash accross
         // architectures and compilers.
 #ifdef ACC
-        // vhash += (mat + p_energy + macro_xs_vector[0] + macro_xs_vector[1]
-        //     + macro_xs_vector[2] + macro_xs_vector[3] + macro_xs_vector[4]);
-        vhash += 1;
+         vhash += (mat + p_energy + macro_xs_vector[0] + macro_xs_vector[1] + macro_xs_vector[2] + macro_xs_vector[3] + macro_xs_vector[4]);
+        //vhash += 1.0;
 #else
 #ifdef VERIFICATION
         char line[256];

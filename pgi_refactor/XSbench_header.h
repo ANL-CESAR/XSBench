@@ -27,7 +27,7 @@
 #define VHASH_TYPE double
 #else
 #define RNG_INT unsigned long
-#define VHASH_TYPE unsigned long long
+#define VHASH_TYPE double//unsigned long long
 #endif
 
 // Structures
@@ -100,7 +100,9 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
     NuclideGridPoint (* restrict nuclide_grids)[n_gridpoints],
     int idx, double * restrict xs_vector );
 
+#ifdef ACC
 #pragma acc routine seq
+#endif
 long grid_search( long n, double quarry, GridPoint * A);
 
 int * load_num_nucs(long n_isotopes);
@@ -109,7 +111,9 @@ int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes 
 double * load_concs( int size_mats );
 double * load_concs_v( int size_mats );
 int pick_mat(double roll);
+#ifdef ACC
 #pragma acc routine seq
+#endif
 double rn(RNG_INT * seed);
 void counter_stop( int * eventset, int num_papi_events );
 void counter_init( int * eventset, int * num_papi_events );
