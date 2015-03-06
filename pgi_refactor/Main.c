@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
   int i, thread, mat;
   RNG_INT seed;
   double tick, tock, p_energy;
-  unsigned long long vhash = 0;
+  VHASH_TYPE vhash = 0;
   int nprocs;
   double roll;
 
@@ -184,200 +184,198 @@ int main( int argc, char* argv[] )
       num_nucs[0:12], \
       dist[0:12] ) \
   create( macro_xs_vector[0:5])
-#else
-#pragma omp parallel default(none) \
-  private(\
-      i, \
-      thread, \
-      p_energy, \
-      mat, \
-      seed, \
-      roll, \
-      macro_xs_vector) \
-  shared( \
-      max_procs, \
-      nthreads, \
-      n_isotopes, \
-      n_gridpoints, \
-      lookups, \
-      energy_grid, \
-      nuclide_grids, \
-      grid_ptrs, \
-      mats, \
-      mats_idx, \
-      concs, \
-      num_nucs, \
-      mype, \
-      vhash, \
-      dist) 
 #endif
-  {	
+  {
 
-    // Initialize RNG seeds for threads
-#ifndef ACC
-    thread = omp_get_thread_num();
-    seed   = (thread+1)*19+17;
-#endif
-
-    // XS Lookup Loop
-    const int _lookups = lookups;
 #ifdef ACC
-#pragma acc parallel for private(seed, macro_xs_vector, mat)
+#pragma acc parallel \
+    reduction(+:vhash)
+#else
+#pragma omp parallel \
+    default(none) \
+    private(\
+        i, \
+        thread, \
+        p_energy, \
+        mat, \
+        seed, \
+        roll, \
+        macro_xs_vector) \
+    shared( \
+        max_procs, \
+        nthreads, \
+        n_isotopes, \
+        n_gridpoints, \
+        lookups, \
+        energy_grid, \
+        nuclide_grids, \
+        grid_ptrs, \
+        mats, \
+        mats_idx, \
+        concs, \
+        num_nucs, \
+        mype, \
+        vhash, \
+        dist) 
+#endif
+    {	
+
+      // Initialize RNG seeds for threads
+#ifndef ACC
+      thread = omp_get_thread_num();
+      seed   = (thread+1)*19+17;
+#endif
+
+      // XS Lookup Loop
+      const int _lookups = lookups;
+#ifdef ACC
+#pragma acc for private(seed, macro_xs_vector, mat)
 #else
 #pragma omp for schedule(dynamic)
 #endif
-    for( i = 0; i < _lookups; i++ )
-    {
-      // Status text
+      for( i = 0; i < _lookups; i++ )
+      {
+        // Status text
 #ifndef ACC
-      if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
-        printf("\rCalculating XS's... (%.0lf%% completed)",
-            (i / ( (double)lookups / (double) nthreads ))
-            / (double) nthreads * 100.0);
+        if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
+          printf("\rCalculating XS's... (%.0lf%% completed)",
+              (i / ( (double)lookups / (double) nthreads ))
+              / (double) nthreads * 100.0);
 #endif
 
 #ifdef ACC
-      seed   = (i+1)*19+17;
+        seed   = (i+1)*19+17;
 #endif
 
-      // Randomly pick an energy and material for the particle
+        // Randomly pick an energy and material for the particle
 #ifdef VERIFICATION
 #ifndef ACC
 #pragma omp critical
-      {
-        p_energy = rn_v();
-        roll = rn_v();
-      }
+        {
+          p_energy = rn_v();
+          roll = rn_v();
+        }
 #endif
 #else
-      p_energy = rn(&seed);
-      roll = rn(&seed);
+        p_energy = rn(&seed);
+        roll = rn(&seed);
 #endif
-      // INLINE:  pick_mat(mat_roll)
-      {
-        for( mat = 0; mat < 12; mat++ )
+        // INLINE:  pick_mat(mat_roll)
         {
-          double running = 0;
-          for(int j = mat; j > 0; j-- )
-            running += dist[j];
-          if( roll < running )
-            break;
-        }
-        mat = mat % 12;
-      }
-
-      // debugging
-      //printf("E = %lf mat = %d\n", p_energy, mat);
-
-      // This returns the macro_xs_vector, but we're not going
-      // to do anything with it in this program, so return value
-      // is written over.
-      // INLINE: calculate_macro_xs( p_energy, mat, n_isotopes,
-      //     n_gridpoints, num_nucs, concs,
-      //     energy_grid, grid_ptrs, nuclide_grids, mats, mats_idx,
-      //     macro_xs_vector );
-      {
-        double xs_vector[5];
-        int p_nuc; // the nuclide we are looking up
-        long idx = 0;	
-        double conc; // the concentration of the nuclide in the material
-
-        // cleans out macro_xs_vector
-        for( int k = 0; k < 5; k++ )
-          macro_xs_vector[k] = 0;
-
-        // binary search for energy on unionized energy grid (UEG)
-        idx = grid_search( n_isotopes * n_gridpoints, p_energy,
-            energy_grid);	
-
-        // Once we find the pointer array on the UEG, we can pull the data
-        // from the respective nuclide grids, as well as the nuclide
-        // concentration data for the material
-        // Each nuclide from the material needs to have its micro-XS array
-        // looked up & interpolatied (via calculate_micro_xs). Then, the
-        // micro XS is multiplied by the concentration of that nuclide
-        // in the material, and added to the total macro XS array.
-#pragma acc for private(xs_vector, p_nuc, conc)
-        for( int j = 0; j < num_nucs[mat]; j++ ) {
-          p_nuc = mats[mats_idx[mat] + j];
-          conc = concs[mats_idx[mat] + j];
-
-          // INLINE: calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-          //     n_gridpoints, energy_grid, grid_ptrs,
-          //     nuclide_grids, idx, xs_vector );
+          for( mat = 0; mat < 12; mat++ )
           {
-
-            // Variables
-            double f;
-            NuclideGridPoint * low, * high;
-
-            // pull ptr from energy grid and check to ensure that
-            // we're not reading off the end of the nuclide's grid
-            if( grid_ptrs[energy_grid[idx].xs_ptrs + p_nuc] == n_gridpoints - 1 )
-              low = &nuclide_grids[p_nuc][grid_ptrs[energy_grid[idx].xs_ptrs + p_nuc] - 1];
-            else
-              low = &nuclide_grids[p_nuc][grid_ptrs[energy_grid[idx].xs_ptrs + p_nuc]];
-
-            high = low + 1;
-
-            // calculate the re-useable interpolation factor
-            f = (high->energy - p_energy) / (high->energy - low->energy);
-
-            // Total XS
-            xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
-
-            // Elastic XS
-            xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
-
-            // Absorbtion XS
-            xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
-
-            // Fission XS
-            xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
-
-            // Nu Fission XS
-            xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-
-            //test
-            /*	
-                if( omp_get_thread_num() == 0 )
-                {
-                printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
-                printf("e_h = %lf e_l = %lf\n", high->energy , low->energy);
-                printf("xs_h = %lf xs_l = %lf\n", high->elastic_xs, low->elastic_xs);
-                printf("total_xs = %lf\n\n", xs_vector[1]);
-                }
-                */
-
+            double running = 0;
+            for(int j = mat; j > 0; j-- )
+              running += dist[j];
+            if( roll < running )
+              break;
           }
-          for( int k = 0; k < 5; k++ )
-            macro_xs_vector[k] += xs_vector[k] * conc;
+          mat = mat % 12;
         }
 
-      }
+        // This returns the macro_xs_vector, but we're not going
+        // to do anything with it in this program, so return value
+        // is written over.
+        // INLINE: calculate_macro_xs( p_energy, mat, n_isotopes,
+        //     n_gridpoints, num_nucs, concs,
+        //     energy_grid, grid_ptrs, nuclide_grids, mats, mats_idx,
+        //     macro_xs_vector );
+        {
+          double xs_vector[5];
+          int p_nuc; // the nuclide we are looking up
+          long idx = 0;	
+          double conc; // the concentration of the nuclide in the material
 
-      // Verification hash calculation
-      // This method provides a consistent hash accross
-      // architectures and compilers.
+          // cleans out macro_xs_vector
+          for( int k = 0; k < 5; k++ )
+            macro_xs_vector[k] = 0;
+
+          // binary search for energy on unionized energy grid (UEG)
+          idx = grid_search( n_isotopes * n_gridpoints, p_energy,
+              energy_grid);	
+
+          // Once we find the pointer array on the UEG, we can pull the data
+          // from the respective nuclide grids, as well as the nuclide
+          // concentration data for the material
+          // Each nuclide from the material needs to have its micro-XS array
+          // looked up & interpolatied (via calculate_micro_xs). Then, the
+          // micro XS is multiplied by the concentration of that nuclide
+          // in the material, and added to the total macro XS array.
+#pragma acc for private(xs_vector, p_nuc, conc)
+          for( int j = 0; j < num_nucs[mat]; j++ ) {
+
+            p_nuc = mats[mats_idx[mat] + j];
+            conc = concs[mats_idx[mat] + j];
+
+            // INLINE: calculate_micro_xs( p_energy, p_nuc, n_isotopes,
+            //     n_gridpoints, energy_grid, grid_ptrs,
+            //     nuclide_grids, idx, xs_vector );
+            {
+
+              // Variables
+              double f;
+              NuclideGridPoint * low, * high;
+
+              // pull ptr from energy grid and check to ensure that
+              // we're not reading off the end of the nuclide's grid
+              if( grid_ptrs[energy_grid[idx].xs_ptrs + p_nuc] == n_gridpoints - 1 )
+                low = &nuclide_grids[p_nuc][grid_ptrs[energy_grid[idx].xs_ptrs + p_nuc] - 1];
+              else
+                low = &nuclide_grids[p_nuc][grid_ptrs[energy_grid[idx].xs_ptrs + p_nuc]];
+
+              high = low + 1;
+
+              // calculate the re-useable interpolation factor
+              f = (high->energy - p_energy) / (high->energy - low->energy);
+
+              // Total XS
+              xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
+
+              // Elastic XS
+              xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
+
+              // Absorbtion XS
+              xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
+
+              // Fission XS
+              xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
+
+              // Nu Fission XS
+              xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
+
+            } // END: calculate_micro_xs
+
+            for( int k = 0; k < 5; k++ )
+              macro_xs_vector[k] += xs_vector[k] * conc;
+
+          } // END: for( int j = 0; j < num_nucs[mat]; j++ )
+        } // END: calculate_macro_xs
+
+        // Verification hash calculation
+        // This method provides a consistent hash accross
+        // architectures and compilers.
+#ifdef ACC
+        // vhash += (mat + p_energy + macro_xs_vector[0] + macro_xs_vector[1]
+        //     + macro_xs_vector[2] + macro_xs_vector[3] + macro_xs_vector[4]);
+        vhash += 1;
+#else
 #ifdef VERIFICATION
-      char line[256];
-      sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
-          p_energy, mat,
-          macro_xs_vector[0],
-          macro_xs_vector[1],
-          macro_xs_vector[2],
-          macro_xs_vector[3],
-          macro_xs_vector[4]);
-      unsigned long long vhash_local = hash(line, 10000);
-#ifndef ACC
+        char line[256];
+        sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+            p_energy, mat,
+            macro_xs_vector[0],
+            macro_xs_vector[1],
+            macro_xs_vector[2],
+            macro_xs_vector[3],
+            macro_xs_vector[4]);
+        VHASH_TYPE vhash_local = hash(line, 10000);
 #pragma omp atomic
+        vhash += vhash_local;
 #endif
-      vhash += vhash_local;
 #endif
-    }
-
-
-  }
+      } // END: for( i = 0; i < _lookups; i++ )
+    } // END: #pragma acc parallel OR #pragma omp parallel
+  } // END: #pragma acc data
 
 #ifdef ACC
   tock = timer();
@@ -387,7 +385,6 @@ int main( int argc, char* argv[] )
 
   // Print / Save Results and Exit
   print_results( in, mype, tock-tick, nprocs, vhash );
-
 
 #ifdef MPI
   MPI_Finalize();

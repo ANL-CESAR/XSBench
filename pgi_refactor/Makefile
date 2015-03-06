@@ -4,12 +4,12 @@
 
 COMPILER    = pgi
 OPTIMIZE    = no
-DEBUG       = yes
+DEBUG       = no
 PROFILE     = no
 MPI         = no
-ACC         = no
+ACC         = yes
 VEC_INFO    = no
-VERIFY      = yes
+VERIFY      = no
 BINARY_DUMP = no
 BINARY_READ = no
 
@@ -53,11 +53,9 @@ endif
 
 ifeq ($(COMPILER),pgi)
   CC = pgcc
-  CFLAGS = -Minform=warn
+  CFLAGS = -c99 -Minform=warn -mp -Minfo=mp
   ifeq ($(ACC),yes)
-    CFLAGS += -c99 -acc -Minfo=accel -DACC
-  else
-    CFLAGS += -c99 -mp -Minfo=mp
+    CFLAGS += -acc -Minfo=accel -DACC
   endif
 endif
 

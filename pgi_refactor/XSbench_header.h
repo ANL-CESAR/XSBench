@@ -24,8 +24,10 @@
 // Data type for RNG; necessary because NUKMOD is unsupported in PGI kernels
 #ifdef ACC
 #define RNG_INT unsigned
+#define VHASH_TYPE double
 #else
 #define RNG_INT unsigned long
+#define VHASH_TYPE unsigned long long
 #endif
 
 // Structures
@@ -123,7 +125,7 @@ unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version );
 void print_results( Inputs in, int mype, double runtime, int nprocs,
-	unsigned long long vhash );
+  VHASH_TYPE vhash );
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
 		 GridPoint * energy_grid, int * grid_ptrs);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids,
