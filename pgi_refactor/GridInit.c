@@ -10,15 +10,15 @@
 void generate_grids( long n_isotopes, long n_gridpoints, 
     NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
 {
-	for( long i = 0; i < n_isotopes; i++ )
-		for( long j = 0; j < n_gridpoints; j++ )
+	for(long i = 0; i < n_isotopes; i++)
+		for(long j = 0; j < n_gridpoints; j++)
 		{
-			nuclide_grids[i][j].energy       =((double)rand()/(double)RAND_MAX);
-			nuclide_grids[i][j].total_xs     =((double)rand()/(double)RAND_MAX);
-			nuclide_grids[i][j].elastic_xs   =((double)rand()/(double)RAND_MAX);
-			nuclide_grids[i][j].absorbtion_xs=((double)rand()/(double)RAND_MAX);
-			nuclide_grids[i][j].fission_xs   =((double)rand()/(double)RAND_MAX);
-			nuclide_grids[i][j].nu_fission_xs=((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].energy        = ((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].total_xs      = ((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].elastic_xs    = ((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].absorbtion_xs = ((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].fission_xs    = ((double)rand()/(double)RAND_MAX);
+			nuclide_grids[i][j].nu_fission_xs = ((double)rand()/(double)RAND_MAX);
 		}
 }
 
@@ -26,28 +26,27 @@ void generate_grids( long n_isotopes, long n_gridpoints,
 void generate_grids_v( long n_isotopes, long n_gridpoints, 
     NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
 {
-	for( long i = 0; i < n_isotopes; i++ )
-		for( long j = 0; j < n_gridpoints; j++ )
+	for(long i = 0; i < n_isotopes; i++)
+		for(long j = 0; j < n_gridpoints; j++)
 		{
-			nuclide_grids[i][j].energy       = rn_v();
-			nuclide_grids[i][j].total_xs     = rn_v();
-			nuclide_grids[i][j].elastic_xs   = rn_v();
-			nuclide_grids[i][j].absorbtion_xs= rn_v();
-			nuclide_grids[i][j].fission_xs   = rn_v();
-			nuclide_grids[i][j].nu_fission_xs= rn_v();
+			nuclide_grids[i][j].energy        = rn_v();
+			nuclide_grids[i][j].total_xs      = rn_v();
+			nuclide_grids[i][j].elastic_xs    = rn_v();
+			nuclide_grids[i][j].absorbtion_xs = rn_v();
+			nuclide_grids[i][j].fission_xs    = rn_v();
+			nuclide_grids[i][j].nu_fission_xs = rn_v();
 		}
 }
 
 // Sorts the nuclide grids by energy (lowest -> highest)
-void sort_nuclide_grids( long n_isotopes, long n_gridpoints, 
+void sort_nuclide_grids(long n_isotopes, long n_gridpoints, 
     NuclideGridPoint (*nuclide_grids)[n_gridpoints])
 {
 	int (*cmp) (const void *, const void *);
 	cmp = NGP_compare;
 	
-	for( long i = 0; i < n_isotopes; i++ )
-		qsort( nuclide_grids[i], n_gridpoints, sizeof(NuclideGridPoint),
-		       cmp );
+	for(long i = 0; i < n_isotopes; i++)
+		qsort(nuclide_grids[i], n_gridpoints, sizeof(NuclideGridPoint), cmp);
 	
 	// error debug check
 	/*

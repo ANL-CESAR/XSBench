@@ -113,7 +113,7 @@ double * load_concs( int size_mats )
 	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
 	for( int i = 0; i < size_mats; i++ )
-    concs[i] = (double) rand() / (double) RAND_MAX;
+		concs[i] = (double) rand() / (double) RAND_MAX;
 
 	// test
 	/*
@@ -131,7 +131,7 @@ double * load_concs_v( int size_mats )
 	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
 	for( int i = 0; i < size_mats; i++ )
-    concs[i] = rn_v();
+		concs[i] = rn_v();
 
 	// test
 	/*

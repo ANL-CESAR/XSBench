@@ -135,6 +135,45 @@ unsigned int hash(unsigned char *str, int nbins)
 	return hash % nbins;
 }
 
+unsigned int hash_le(double *v, int n, int nbins)
+{
+	unsigned int hash = 5381;
+	Bytes b;
+	int i, j, c;
+
+	for(i=0; i<n; i++){
+		b.d = v[i];
+		for(j=0; j<8; j++){
+			hash = ((hash << 5) + hash) + b.c[j];
+		}
+	}
+
+	return hash % nbins;
+}
+
+unsigned int hash_be(double *v, int n, int nbins)
+{
+	unsigned int hash = 5381;
+	Bytes b;
+	int i, j, c;
+
+	for(i=0; i<n; i++){
+		b.d = v[i];
+		for(j=7; j>=0; j--){
+			hash = ((hash << 5) + hash) + b.c[j];
+		}
+	}
+
+	return hash % nbins;
+}
+
+int little_endian()
+{
+	int x = 1;
+	if(*(char *)&x == 1) return 1;
+	return 0;
+}
+
 size_t estimate_mem_usage( Inputs in )
 {
 	size_t single_nuclide_grid = in.n_gridpoints * sizeof( NuclideGridPoint );
