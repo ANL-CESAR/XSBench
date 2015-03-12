@@ -21,15 +21,6 @@
 #define DEBUG 1
 #define SAVE 1
 
-// Data type for RNG; necessary because NUKMOD is unsupported in PGI kernels
-#ifdef ACC
-#define RNG_INT unsigned
-#define VHASH_TYPE double
-#else
-#define RNG_INT unsigned long
-#define VHASH_TYPE double//unsigned long long
-#endif
-
 // Structures
 typedef struct{
 	double energy;
@@ -59,7 +50,7 @@ double *** d3tensor(size_t p, size_t q, size_t r);
 void gpmatrix_free( NuclideGridPoint ** M );
 int NGP_compare( const void * a, const void * b );
 int binary_search( NuclideGridPoint * A, double quarry, int n );
-double rn(RNG_INT * seed);
+double rn(unsigned long * seed);
 double rn_v(void);
 unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage(Inputs in);
@@ -73,7 +64,7 @@ double timer();
 void logo(int version);
 void center_print(const char *s, int width);
 void print_results(Inputs in, int mype, double runtime, int nprocs,
-     VHASH_TYPE vval, unsigned long long vhash);
+     double vval, unsigned long long vhash);
 void print_inputs(Inputs in, int nprocs, int version);
 void border_print(void);
 void fancy_int(long a);

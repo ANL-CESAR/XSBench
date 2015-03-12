@@ -36,7 +36,7 @@ void center_print(const char *s, int width)
 	fputs("\n", stdout);
 }
 
-void print_results(Inputs in, int mype, double runtime, int nprocs, VHASH_TYPE vval, unsigned long long vhash)
+void print_results(Inputs in, int mype, double runtime, int nprocs, double vval, unsigned long long vhash)
 {
 	// Calculate Lookups per sec
 	int lookups_per_sec = (int) ((double) in.lookups / runtime);

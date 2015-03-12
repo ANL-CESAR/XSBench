@@ -11,9 +11,9 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	int version = 13;
 	int i, thread, mat;
-	RNG_INT seed;
+	unsigned long seed;
 	double tick, tock, p_energy;
-	VHASH_TYPE vval = 0;
+	double vval = 0;
 	unsigned long long vhash = 0;
 	int nprocs;
 	double roll;
@@ -133,8 +133,13 @@ int main( int argc, char* argv[] )
 	// Generate a stream of random numbers to copy in to device
 	double * restrict rands = malloc(2*lookups*sizeof(double));
 	for(i=0; i<lookups; i++){
+		#ifdef VERIFICATION
 		rands[2*i] = rn_v();
 		rands[2*i+1] = rn_v();
+		#else
+		rands[2*i] = rn();
+		rands[2*i+1] = rn();
+		#endif
 	}
 
 	// Create arrays to store values for verification
@@ -189,11 +194,7 @@ int main( int argc, char* argv[] )
 			#endif
 			for(i = 0; i < _lookups; i++)
 			{
-				//seed = ((i % 10) +1)*19+17;
-
 				// Randomly pick an energy and material for the particle
-				//p_energy = rn(&seed);
-				//roll = rn(&seed);
 				p_energy = rands[2*i];
 				roll = rands[2*i+1];
 
@@ -298,10 +299,7 @@ int main( int argc, char* argv[] )
 	tock = timer();
 
 	#ifdef VERIFICATION
-	FILE *fp = fopen("out", "w");
 	for(int i = 0; i < lookups; i++){
-		fprintf(fp, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf\n",
-		     v_doubles[6*i], v_ints[i], v_doubles[6*i+1], v_doubles[6*i+2], v_doubles[6*i+3], v_doubles[6*i+4], v_doubles[6*i+5]);
 		char line[256];
 		sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
 		     v_doubles[6*i], v_ints[i], v_doubles[6*i+1], v_doubles[6*i+2], v_doubles[6*i+3], v_doubles[6*i+4], v_doubles[6*i+5]);

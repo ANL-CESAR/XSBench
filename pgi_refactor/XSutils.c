@@ -91,12 +91,12 @@ int binary_search( NuclideGridPoint * A, double quarry, int n )
 
 // Park & Miller Multiplicative Conguential Algorithm
 // From "Numerical Recipes" Second Edition
-double rn(RNG_INT * seed)
+double rn(unsigned long * seed)
 {
 	double ret;
-	RNG_INT n1;
-	RNG_INT a = 16807;
-	RNG_INT m = 2147483647;
+	unsigned long n1;
+	unsigned long a = 16807;
+	unsigned long m = 2147483647;
 	n1 = ( a * (*seed) ) % m;
 	*seed = n1;
 	ret = (double) n1 / m;
@@ -109,11 +109,11 @@ double rn(RNG_INT * seed)
 // From "Numerical Recipes" Second Edition
 double rn_v(void)
 {
-	static RNG_INT seed = 1337;
+	static unsigned long seed = 1337;
 	double ret;
-	RNG_INT n1;
-	RNG_INT a = 16807;
-	RNG_INT m = 2147483647;
+	unsigned long n1;
+	unsigned long a = 16807;
+	unsigned long m = 2147483647;
 	n1 = ( a * (seed) ) % m;
 	seed = n1;
 	ret = (double) n1 / m;
