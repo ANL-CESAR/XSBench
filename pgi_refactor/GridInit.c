@@ -7,8 +7,8 @@
 // Generates randomized energy grid for each nuclide
 // Note that this is done as part of initialization (serial), so
 // rand() is used.
-void generate_grids( long n_isotopes, long n_gridpoints, 
-    NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
+void generate_grids(long n_isotopes, long n_gridpoints, 
+     NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
 {
 	for(long i = 0; i < n_isotopes; i++)
 		for(long j = 0; j < n_gridpoints; j++)
@@ -24,7 +24,7 @@ void generate_grids( long n_isotopes, long n_gridpoints,
 
 // Verification version of this function (tighter control over RNG)
 void generate_grids_v( long n_isotopes, long n_gridpoints, 
-    NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
+     NuclideGridPoint (*nuclide_grids)[n_gridpoints]) 
 {
 	for(long i = 0; i < n_isotopes; i++)
 		for(long j = 0; j < n_gridpoints; j++)
@@ -63,7 +63,7 @@ void sort_nuclide_grids(long n_isotopes, long n_gridpoints,
 int * generate_ptr_grid(int n_isotopes, int n_gridpoints)
 {
 	int * grid_ptrs = (int *) malloc(n_isotopes * n_isotopes
-					 * n_gridpoints * sizeof(int));
+	     * n_gridpoints * sizeof(int));
 	return grid_ptrs;
 }
 
@@ -134,7 +134,7 @@ void set_grid_ptrs( GridPoint * energy_grid, int * grid_ptrs, long n_isotopes,
 	#endif
 	
 	if( mype == 0 ) printf("Assigning pointers to Unionized Energy Grid...\n");
-	#pragma omp parallel for default(none) \
+	//#pragma omp parallel for default(none) \
 	shared( energy_grid, nuclide_grids, grid_ptrs, n_isotopes, n_gridpoints, mype )
 	for( long i = 0; i < n_isotopes * n_gridpoints ; i++ )
 	{
@@ -148,7 +148,7 @@ void set_grid_ptrs( GridPoint * energy_grid, int * grid_ptrs, long n_isotopes,
 			// j is the nuclide i.d.
 			// log n binary search
 			grid_ptrs[energy_grid[i].xs_ptrs + j] = 
-				binary_search( nuclide_grids[j], quarry, n_gridpoints);
+				binary_search( nuclide_grids[j], quarry, n_gridpoints );
 		}
 	}
 	if( mype == 0 ) printf("\n");

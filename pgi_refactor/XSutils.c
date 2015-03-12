@@ -61,8 +61,6 @@ int NGP_compare( const void * a, const void * b )
 		return 0;
 }
 
-
-
 // Binary Search function for nuclide grid
 // Returns ptr to energy less than the quarry that is closest to the quarry
 int binary_search( NuclideGridPoint * A, double quarry, int n )
@@ -105,8 +103,6 @@ double rn(RNG_INT * seed)
 	return ret;
 }
 
-
-
 // RNG Used for Verification Option.
 // This one has a static seed (must be set manually in source).
 // Park & Miller Multiplicative Conguential Algorithm
@@ -135,46 +131,7 @@ unsigned int hash(unsigned char *str, int nbins)
 	return hash % nbins;
 }
 
-unsigned int hash_le(double *v, int n, int nbins)
-{
-	unsigned int hash = 5381;
-	Bytes b;
-	int i, j, c;
-
-	for(i=0; i<n; i++){
-		b.d = v[i];
-		for(j=0; j<8; j++){
-			hash = ((hash << 5) + hash) + b.c[j];
-		}
-	}
-
-	return hash % nbins;
-}
-
-unsigned int hash_be(double *v, int n, int nbins)
-{
-	unsigned int hash = 5381;
-	Bytes b;
-	int i, j, c;
-
-	for(i=0; i<n; i++){
-		b.d = v[i];
-		for(j=7; j>=0; j--){
-			hash = ((hash << 5) + hash) + b.c[j];
-		}
-	}
-
-	return hash % nbins;
-}
-
-int little_endian()
-{
-	int x = 1;
-	if(*(char *)&x == 1) return 1;
-	return 0;
-}
-
-size_t estimate_mem_usage( Inputs in )
+size_t estimate_mem_usage(Inputs in)
 {
 	size_t single_nuclide_grid = in.n_gridpoints * sizeof( NuclideGridPoint );
 	size_t all_nuclide_grids   = in.n_isotopes * single_nuclide_grid;

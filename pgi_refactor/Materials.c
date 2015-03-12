@@ -30,19 +30,20 @@ int * load_num_nucs(long n_isotopes)
 	return num_nucs;
 }
 
-int * load_mats_idx(int * num_nucs) {
-  int * mats_idx = (int *) malloc(12 * sizeof(int));
+int * load_mats_idx(int * num_nucs)
+{
+	int * mats_idx = (int *) malloc(12 * sizeof(int));
+	int j = 0;
 
-  int j = 0;
-  for (int i=0; i<12; i++) {
-    mats_idx[i] = j;
-    j += num_nucs[i];
-  }
-  return mats_idx;
+	for (int i=0; i<12; i++){
+		mats_idx[i] = j;
+		j += num_nucs[i];
+	}
+	return mats_idx;
 }
 
 // Assigns an array of nuclide ID's to each material
-int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes ) {
+int * load_mats(int * num_nucs, int * mats_idx, int size_mats, long n_isotopes) {
 
 	int * mats = (int *) malloc( size_mats * sizeof(int) );
 
@@ -108,7 +109,7 @@ int * load_mats( int * num_nucs, int * mats_idx, int size_mats, long n_isotopes 
 }
 
 // Creates a randomized array of 'concentrations' of nuclides in each mat
-double * load_concs( int size_mats )
+double * load_concs(int size_mats)
 {
 	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
@@ -126,7 +127,7 @@ double * load_concs( int size_mats )
 }
 
 // Verification version of this function (tighter control over RNG)
-double * load_concs_v( int size_mats )
+double * load_concs_v(int size_mats)
 {
 	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
@@ -154,7 +155,7 @@ int pick_mat(double roll)
 	// Also could be argued that doing fractions by weight would be 
 	// a better approximation, but volume does a good enough job for now.
 
-  int mat;
+	int mat;
 	double dist[12];
 	dist[0]  = 0.140;	// fuel
 	dist[1]  = 0.052;	// cladding
@@ -181,15 +182,15 @@ int pick_mat(double roll)
 
 	// return 0;
 
-  for( mat = 0; mat < 12; mat++ )
-  {
-    double running = 0;
-    for(int j = mat; j > 0; j-- )
-      running += dist[j];
-    if( roll < running )
-      break;
-  }
-  mat = mat % 12;
+	for( mat = 0; mat < 12; mat++ )
+	{
+		double running = 0;
+		for(int j = mat; j > 0; j--)
+			running += dist[j];
+		if(roll < running)
+			break;
+	}
+	mat = mat % 12;
 
-  return mat;
+	return mat;
 }
