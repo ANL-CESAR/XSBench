@@ -35,8 +35,6 @@ int main( int argc, char* argv[] )
 		0.013 	// bottom of fuel assemblies
 	};
 
-	double macro_xs_vector[5];
-
 	#ifdef MPI
 	MPI_Status stat;
 	MPI_Init(&argc, &argv);
@@ -188,8 +186,7 @@ int main( int argc, char* argv[] )
 	     concs[0:size_mats], \
 	     num_nucs[0:12], \
 	     dist[0:12], \
-	     rands[0:2*lookups] ) \
-	create(macro_xs_vector[0:5])
+	     rands[0:2*lookups] )
 	#endif
 	{
 		#ifdef ACC
@@ -199,7 +196,7 @@ int main( int argc, char* argv[] )
 			// XS Lookup Loop
 			const int _lookups = lookups;
 			#ifdef ACC
-			#pragma acc loop independent gang private(seed, macro_xs_vector, mat) reduction(+:vval, vhash)
+			#pragma acc loop independent gang private(seed, mat) reduction(+:vval, vhash)
 			#endif
 			for(i = 0; i < _lookups; i++)
 			{
@@ -225,14 +222,14 @@ int main( int argc, char* argv[] )
 				//     n_gridpoints, num_nucs, concs,
 				//     energy_grid, grid_ptrs, nuclide_grids, mats, mats_idx,
 				//     macro_xs_vector );
-				double xs_vector[5];
+				double macro_xs_0 = 0;
+				double macro_xs_1 = 0;
+				double macro_xs_2 = 0;
+				double macro_xs_3 = 0;
+				double macro_xs_4 = 0;
 				int p_nuc; // the nuclide we are looking up
 				long idx = 0;	
 				double conc; // the concentration of the nuclide in the material
-
-				// cleans out macro_xs_vector
-				for( int k = 0; k < 5; k++ )
-					macro_xs_vector[k] = 0;
 
 				// binary search for energy on unionized energy grid (UEG)
 				idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
@@ -245,7 +242,7 @@ int main( int argc, char* argv[] )
 				// micro XS is multiplied by the concentration of that nuclide
 				// in the material, and added to the total macro XS array.
 				#ifdef ACC
-				#pragma acc loop private(xs_vector, p_nuc, conc)
+				#pragma acc loop private(p_nuc, conc) reduction(+:macro_xs_0, macro_xs_1, macro_xs_2, macro_xs_3, macro_xs_4)
 				#endif
 				for(int j = 0; j < num_nucs[mat]; j++)
 				{
@@ -272,34 +269,34 @@ int main( int argc, char* argv[] )
 					f = (high->energy - p_energy) / (high->energy - low->energy);
 
 					// Total XS
-					xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
+					macro_xs_0 += conc * (high->total_xs - f * (high->total_xs - low->total_xs));
 
 					// Elastic XS
-					xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
+					macro_xs_1 += conc * (high->elastic_xs - f * (high->elastic_xs - low->elastic_xs));
 
 					// Absorbtion XS
-					xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
+					macro_xs_2 += conc * (high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs));
 
 					// Fission XS
-					xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
+					macro_xs_3 += conc * (high->fission_xs - f * (high->fission_xs - low->fission_xs));
 
 					// Nu Fission XS
-					xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-
-					for(int k = 0; k < 5; k++)
-						macro_xs_vector[k] += xs_vector[k] * conc;
+					macro_xs_4 += conc * (high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs));
 
 				} // END: for( int j = 0; j < num_nucs[mat]; j++ )
 
 				// Verification hash calculation
 				// This method provides a consistent hash accross
 				// architectures and compilers.
-				vval += (mat + p_energy + macro_xs_vector[0] + macro_xs_vector[1] + macro_xs_vector[2] + macro_xs_vector[3] + macro_xs_vector[4]);
+				vval += (mat + p_energy + macro_xs_0 + macro_xs_1 + macro_xs_2 + macro_xs_3 + macro_xs_4);
 				#ifdef VERIFICATION
 				v_ints[i] = mat;
 				v_doubles[6*i] = p_energy;
-				for(int k = 0; k < 5; k++)
-					v_doubles[6*i+k+1] = macro_xs_vector[k];
+				v_doubles[6*i+1] = macro_xs_0;
+				v_doubles[6*i+2] = macro_xs_1;
+				v_doubles[6*i+3] = macro_xs_2;
+				v_doubles[6*i+4] = macro_xs_3;
+				v_doubles[6*i+5] = macro_xs_4;
 				#endif
 			} // END: for( i = 0; i < _lookups; i++ )
 		} // END: #pragma acc parallel OR #pragma omp parallel
