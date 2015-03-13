@@ -9,7 +9,7 @@ PROFILE     = no
 MPI         = no
 ACC         = yes
 VEC_INFO    = no
-VERIFY      = yes
+VERIFY      = no
 BINARY_DUMP = no
 BINARY_READ = no
 

@@ -137,14 +137,23 @@ int main( int argc, char* argv[] )
 		rands[2*i] = rn_v();
 		rands[2*i+1] = rn_v();
 		#else
-		rands[2*i] = rn();
-		rands[2*i+1] = rn();
+		rands[2*i] = (double) rand() / (double) RAND_MAX;
+		rands[2*i+1] = (double) rand() / (double) RAND_MAX;
 		#endif
 	}
 
 	// Create arrays to store values for verification
-	int * restrict v_ints = malloc(lookups*sizeof(int));
-	double * restrict v_doubles = malloc(6*lookups*sizeof(double));
+	#ifdef VERIFICATION
+	int n_v_ints = lookups;
+	int n_v_doubles = 6*lookups;
+	int * restrict v_ints = malloc(n_v_ints*sizeof(int));
+	double * restrict v_doubles = malloc(n_v_doubles*sizeof(double));
+	#else
+	int n_v_ints = 1;
+	int n_v_doubles = 1;
+	int * restrict v_ints = malloc(n_v_ints*sizeof(int));
+	double * restrict v_doubles = malloc(n_v_doubles*sizeof(double));
+	#endif
 
 	#ifdef BINARY_DUMP
 	printf("Dumping data to binary file...\n");
@@ -166,7 +175,7 @@ int main( int argc, char* argv[] )
 
 	#ifdef ACC
 	#pragma acc data \
-	copy(vhash, vval, v_ints[0:lookups], v_doubles[0:6*lookups]) \
+	copy(vhash, vval, v_ints[0:n_v_ints], v_doubles[0:n_v_doubles]) \
 	copyin( \
 	     n_isotopes, \
 	     n_gridpoints, \
@@ -236,7 +245,7 @@ int main( int argc, char* argv[] )
 				// micro XS is multiplied by the concentration of that nuclide
 				// in the material, and added to the total macro XS array.
 				#ifdef ACC
-				#pragma acc loop worker private(xs_vector, p_nuc, conc)
+				#pragma acc loop private(xs_vector, p_nuc, conc)
 				#endif
 				for(int j = 0; j < num_nucs[mat]; j++)
 				{
