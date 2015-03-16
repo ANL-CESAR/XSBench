@@ -16,7 +16,11 @@ int main( int argc, char* argv[] )
 	double vval = 0;
 	unsigned long long vhash = 0;
 	int nprocs;
-	double roll;
+	int mype = 0;
+
+	#ifdef OMP
+	int max_procs = omp_get_num_procs();
+	#endif
 
 	char HM[6];
 
@@ -57,8 +61,12 @@ int main( int argc, char* argv[] )
 	const long n_gridpoints = in.n_gridpoints; //why not a const?
 	const int lookups = in.lookups;
 
+        // Set number of OpenMP Threads
+        omp_set_num_threads(in.nthreads);
+
 	// Print-out of Input Summary
-	print_inputs(in, nprocs, version);
+	if(mype == 0)
+		print_inputs(in, nprocs, version);
 
 	// =====================================================================
 	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
@@ -66,7 +74,7 @@ int main( int argc, char* argv[] )
 
 	// Allocate & fill energy grids
 	#ifndef BINARY_READ
-	printf("Generating Nuclide Energy Grids...\n");
+	if(mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	#endif
 
 	// allocate nuclide_grids[0:n_isotopes][0:n_gridpoints]
@@ -82,7 +90,7 @@ int main( int argc, char* argv[] )
 
 	// Sort grids by energy
 	#ifndef BINARY_READ
-	printf("Sorting Nuclide Energy Grids...\n");
+	if(mype == 0) printf("Sorting Nuclide Energy Grids...\n");
 	sort_nuclide_grids(n_isotopes, n_gridpoints, nuclide_grids);
 	#endif
 
@@ -105,12 +113,12 @@ int main( int argc, char* argv[] )
 	#endif
 
 	#ifdef BINARY_READ
-	printf("Reading data from \"XS_data.dat\" file...\n");
+	if(mype == 0) printf("Reading data from \"XS_data.dat\" file...\n");
 	binary_read(n_isotopes, n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
 	#endif
 
 	// Get material data
-	printf("Loading Mats...\n");
+	if(mype == 0) printf("Loading Mats...\n");
 
 	int size_mats;
 	if (n_isotopes == 68) 
@@ -128,6 +136,7 @@ int main( int argc, char* argv[] )
 	double * restrict concs = load_concs(size_mats);
 	#endif
 
+	#ifdef ACC
 	// Generate a stream of random numbers to copy in to device
 	double * restrict rands = malloc(2*lookups*sizeof(double));
 	for(i=0; i<lookups; i++){
@@ -152,11 +161,12 @@ int main( int argc, char* argv[] )
 	int * restrict v_ints = malloc(n_v_ints*sizeof(int));
 	double * restrict v_doubles = malloc(n_v_doubles*sizeof(double));
 	#endif
+	#endif
 
 	#ifdef BINARY_DUMP
-	printf("Dumping data to binary file...\n");
+	if(mype == 0) printf("Dumping data to binary file...\n");
 	binary_dump(n_isotopes, n_gridpoints, nuclide_grids, energy_grid, grid_ptrs);
-	printf("Binary file \"XS_data.dat\" written! Exiting...\n");
+	if(mype == 0) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
 	return 0;
 	#endif
 
@@ -164,14 +174,24 @@ int main( int argc, char* argv[] )
 	// Cross Section (XS) Parallel Lookup Simulation Begins
 	// =====================================================================
 
-	printf("\n");
-	border_print();
-	center_print("SIMULATION", 79);
-	border_print();
+	if(mype == 0){
+		printf("\n");
+		border_print();
+		center_print("SIMULATION", 79);
+		border_print();
+	}
 
-	tick = timer();
+	#ifdef OMP
+	tick = omp_get_wtime();
+        #pragma omp parallel default(none) \
+        private(i, thread, p_energy, mat, seed) \
+        shared( max_procs, in, energy_grid, nuclide_grids, \
+             mats, concs, num_nucs, mype, vhash, \
+	     mats_idx, dist, grid_ptrs, vval)
+	#endif
 
 	#ifdef ACC
+	tick = timer();
 	#pragma acc data \
 	copy(vhash, vval, v_ints[0:n_v_ints], v_doubles[0:n_v_doubles]) \
 	copyin( \
@@ -193,16 +213,47 @@ int main( int argc, char* argv[] )
 		#pragma acc kernels 
 		#endif
 		{	
-			// XS Lookup Loop
 			const int _lookups = lookups;
+			#ifdef OMP
+			// Initialize RNG seeds for threads
+			thread = omp_get_thread_num();
+			seed   = (thread+1)*19+17;
+			#pragma omp for schedule(dynamic)
+			#endif
+
 			#ifdef ACC
 			#pragma acc loop independent gang private(seed, mat) reduction(+:vval, vhash)
 			#endif
+			// XS Lookup Loop
 			for(i = 0; i < _lookups; i++)
 			{
+				#ifdef OMP
+				// Status text
+				if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
+					printf("\rCalculating XS's... (%.0lf%% completed)",
+							(i / ( (double)in.lookups / (double) in.nthreads ))
+							/ (double) in.nthreads * 100.0);
+				#endif
+
 				// Randomly pick an energy and material for the particle
+				double roll;
+				#ifdef OMP
+				#ifdef VERIFICATION
+				#pragma omp critical
+				{
+					p_energy = rn_v();
+					roll = rn_v();
+				}
+				#else
+				p_energy = rn(&seed);
+				roll = rn(&seed);
+				#endif
+				#endif
+
+				#ifdef ACC
 				p_energy = rands[2*i];
 				roll = rands[2*i+1];
+				#endif
 
 				// INLINE:  pick_mat(mat_roll)
 				for(mat = 0; mat < 12; mat++)
@@ -290,6 +341,21 @@ int main( int argc, char* argv[] )
 				// architectures and compilers.
 				vval += (mat + p_energy + macro_xs_0 + macro_xs_1 + macro_xs_2 + macro_xs_3 + macro_xs_4);
 				#ifdef VERIFICATION
+				#ifdef OMP
+				char line[256];
+				sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+						p_energy, mat,
+						macro_xs_0,
+						macro_xs_1,
+						macro_xs_2,
+						macro_xs_3,
+						macro_xs_4);
+				unsigned long long vhash_local = hash(line, 10000);
+				#pragma omp atomic
+				vhash += vhash_local;
+				#endif
+
+				#ifdef ACC
 				v_ints[i] = mat;
 				v_doubles[6*i] = p_energy;
 				v_doubles[6*i+1] = macro_xs_0;
@@ -298,12 +364,17 @@ int main( int argc, char* argv[] )
 				v_doubles[6*i+4] = macro_xs_3;
 				v_doubles[6*i+5] = macro_xs_4;
 				#endif
+				#endif
 			} // END: for( i = 0; i < _lookups; i++ )
 		} // END: #pragma acc parallel OR #pragma omp parallel
 	} // END: #pragma acc data
 
-	tock = timer();
+	#ifdef OMP
+	tock = omp_get_wtime();
+	#endif
 
+	#ifdef ACC
+	tock = timer();
 	#ifdef VERIFICATION
 	for(int i = 0; i < lookups; i++){
 		char line[256];
@@ -313,9 +384,10 @@ int main( int argc, char* argv[] )
 		vhash += vhash_local;
 	}
 	#endif
+	#endif
 
 	// Print / Save Results and Exit
-	print_results(in, 0, tock-tick, nprocs, vval, vhash);
+	print_results(in, mype, tock-tick, nprocs, vval, vhash);
 
 	#ifdef MPI
 	MPI_Finalize();

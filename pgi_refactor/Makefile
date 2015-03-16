@@ -2,14 +2,15 @@
 # User Options
 #===============================================================================
 
-COMPILER    = pgi
+COMPILER    = gnu
 OPTIMIZE    = no
 DEBUG       = no
 PROFILE     = no
 MPI         = no
-ACC         = yes
+ACC         = no
+OMP         = yes
 VEC_INFO    = no
-VERIFY      = no
+VERIFY      = yes
 BINARY_DUMP = no
 BINARY_READ = no
 
@@ -42,13 +43,17 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
-  CFLAGS += -fopenmp
+  ifeq ($(OMP),yes)
+    CFLAGS += -fopenmp -DOMP
+  endif
 endif
 
 # Intel Compiler
 ifeq ($(COMPILER),intel)
   CC = icc
-  CFLAGS += -openmp 
+  ifeq ($(OMP),yes)
+    CFLAGS += -openmp -DOMP
+  endif
 endif
 
 ifeq ($(COMPILER),pgi)
