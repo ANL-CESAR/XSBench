@@ -2,15 +2,15 @@
 # User Options
 #===============================================================================
 
-COMPILER    = gnu
-OPTIMIZE    = no
+COMPILER    = pgi
+OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
-ACC         = no
-OMP         = yes
+ACC         = yes
+OMP         = no
 VEC_INFO    = no
-VERIFY      = yes
+VERIFY      = no
 BINARY_DUMP = no
 BINARY_READ = no
 
@@ -59,6 +59,9 @@ endif
 ifeq ($(COMPILER),pgi)
   CC = pgcc
   CFLAGS = -c99 -Minform=warn -mp -Minfo=mp
+  ifeq ($(OPTIMIZE),yes)
+    CFLAGS += -fast
+  endif
   ifeq ($(ACC),yes)
     CFLAGS += -acc -Minfo=accel -DACC
   endif
