@@ -30,24 +30,22 @@ int * load_num_nucs(long n_isotopes)
 	return num_nucs;
 }
 
-int * load_mats_ptr(int * num_nucs)
+int * load_mats_idx(int * num_nucs)
 {
-	int * mats_ptr = (int*)malloc(12*sizeof(int));
-	int i, j = 0;
-	
-	for(i=0; i<12; i++){
-		mats_ptr[i] = j;
+	int * mats_idx = (int *) malloc(12 * sizeof(int));
+	int j = 0;
+
+	for (int i=0; i<12; i++){
+		mats_idx[i] = j;
 		j += num_nucs[i];
 	}
-
-	return mats_ptr;
+	return mats_idx;
 }
 
 // Assigns an array of nuclide ID's to each material
-int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes )
-{
-	int i;
-	int * mats = (int *) malloc( size_mats * sizeof(int ) );
+int * load_mats(int * num_nucs, int * mats_idx, int size_mats, long n_isotopes) {
+
+	int * mats = (int *) malloc( size_mats * sizeof(int) );
 
 	// Small H-M has 34 fuel nuclides
 	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
@@ -57,6 +55,8 @@ int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes 
 	int mats0_Lrg[321] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
 	                 8, 9, 10, 29, 57, 47, 48, 0, 62, 15, 33, 34, 52, 53,
 	                 54, 55, 56, 18, 23, 41 }; //fuel
+	for( int i = 0; i < 321-34; i++ )
+		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// These are the non-fuel materials	
 	int mats1[] =  { 63, 64, 65, 66, 67 }; // cladding
@@ -77,28 +77,25 @@ int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes 
 	                 49, 50, 51, 11, 12, 13, 14 }; // top nozzle
 	int mats10[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67 }; // top of FA's
 	int mats11[] = { 24, 41, 4, 5, 63, 64, 65, 66, 67 }; // bottom FA's
-
-	for( i = 0; i < 321-34; i++ )
-		mats0_Lrg[34+i] = 68 + i; // H-M large adds nuclides to fuel only
 	
 	// H-M large v small dependency
 	if( n_isotopes == 68 )
-		memcpy( &mats[mats_ptr[0]],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
+		memcpy( &mats[mats_idx[0]],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
 	else
-		memcpy( &mats[mats_ptr[0]],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
+		memcpy( &mats[mats_idx[0]],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
 	
 	// Copy other materials
-	memcpy( &mats[mats_ptr[1]],  mats1,  num_nucs[1]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[2]],  mats2,  num_nucs[2]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[3]],  mats3,  num_nucs[3]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[4]],  mats4,  num_nucs[4]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[5]],  mats5,  num_nucs[5]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[6]],  mats6,  num_nucs[6]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[7]],  mats7,  num_nucs[7]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[8]],  mats8,  num_nucs[8]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[9]],  mats9,  num_nucs[9]  * sizeof(int) );	
-	memcpy( &mats[mats_ptr[10]], mats10, num_nucs[10] * sizeof(int) );	
-	memcpy( &mats[mats_ptr[11]], mats11, num_nucs[11] * sizeof(int) );	
+	memcpy( &mats[mats_idx[1]],  mats1,  num_nucs[1]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[2]],  mats2,  num_nucs[2]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[3]],  mats3,  num_nucs[3]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[4]],  mats4,  num_nucs[4]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[5]],  mats5,  num_nucs[5]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[6]],  mats6,  num_nucs[6]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[7]],  mats7,  num_nucs[7]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[8]],  mats8,  num_nucs[8]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[9]],  mats9,  num_nucs[9]  * sizeof(int) );	
+	memcpy( &mats[mats_idx[10]], mats10, num_nucs[10] * sizeof(int) );	
+	memcpy( &mats[mats_idx[11]], mats11, num_nucs[11] * sizeof(int) );	
 	
 	// test
 	/*
@@ -112,12 +109,11 @@ int * load_mats( int * num_nucs, int * mats_ptr, int size_mats, long n_isotopes 
 }
 
 // Creates a randomized array of 'concentrations' of nuclides in each mat
-double * load_concs( int size_mats )
+double * load_concs(int size_mats)
 {
-	int i;
-	double * concs = (double *)malloc( size_mats * sizeof( double ) );
+	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
-	for( i = 0; i < size_mats; i++ )
+	for( int i = 0; i < size_mats; i++ )
 		concs[i] = (double) rand() / (double) RAND_MAX;
 
 	// test
@@ -131,12 +127,11 @@ double * load_concs( int size_mats )
 }
 
 // Verification version of this function (tighter control over RNG)
-double * load_concs_v( int size_mats )
+double * load_concs_v(int size_mats)
 {
-	int i;
-	double * concs = (double *)malloc( size_mats * sizeof( double ) );
+	double * concs = (double *) malloc( size_mats * sizeof(double) );
 	
-	for( i = 0; i < size_mats; i++ )
+	for( int i = 0; i < size_mats; i++ )
 		concs[i] = rn_v();
 
 	// test
@@ -150,48 +145,54 @@ double * load_concs_v( int size_mats )
 }
 
 // picks a material based on a probabilistic distribution
-// int pick_mat( unsigned long * seed )
-// {
-// 	// I have a nice spreadsheet supporting these numbers. They are
-// 	// the fractions (by volume) of material in the core. Not a 
-// 	// *perfect* approximation of where XS lookups are going to occur,
-// 	// but this will do a good job of biasing the system nonetheless.
-// 
-// 	// Also could be argued that doing fractions by weight would be 
-// 	// a better approximation, but volume does a good enough job for now.
-// 
-// 	double roll, running;
-// 	int i, j;
-// 	double dist[12];
-// 	dist[0]  = 0.140;	// fuel
-// 	dist[1]  = 0.052;	// cladding
-// 	dist[2]  = 0.275;	// cold, borated water
-// 	dist[3]  = 0.134;	// hot, borated water
-// 	dist[4]  = 0.154;	// RPV
-// 	dist[5]  = 0.064;	// Lower, radial reflector
-// 	dist[6]  = 0.066;	// Upper reflector / top plate
-// 	dist[7]  = 0.055;	// bottom plate
-// 	dist[8]  = 0.008;	// bottom nozzle
-// 	dist[9]  = 0.015;	// top nozzle
-// 	dist[10] = 0.025;	// top of fuel assemblies
-// 	dist[11] = 0.013;	// bottom of fuel assemblies
-// 	
-// 	//double roll = (double) rand() / (double) RAND_MAX;
-// 	#ifdef VERIFICATION
-// 	roll = rn_v();
-// 	#else
-// 	roll = rn(seed);
-// 	#endif
-// 
-// 	// makes a pick based on the distro
-// 	for( i = 0; i < 12; i++ )
-// 	{
-// 		running = 0;
-// 		for( j = i; j > 0; j-- )
-// 			running += dist[j];
-// 		if( roll < running )
-// 			return i;
-// 	}
-// 
-// 	return 0;
-// }
+// In this version of XSBench, the subroutine is manually inlined, so this
+// subroutine is not actually called
+int pick_mat(double roll)
+{
+	// I have a nice spreadsheet supporting these numbers. They are
+	// the fractions (by volume) of material in the core. Not a 
+	// *perfect* approximation of where XS lookups are going to occur,
+	// but this will do a good job of biasing the system nonetheless.
+
+	// Also could be argued that doing fractions by weight would be 
+	// a better approximation, but volume does a good enough job for now.
+
+	int mat;
+	double dist[12];
+	dist[0]  = 0.140;	// fuel
+	dist[1]  = 0.052;	// cladding
+	dist[2]  = 0.275;	// cold, borated water
+	dist[3]  = 0.134;	// hot, borated water
+	dist[4]  = 0.154;	// RPV
+	dist[5]  = 0.064;	// Lower, radial reflector
+	dist[6]  = 0.066;	// Upper reflector / top plate
+	dist[7]  = 0.055;	// bottom plate
+	dist[8]  = 0.008;	// bottom nozzle
+	dist[9]  = 0.015;	// top nozzle
+	dist[10] = 0.025;	// top of fuel assemblies
+	dist[11] = 0.013;	// bottom of fuel assemblies
+	
+	// makes a pick based on the distro
+	// for( int i = 0; i < 12; i++ )
+	// {
+	// 	double running = 0;
+	// 	for( int j = i; j > 0; j-- )
+	// 		running += dist[j];
+	// 	if( roll < running )
+	// 		return i;
+	// }
+
+	// return 0;
+
+	for( mat = 0; mat < 12; mat++ )
+	{
+		double running = 0;
+		for(int j = mat; j > 0; j--)
+			running += dist[j];
+		if(roll < running)
+			break;
+	}
+	mat = mat % 12;
+
+	return mat;
+}
