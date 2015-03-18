@@ -18,7 +18,7 @@ int main( int argc, char* argv[] )
   int nprocs;
   int mype = 0;
 
-#ifdef OMP
+#ifndef ACC
   int max_procs = omp_get_num_procs();
 #endif
 
@@ -181,16 +181,14 @@ int main( int argc, char* argv[] )
     border_print();
   }
 
-#ifdef OMP
+#ifndef ACC
   tick = omp_get_wtime();
 #pragma omp parallel default(none) \
   private(i, thread, p_energy, mat, seed) \
   shared( max_procs, in, energy_grid, nuclide_grids, \
       mats, concs, num_nucs, mype, vhash, \
       mats_idx, dist, grid_ptrs, vval)
-#endif
-
-#ifdef ACC
+#else
   tick = timer();
 #pragma acc data \
   copy(vhash, vval, v_ints[0:n_v_ints], v_doubles[0:n_v_doubles]) \
@@ -210,20 +208,18 @@ int main( int argc, char* argv[] )
 #endif
   {
     const int _lookups = lookups;
-#ifdef OMP
+#ifndef ACC
     // Initialize RNG seeds for threads
     thread = omp_get_thread_num();
     seed   = (thread+1)*19+17;
 #pragma omp for schedule(dynamic)
-#endif
-
-#ifdef ACC
+#else
 #pragma acc kernels loop independent gang, vector(32) private(seed, mat) reduction(+:vval, vhash)
 #endif
     // XS Lookup Loop
     for(i = 0; i < _lookups; i++)
     {
-#ifdef OMP
+#ifndef ACC
       // Status text
       if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
         printf("\rCalculating XS's... (%.0lf%% completed)",
@@ -233,7 +229,7 @@ int main( int argc, char* argv[] )
 
       // Randomly pick an energy and material for the particle
       double roll;
-#ifdef OMP
+#ifndef ACC
 #ifdef VERIFICATION
 #pragma omp critical
       {
@@ -337,7 +333,7 @@ int main( int argc, char* argv[] )
       // architectures and compilers.
       vval += (mat + p_energy + macro_xs_0 + macro_xs_1 + macro_xs_2 + macro_xs_3 + macro_xs_4);
 #ifdef VERIFICATION
-#ifdef OMP
+#ifndef ACC
       char line[256];
       sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
           p_energy, mat,
@@ -349,9 +345,7 @@ int main( int argc, char* argv[] )
       unsigned long long vhash_local = hash(line, 10000);
 #pragma omp atomic
       vhash += vhash_local;
-#endif
-
-#ifdef ACC
+#else
       v_ints[i] = mat;
       v_doubles[6*i] = p_energy;
       v_doubles[6*i+1] = macro_xs_0;
@@ -364,11 +358,9 @@ int main( int argc, char* argv[] )
     } // END: for( i = 0; i < _lookups; i++ )
   } // END: #pragma acc parallel OR #pragma omp parallel
 
-#ifdef OMP
+#ifndef ACC
   tock = omp_get_wtime();
-#endif
-
-#ifdef ACC
+#else
   tock = timer();
 #ifdef VERIFICATION
   for(int i = 0; i < lookups; i++){

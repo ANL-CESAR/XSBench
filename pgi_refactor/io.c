@@ -51,12 +51,13 @@ void print_results(Inputs in, int mype, double runtime, int nprocs, double vval,
 	// Print output
 	if( mype == 0 )
 	{
+    printf("\n");
 		border_print();
 		center_print("RESULTS", 79);
 		border_print();
 
 		// Print the results
-		printf("Threads:     %d\n", in.nthreads);
+		printf("OMP threads: %d\n", in.nthreads);
 		#ifdef MPI
 		printf("MPI ranks:   %d\n", nprocs);
 		#endif
@@ -74,7 +75,7 @@ void print_results(Inputs in, int mype, double runtime, int nprocs, double vval,
 		#ifdef VERIFICATION
 		printf("Verification checksum: %llu\n", vhash);
 		#endif
-		printf("Verification value: %0.4f\n", vval/in.lookups);
+		//printf("Verification value: %0.4f\n", vval/in.lookups);
 		border_print();
 
 		// For bechmarking, output lookup/s data to file
@@ -110,7 +111,7 @@ void print_inputs(Inputs in, int nprocs, int version )
 	printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
 	printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
 	#else
-	printf("Threads:                      %d\n", in.nthreads);
+	printf("OMP Threads:                  %d\n", in.nthreads);
 	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 	#endif
 	border_print();

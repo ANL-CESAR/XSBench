@@ -8,7 +8,6 @@ DEBUG       = no
 PROFILE     = no
 MPI         = no
 ACC         = yes
-OMP         = no
 VEC_INFO    = no
 VERIFY      = no
 BINARY_DUMP = no
@@ -43,17 +42,13 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
-  ifeq ($(OMP),yes)
-    CFLAGS += -fopenmp -DOMP
-  endif
+  CFLAGS += -fopenmp
 endif
 
 # Intel Compiler
 ifeq ($(COMPILER),intel)
   CC = icc
-  ifeq ($(OMP),yes)
-    CFLAGS += -openmp -DOMP
-  endif
+	CFLAGS += -openmp
 endif
 
 ifeq ($(COMPILER),pgi)
