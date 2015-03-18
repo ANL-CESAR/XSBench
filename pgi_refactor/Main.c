@@ -9,22 +9,20 @@ int main( int argc, char* argv[] )
   // =====================================================================
   // Initialization & Command Line Read-In
   // =====================================================================
-  int version = 13;
-  int i, thread, mat;
-  unsigned long seed;
-  double tick, tock, p_energy;
-  double vval = 0;
-  unsigned long long vhash = 0;
-  int nprocs;
-  int mype = 0;
+  int version = 13;             // Version number
+  int thread, mat;              // OMP thread index, material index
+  unsigned long seed;           // RNG seed for OMP version
+  double tick, tock, p_energy;  // Start time, end time, particle energy
+  double dval = 0;              // A dummy value, used to reduce xs values
+  unsigned long long vhash = 0; // The verfication hash
+  int nprocs;                   // Number of MPI procs
+  int mype = 0;                 // MPI rank
 
-#ifndef ACC
-  int max_procs = omp_get_num_procs();
-#endif
+  char HM[6];                   // Size of HM benchmark problem
 
-  char HM[6];
-
-  double dist[12] = {
+  // Fractions (by volume) of materials in the reactor core.
+  // These are used as probabilities to approximate where xs lookups will occur.
+  double dist[12] = {           
     0.140,	// fuel
     0.052,	// cladding
     0.275,	// cold, borated water
@@ -55,10 +53,11 @@ int main( int argc, char* argv[] )
 #endif
 
   // Process CLI Fields -- store in "Inputs" structure
+  // Duplicate as constant values to resolve data dependencies in ACC loops.
   Inputs in = read_CLI(argc, argv);
   const int nthreads = in.nthreads;
   const long n_isotopes = in.n_isotopes;
-  const long n_gridpoints = in.n_gridpoints; //why not a const?
+  const long n_gridpoints = in.n_gridpoints; 
   const int lookups = in.lookups;
 
   // Set number of OpenMP Threads
@@ -72,16 +71,18 @@ int main( int argc, char* argv[] )
   // Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
   // =====================================================================
 
-  // Allocate & fill energy grids
+  // === Allocate & fill energy grids
+
 #ifndef BINARY_READ
   if(mype == 0) printf("Generating Nuclide Energy Grids...\n");
 #endif
 
-  // allocate nuclide_grids[0:n_isotopes][0:n_gridpoints]
+  // allocates nuclide_grids[0:n_isotopes][0:n_gridpoints]
   NuclideGridPoint (* restrict nuclide_grids)[(long) n_gridpoints] = 
     (NuclideGridPoint (*)[(long) n_gridpoints]) 
     malloc(n_isotopes * n_gridpoints * sizeof(NuclideGridPoint));
 
+  // fill grids deterministically or randomly
 #ifdef VERIFICATION
   generate_grids_v(n_isotopes, n_gridpoints, nuclide_grids);
 #else
@@ -126,10 +127,14 @@ int main( int argc, char* argv[] )
   else
     size_mats = 484;
 
+  // The number of nuclides in each material
   int * restrict num_nucs = load_num_nucs(n_isotopes);
+  // The indices of each material 
   int * restrict mats_idx = load_mats_idx(num_nucs);
+  // The nuclide identities of each material
   int * restrict mats     = load_mats(num_nucs, mats_idx, size_mats, n_isotopes);
 
+  // The concentrations of nuclides in each material
 #ifdef VERIFICATION
   double * restrict concs = load_concs_v(size_mats);
 #else
@@ -137,30 +142,36 @@ int main( int argc, char* argv[] )
 #endif
 
 #ifdef ACC
-  // Generate a stream of random numbers to copy in to device
+
+  // === In OMP, the random numbers are generated on the fly; and the results
+  // are hashed on the fly.  In ACC, we pre-generate random numbers and
+  // post-process the results on the host.
+
+  // Generate a stream of random numbers to copyin to device
   double * restrict rands = malloc(2*lookups*sizeof(double));
-  for(i=0; i<lookups; i++){
-#ifdef VERIFICATION
+  for(int i=0; i<lookups; i++){
+  #ifdef VERIFICATION
     rands[2*i] = rn_v();
     rands[2*i+1] = rn_v();
-#else
+  #else
     rands[2*i] = (double) rand() / (double) RAND_MAX;
     rands[2*i+1] = (double) rand() / (double) RAND_MAX;
-#endif
+  #endif
   }
 
-  // Create arrays to store values for verification
-#ifdef VERIFICATION
+  // Allocate arrays for results to copyout from device
+  #ifdef VERIFICATION
   int n_v_ints = lookups;
   int n_v_doubles = 6*lookups;
   int * restrict v_ints = malloc(n_v_ints*sizeof(int));
   double * restrict v_doubles = malloc(n_v_doubles*sizeof(double));
-#else
+  #else
   int n_v_ints = 1;
   int n_v_doubles = 1;
   int * restrict v_ints = malloc(n_v_ints*sizeof(int));
   double * restrict v_doubles = malloc(n_v_doubles*sizeof(double));
-#endif
+  #endif
+
 #endif
 
 #ifdef BINARY_DUMP
@@ -184,14 +195,14 @@ int main( int argc, char* argv[] )
 #ifndef ACC
   tick = omp_get_wtime();
 #pragma omp parallel default(none) \
-  private(i, thread, p_energy, mat, seed) \
-  shared( max_procs, in, energy_grid, nuclide_grids, \
+  private(thread, p_energy, mat, seed) \
+  shared( in, energy_grid, nuclide_grids, \
       mats, concs, num_nucs, mype, vhash, \
-      mats_idx, dist, grid_ptrs, vval)
+      mats_idx, dist, grid_ptrs, dval)
 #else
   tick = timer();
 #pragma acc data \
-  copy(vhash, vval, v_ints[0:n_v_ints], v_doubles[0:n_v_doubles]) \
+  copy(vhash, dval, v_ints[0:n_v_ints], v_doubles[0:n_v_doubles]) \
   copyin( \
       n_isotopes, \
       n_gridpoints, \
@@ -207,17 +218,23 @@ int main( int argc, char* argv[] )
       rands[0:2*lookups] )
 #endif
   {
-    const int _lookups = lookups;
+
 #ifndef ACC
-    // Initialize RNG seeds for threads
+    // In OMP, initialize a private RNG seed for each thread
     thread = omp_get_thread_num();
     seed   = (thread+1)*19+17;
+#endif
+
+    // Dummy variable for bounds of XS lookup loop
+    const int _lookups = lookups;
+
+    // === The XS lookup loop
+#ifndef ACC
 #pragma omp for schedule(dynamic)
 #else
-#pragma acc kernels loop independent gang, vector(32) private(seed, mat) reduction(+:vval, vhash)
+#pragma acc kernels loop independent gang, vector(32) private(seed, mat) reduction(+:dval, vhash)
 #endif
-    // XS Lookup Loop
-    for(i = 0; i < _lookups; i++)
+    for(int i = 0; i < _lookups; i++)
     {
 #ifndef ACC
       // Status text
@@ -230,24 +247,25 @@ int main( int argc, char* argv[] )
       // Randomly pick an energy and material for the particle
       double roll;
 #ifndef ACC
-#ifdef VERIFICATION
+      // In OMP, generate random numbers on the fly
+  #ifdef VERIFICATION
 #pragma omp critical
       {
         p_energy = rn_v();
         roll = rn_v();
       }
-#else
+  #else
       p_energy = rn(&seed);
       roll = rn(&seed);
-#endif
-#endif
-
-#ifdef ACC
+  #endif
+#else
+      // In ACC, use pre-generated random numbers
       p_energy = rands[2*i];
       roll = rands[2*i+1];
 #endif
 
-      // INLINE:  pick_mat(mat_roll)
+      // Use distribution to pick a material
+      // ( inlined from pick_mat(mat_roll))
       for(mat = 0; mat < 12; mat++)
       {
         double running = 0;
@@ -270,12 +288,9 @@ int main( int argc, char* argv[] )
       double macro_xs_2 = 0;
       double macro_xs_3 = 0;
       double macro_xs_4 = 0;
-      int p_nuc; // the nuclide we are looking up
-      long idx = 0;	
-      double conc; // the concentration of the nuclide in the material
 
       // binary search for energy on unionized energy grid (UEG)
-      idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
+      long idx = grid_search(n_isotopes * n_gridpoints, p_energy, energy_grid);	
 
       // Once we find the pointer array on the UEG, we can pull the data
       // from the respective nuclide grids, as well as the nuclide
@@ -285,18 +300,20 @@ int main( int argc, char* argv[] )
       // micro XS is multiplied by the concentration of that nuclide
       // in the material, and added to the total macro XS array.
 #ifdef ACC
-#pragma acc loop seq private(p_nuc, conc) reduction(+:macro_xs_0, macro_xs_1, macro_xs_2, macro_xs_3, macro_xs_4)
+// This inner loop is parallelizable. 
+// However, we have found that performance is better if it is executed sequentialy.
+#pragma acc loop seq reduction(+:macro_xs_0, macro_xs_1, macro_xs_2, macro_xs_3, macro_xs_4)
 #endif
       for(int j = 0; j < num_nucs[mat]; j++)
       {
-
-        p_nuc = mats[mats_idx[mat] + j];
-        conc = concs[mats_idx[mat] + j];
-
-        // INLINE: calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-        //     n_gridpoints, energy_grid, grid_ptrs,
-        //     nuclide_grids, idx, xs_vector );
+        
+        // the nuclide we are looking up
+        int p_nuc = mats[mats_idx[mat] + j];      
+        // the concentration of the nuclide in the material
+        double conc = concs[mats_idx[mat] + j];  
+        // Interpolation factor
         double f;
+        // Bounding energy gridpoints
         NuclideGridPoint * low, * high;
 
         // pull ptr from energy grid and check to ensure that
@@ -328,12 +345,15 @@ int main( int argc, char* argv[] )
 
       } // END: for( int j = 0; j < num_nucs[mat]; j++ )
 
+      // Accumulate results into a dummy variable for reduction
+      dval += (mat + p_energy + macro_xs_0 + macro_xs_1 + macro_xs_2 + macro_xs_3 + macro_xs_4);
+
       // Verification hash calculation
       // This method provides a consistent hash accross
       // architectures and compilers.
-      vval += (mat + p_energy + macro_xs_0 + macro_xs_1 + macro_xs_2 + macro_xs_3 + macro_xs_4);
 #ifdef VERIFICATION
 #ifndef ACC
+      // In OMP, hash results on-the-fly
       char line[256];
       sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
           p_energy, mat,
@@ -346,6 +366,7 @@ int main( int argc, char* argv[] )
 #pragma omp atomic
       vhash += vhash_local;
 #else
+      // In ACC, results are stored and hashed on the host
       v_ints[i] = mat;
       v_doubles[6*i] = p_energy;
       v_doubles[6*i+1] = macro_xs_0;
@@ -355,14 +376,19 @@ int main( int argc, char* argv[] )
       v_doubles[6*i+5] = macro_xs_4;
 #endif
 #endif
-    } // END: for( i = 0; i < _lookups; i++ )
-  } // END: #pragma acc parallel OR #pragma omp parallel
+    } // END: for(int i = 0; i < _lookups; i++)
+  } // END:  #pragma omp parallel OR #pragma acc data
 
+// Stop the timer
 #ifndef ACC
   tock = omp_get_wtime();
 #else
   tock = timer();
-#ifdef VERIFICATION
+#endif
+
+// For ACC, hash the results
+#ifdef ACC
+  #ifdef VERIFICATION
   for(int i = 0; i < lookups; i++){
     char line[256];
     sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
@@ -370,11 +396,11 @@ int main( int argc, char* argv[] )
     unsigned long long vhash_local = hash(line, 10000);
     vhash += vhash_local;
   }
-#endif
+  #endif
 #endif
 
   // Print / Save Results and Exit
-  print_results(in, mype, tock-tick, nprocs, vval, vhash);
+  print_results(in, mype, tock-tick, nprocs, dval, vhash);
 
 #ifdef MPI
   MPI_Finalize();

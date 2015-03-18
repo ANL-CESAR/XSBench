@@ -1,6 +1,8 @@
 #include "XSbench_header.h"
 
 // Calculates the microscopic cross section for a given nuclide & energy
+// In this version of XSBench, the subroutine is manually inlined, so this
+// subroutine is not actually called
 void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpoints,
      GridPoint * restrict energy_grid, int * restrict grid_ptrs,
      NuclideGridPoint (* restrict nuclide_grids)[n_gridpoints], int idx,
@@ -49,6 +51,8 @@ void calculate_micro_xs(double p_energy, int nuc, long n_isotopes, long n_gridpo
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
+// In this version of XSBench, the subroutine is manually inlined, so this
+// subroutine is not actually called
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
      long n_gridpoints, int * restrict num_nucs, double * restrict concs,
      GridPoint * restrict energy_grid, int * restrict grid_ptrs,

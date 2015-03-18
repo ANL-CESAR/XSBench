@@ -145,6 +145,8 @@ double * load_concs_v(int size_mats)
 }
 
 // picks a material based on a probabilistic distribution
+// In this version of XSBench, the subroutine is manually inlined, so this
+// subroutine is not actually called
 int pick_mat(double roll)
 {
 	// I have a nice spreadsheet supporting these numbers. They are

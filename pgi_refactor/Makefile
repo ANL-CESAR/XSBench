@@ -33,34 +33,53 @@ obj = $(source:.c=.o)
 # Sets Flags
 #===============================================================================
 
-# Standard Flags
-CFLAGS := -std=gnu99
-
 # Linker Flags
 LDFLAGS = -lm
 
-# Regular gcc Compiler
-ifeq ($(COMPILER),gnu)
-  CC = gcc
-  CFLAGS += -fopenmp
-endif
-
-# Intel Compiler
-ifeq ($(COMPILER),intel)
-  CC = icc
-	CFLAGS += -openmp
-endif
-
+# PGI Compiler
 ifeq ($(COMPILER),pgi)
   CC = pgcc
   CFLAGS = -c99 -Minform=warn -mp -Minfo=mp
   ifeq ($(OPTIMIZE),yes)
     CFLAGS += -fast
   endif
+  ifeq ($(VEC_INFO),yes)
+    CFLAGS += -Minfo=vect
+  endif
+	# OpenACC (assumes NVIDA GPU)
   ifeq ($(ACC),yes)
-    CFLAGS += -acc -Minfo=accel -DACC
+    CFLAGS += -acc -Minfo=accel -ta=tesla:ptxinfo -DACC
   endif
 endif
+
+# GNU Compiler
+ifeq ($(COMPILER),gnu)
+  CC = gcc
+  CFLAGS += -std=gnu99 -Wall -fopenmp
+	# Optimization
+  ifeq ($(OPTIMIZE),yes)
+    CFLAGS += -O3
+		# Compiler Vectorization (needs -O3 flag) information
+    ifeq ($(VEC_INFO),yes)
+      CFLAGS += -ftree-vectorizer-verbose=6
+    endif
+  endif
+endif
+
+# Intel Compiler
+ifeq ($(COMPILER),intel)
+  CC = icc
+  CFLAGS += -std=gnu99 -w1 -openmp
+	# Optimization
+  ifeq ($(OPTIMIZE),yes)
+    CFLAGS += -O3
+		# Compiler Vectorization (needs -O3 flag) information
+    ifeq ($(VEC_INFO),yes)
+      CFLAGS += -ftree-vectorizer-verbose=6
+    endif
+  endif
+endif
+
 
 # BG/Q gcc Cross-Compiler
 ifeq ($(MACHINE),bluegene)
@@ -77,16 +96,6 @@ endif
 ifeq ($(PROFILE),yes)
   CFLAGS += -pg
   LDFLAGS  += -pg
-endif
-
-# Optimization Flags
-ifeq ($(OPTIMIZE),yes)
-  CFLAGS += -O3
-endif
-
-# Compiler Vectorization (needs -O3 flag) information
-ifeq ($(VEC_INFO),yes)
-  CFLAGS += -ftree-vectorizer-verbose=6
 endif
 
 # PAPI source (you may need to provide -I and -L pointing
