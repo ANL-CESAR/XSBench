@@ -103,7 +103,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
     NuclideGridPoint (* restrict nuclide_grids)[n_gridpoints],
     int * restrict mats, int * restrict mats_idx,
     double * restrict macro_xs_vector );
-#ifdef ACC
+#ifdef _OPENACC
 #pragma acc routine seq
 #endif
 long grid_search( long n, double quarry, GridPoint * A);

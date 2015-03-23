@@ -7,7 +7,7 @@ OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
-ACC         = yes
+OPENACC     = yes
 VEC_INFO    = no
 VERIFY      = no
 BINARY_DUMP = no
@@ -47,8 +47,8 @@ ifeq ($(COMPILER),pgi)
     CFLAGS += -Minfo=vect
   endif
 	# OpenACC (assumes NVIDA GPU)
-  ifeq ($(ACC),yes)
-    CFLAGS += -acc -Minfo=accel -ta=tesla:ptxinfo -DACC
+  ifeq ($(OPENACC),yes)
+    CFLAGS += -acc -Minfo=accel -ta=tesla:ptxinfo 
   endif
 endif
 

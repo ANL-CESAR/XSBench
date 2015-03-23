@@ -4,7 +4,7 @@
 #include<mpi.h>
 #endif
 
-#ifdef ACC
+#ifdef _OPENACC
 #include "openacc.h"
 #endif
 
@@ -48,7 +48,7 @@ int main( int argc, char* argv[] )
   MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 #endif
 
-#ifdef ACC
+#ifdef _OPENACC
   acc_init(acc_get_device_type());
 #endif
 
@@ -61,7 +61,7 @@ int main( int argc, char* argv[] )
 #endif
 
   // Process CLI Fields -- store in "Inputs" structure
-  // Duplicate as constant values to resolve data dependencies in ACC loops.
+  // Duplicate as constant values to resolve data dependencies in _OPENACC loops.
   Inputs in = read_CLI(argc, argv);
   const int nthreads = in.nthreads;
   const long n_isotopes = in.n_isotopes;
@@ -149,10 +149,10 @@ int main( int argc, char* argv[] )
   double * restrict concs = load_concs(size_mats);
 #endif
 
-#ifdef ACC
+#ifdef _OPENACC
 
   // === In OMP, the random numbers are generated on the fly; and the results
-  // are hashed on the fly.  In ACC, we pre-generate random numbers and
+  // are hashed on the fly.  In _OPENACC, we pre-generate random numbers and
   // post-process the results on the host.
 
   // Generate a stream of random numbers to copyin to device
@@ -189,7 +189,7 @@ int main( int argc, char* argv[] )
   return 0;
 #endif
 
-#ifdef ACC
+#ifdef _OPENACC
 #pragma acc enter data \
   copyin( \
       vhash, \
@@ -224,7 +224,7 @@ int main( int argc, char* argv[] )
     border_print();
   }
 
-#ifndef ACC
+#ifndef _OPENACC
   tick = omp_get_wtime();
 #pragma omp parallel default(none) \
   private(thread, p_energy, mat, seed) \
@@ -255,7 +255,7 @@ int main( int argc, char* argv[] )
 #endif
   {
 
-#ifndef ACC
+#ifndef _OPENACC
     // In OMP, initialize a private RNG seed for each thread
     thread = omp_get_thread_num();
     seed   = (thread+1)*19+17;
@@ -265,14 +265,14 @@ int main( int argc, char* argv[] )
     const int _lookups = lookups;
 
     // === The XS lookup loop
-#ifndef ACC
+#ifndef _OPENACC
 #pragma omp for schedule(dynamic)
 #else
 #pragma acc loop independent gang, vector(32) private(seed, mat) reduction(+:dval, vhash)
 #endif
     for(int i = 0; i < _lookups; i++)
     {
-#ifndef ACC
+#ifndef _OPENACC
       // Status text
       if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
         printf("\rCalculating XS's... (%.0lf%% completed)",
@@ -282,7 +282,7 @@ int main( int argc, char* argv[] )
 
       // Randomly pick an energy and material for the particle
       double roll;
-#ifndef ACC
+#ifndef _OPENACC
       // In OMP, generate random numbers on the fly
   #ifdef VERIFICATION
 #pragma omp critical
@@ -295,7 +295,7 @@ int main( int argc, char* argv[] )
       roll = rn(&seed);
   #endif
 #else
-      // In ACC, use pre-generated random numbers
+      // In _OPENACC, use pre-generated random numbers
       p_energy = rands[2*i];
       roll = rands[2*i+1];
 #endif
@@ -335,7 +335,7 @@ int main( int argc, char* argv[] )
       // looked up & interpolatied (via calculate_micro_xs). Then, the
       // micro XS is multiplied by the concentration of that nuclide
       // in the material, and added to the total macro XS array.
-#ifdef ACC
+#ifdef _OPENACC
 // This inner loop is parallelizable. 
 // However, we have found that performance is better if it is executed sequentialy.
 #pragma acc loop seq reduction(+:macro_xs_0, macro_xs_1, macro_xs_2, macro_xs_3, macro_xs_4)
@@ -388,7 +388,7 @@ int main( int argc, char* argv[] )
       // This method provides a consistent hash accross
       // architectures and compilers.
 #ifdef VERIFICATION
-  #ifndef ACC
+  #ifndef _OPENACC
       // In OMP, hash results on-the-fly
       char line[256];
       sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
@@ -402,7 +402,7 @@ int main( int argc, char* argv[] )
 #pragma omp atomic
       vhash += vhash_local;
   #else
-      // In ACC, results are stored and hashed on the host
+      // In _OPENACC, results are stored and hashed on the host
       v_ints[i] = mat;
       v_doubles[6*i] = p_energy;
       v_doubles[6*i+1] = macro_xs_0;
@@ -414,7 +414,7 @@ int main( int argc, char* argv[] )
 #endif
     } // END: for(int i = 0; i < _lookups; i++)
   } // END:  #pragma omp parallel OR #pragma acc kernels
-#ifndef ACC
+#ifndef _OPENACC
   tock = omp_get_wtime();
 #else
   tock = timer();
@@ -427,8 +427,8 @@ int main( int argc, char* argv[] )
       )
 #endif
 
-// For ACC, hash the results
-#ifdef ACC
+// For _OPENACC, hash the results
+#ifdef _OPENACC
   #ifdef VERIFICATION
   for(int i = 0; i < lookups; i++){
     char line[256];
