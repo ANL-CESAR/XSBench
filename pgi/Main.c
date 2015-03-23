@@ -4,6 +4,10 @@
 #include<mpi.h>
 #endif
 
+#ifdef ACC
+#include "openacc.h"
+#endif
+
 int main( int argc, char* argv[] )
 {
   // =====================================================================
@@ -42,6 +46,10 @@ int main( int argc, char* argv[] )
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   MPI_Comm_rank(MPI_COMM_WORLD, &mype);
+#endif
+
+#ifdef ACC
+  acc_init(acc_get_device_type());
 #endif
 
   // rand() is only used in the serial initialization stages.
@@ -181,6 +189,30 @@ int main( int argc, char* argv[] )
   return 0;
 #endif
 
+#ifdef ACC
+#pragma acc enter data \
+  copyin( \
+      vhash, \
+      dval, \
+      n_isotopes, \
+      n_gridpoints, \
+      lookups, \
+      energy_grid[0:n_isotopes*n_gridpoints], \
+      nuclide_grids[0:n_isotopes][0:n_gridpoints], \
+      grid_ptrs[0:n_isotopes*n_isotopes*n_gridpoints], \
+      mats[0:size_mats], \
+      mats_idx[0:12], \
+      concs[0:size_mats], \
+      num_nucs[0:12], \
+      dist[0:12], \
+      rands[0:2*lookups] \
+      ) \
+  create( \
+      v_ints[0:n_v_ints], \
+      v_doubles[0:n_v_doubles] \
+      ) 
+#endif
+
   // =====================================================================
   // Cross Section (XS) Parallel Lookup Simulation Begins
   // =====================================================================
@@ -201,9 +233,12 @@ int main( int argc, char* argv[] )
       mats_idx, dist, grid_ptrs, dval)
 #else
   tick = timer();
-#pragma acc data \
-  copy(vhash, dval, v_ints[0:n_v_ints], v_doubles[0:n_v_doubles]) \
-  copyin( \
+#pragma acc kernels \
+  present( \
+      vhash, \
+      dval, \
+      v_ints[0:n_v_ints], \
+      v_doubles[0:n_v_doubles], \
       n_isotopes, \
       n_gridpoints, \
       lookups, \
@@ -215,7 +250,8 @@ int main( int argc, char* argv[] )
       concs[0:size_mats], \
       num_nucs[0:12], \
       dist[0:12], \
-      rands[0:2*lookups] )
+      rands[0:2*lookups] \
+      )
 #endif
   {
 
@@ -232,7 +268,7 @@ int main( int argc, char* argv[] )
 #ifndef ACC
 #pragma omp for schedule(dynamic)
 #else
-#pragma acc kernels loop independent gang, vector(32) private(seed, mat) reduction(+:dval, vhash)
+#pragma acc loop independent gang, vector(32) private(seed, mat) reduction(+:dval, vhash)
 #endif
     for(int i = 0; i < _lookups; i++)
     {
@@ -352,7 +388,7 @@ int main( int argc, char* argv[] )
       // This method provides a consistent hash accross
       // architectures and compilers.
 #ifdef VERIFICATION
-#ifndef ACC
+  #ifndef ACC
       // In OMP, hash results on-the-fly
       char line[256];
       sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
@@ -365,7 +401,7 @@ int main( int argc, char* argv[] )
       unsigned long long vhash_local = hash(line, 10000);
 #pragma omp atomic
       vhash += vhash_local;
-#else
+  #else
       // In ACC, results are stored and hashed on the host
       v_ints[i] = mat;
       v_doubles[6*i] = p_energy;
@@ -374,16 +410,21 @@ int main( int argc, char* argv[] )
       v_doubles[6*i+3] = macro_xs_2;
       v_doubles[6*i+4] = macro_xs_3;
       v_doubles[6*i+5] = macro_xs_4;
-#endif
+  #endif
 #endif
     } // END: for(int i = 0; i < _lookups; i++)
-  } // END:  #pragma omp parallel OR #pragma acc data
-
-// Stop the timer
+  } // END:  #pragma omp parallel OR #pragma acc kernels
 #ifndef ACC
   tock = omp_get_wtime();
 #else
   tock = timer();
+#pragma acc exit data \
+  copyout(\
+      vhash, \
+      dval, \
+      v_ints[0:n_v_ints], \
+      v_doubles[0:n_v_doubles] \
+      )
 #endif
 
 // For ACC, hash the results
