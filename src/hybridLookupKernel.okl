@@ -1,7 +1,3 @@
-#if !OCCA_USING_CUDA
-#  define __ldg(PTR) *(PTR)
-#endif
-
 typedef struct{
   double energy;
   double total_xs;
@@ -132,8 +128,8 @@ occaKernel void lookup_kernel(
         // Search for energy on energy grid
         const long int idx = grid_search_kernel(n_isotopes * n_gridpoints, p_energy, energy_grid);
 
-        const int nucs_idx = __ldg(&num_nucs[mat]);
-        const int mat_idx  = __ldg(&mats_idx[mat]);
+        const int nucs_idx = directLoad(&num_nucs[mat]);
+        const int mat_idx  = directLoad(&mats_idx[mat]);
 
         const int energy_xs_ptrs = energy_grid[idx].xs_ptrs;
 
@@ -144,11 +140,11 @@ occaKernel void lookup_kernel(
           double2 b[12];
 
           // Get this nuclide and its concentration
-          const int nuc     = __ldg(&mats[mat_idx + j]);
-          const double conc = __ldg(&concs[mat_idx + j]);
+          const int nuc     = directLoad(&mats[mat_idx + j]);
+          const double conc = directLoad(&concs[mat_idx + j]);
 
           // Get pointers to bounding values on nuclide energy grid
-          const int grid_ptr = __ldg(&grid_ptrs[energy_xs_ptrs + nuc]);
+          const int grid_ptr = directLoad(&grid_ptrs[energy_xs_ptrs + nuc]);
 
           const double2 * const base = (double2*) (nuclide_vector +
                                                    (nuc * n_gridpoints) +
@@ -162,11 +158,11 @@ occaKernel void lookup_kernel(
 
           if(doTwoOps){
             // Get this nuclide and its concentration
-            const int nuc2 = __ldg(&mats[mat_idx + j + 1]);
-            conc2          = __ldg(&concs[mat_idx + j + 1]);
+            const int nuc2 = directLoad(&mats[mat_idx + j + 1]);
+            conc2          = directLoad(&concs[mat_idx + j + 1]);
 
             // Get pointers to bounding values on nuclide energy grid
-            const int grid_ptr2 = __ldg(&grid_ptrs[energy_xs_ptrs + nuc2]);
+            const int grid_ptr2 = directLoad(&grid_ptrs[energy_xs_ptrs + nuc2]);
 
             base2 = (double2*) (nuclide_vector +
                                 (nuc2 * n_gridpoints) +
@@ -175,25 +171,25 @@ occaKernel void lookup_kernel(
           }
 
           // Low
-          b[0] = __ldg(base + 0);
-          b[1] = __ldg(base + 1);
-          b[2] = __ldg(base + 2);
+          b[0] = directLoad(base + 0);
+          b[1] = directLoad(base + 1);
+          b[2] = directLoad(base + 2);
 
           // High
-          b[3] = __ldg(base + 3);
-          b[4] = __ldg(base + 4);
-          b[5] = __ldg(base + 5);
+          b[3] = directLoad(base + 3);
+          b[4] = directLoad(base + 4);
+          b[5] = directLoad(base + 5);
 
           if(doTwoOps){
             // Low
-            b[6] = __ldg(base2 + 0);
-            b[7] = __ldg(base2 + 1);
-            b[8] = __ldg(base2 + 2);
+            b[6] = directLoad(base2 + 0);
+            b[7] = directLoad(base2 + 1);
+            b[8] = directLoad(base2 + 2);
 
             // High
-            b[9]  = __ldg(base2 + 3);
-            b[10] = __ldg(base2 + 4);
-            b[11] = __ldg(base2 + 5);
+            b[9]  = directLoad(base2 + 3);
+            b[10] = directLoad(base2 + 4);
+            b[11] = directLoad(base2 + 5);
           }
 
           const double f = (b[3].x - p_energy) / (b[3].x - b[0].x);
