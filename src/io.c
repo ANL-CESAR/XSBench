@@ -98,13 +98,20 @@ void print_inputs(Inputs in, int nprocs, int version )
 	#ifdef VERIFICATION
 	printf("Verification Mode:            on\n");
 	#endif
+	if( in.grid_type == NUCLIDE )
+		printf("Grid Type:                    Nuclide Grid\n");
+	else
+		printf("Grid Type:                    Unionized Grid\n");
 	printf("Materials:                    %d\n", 12);
 	printf("H-M Benchmark Size:           %s\n", in.HM);
 	printf("Total Nuclides:               %ld\n", in.n_isotopes);
 	printf("Gridpoints (per Nuclide):     ");
 	fancy_int(in.n_gridpoints);
-	printf("Unionized Energy Gridpoints:  ");
-	fancy_int(in.n_isotopes*in.n_gridpoints);
+	if( in.grid_type == UNIONIZED )
+	{
+		printf("Unionized Energy Gridpoints:  ");
+		fancy_int(in.n_isotopes*in.n_gridpoints);
+	}
 	printf("XS Lookups:                   "); fancy_int(in.lookups);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
@@ -155,8 +162,9 @@ void print_CLI_error(void)
 	printf("  -t <threads>     Number of OpenMP threads to run\n");
 	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)\n");
 	printf("  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)\n");
+	printf("  -G <grid type>   Grid search type (unionized, nuclide). Defaults to unionized.\n");
 	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
-	printf("Default is equivalent to: -s large -l 15000000\n");
+	printf("Default is equivalent to: -s large -l 15000000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
 }
@@ -176,6 +184,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// defaults to 15,000,000
 	input.lookups = 15000000;
+	
+	// default to unionized grid
+	input.grid_type = UNIONIZED;
 	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
@@ -226,6 +237,22 @@ Inputs read_CLI( int argc, char * argv[] )
 		{	
 			if( ++i < argc )
 				input.HM = argv[i];
+			else
+				print_CLI_error();
+		}
+		// grid type (-G)
+		else if( strcmp(arg, "-G") == 0 )
+		{
+			char * grid_type;
+			if( ++i < argc )
+				grid_type = argv[i];
+			else
+				print_CLI_error();
+
+			if( strcmp(grid_type, "unionized") == 0 )
+				input.grid_type = UNIONIZED;
+			else if( strcmp(grid_type, "nuclide") == 0 )
+				input.grid_type = NUCLIDE;
 			else
 				print_CLI_error();
 		}

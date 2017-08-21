@@ -43,7 +43,7 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
-  CFLAGS += -fopenmp
+  CFLAGS += -fopenmp -flto
 endif
 
 # Intel Compiler
@@ -121,10 +121,10 @@ endif
 # Targets to Build
 #===============================================================================
 
-$(program): $(obj) XSbench_header.h
+$(program): $(obj) XSbench_header.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.c
+%.o: %.c Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

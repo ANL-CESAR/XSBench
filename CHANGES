@@ -1,4 +1,21 @@
 =====================================================================
+NEW IN VERSION 14
+=====================================================================
+- (Feature) Added in the ability to only use a nuclide grid via the
+  "-G nuclide" command line argument. This stops the code from
+  allocating and initializing the unionized energy grid, which
+  significantly reduces the amount of memory required. However,
+  lookups are much slower in this mode as now a binary search must
+  be performed for all nuclides for each macroscopic XS lookup
+  (instead of only once per macro XS lookup). This feature was added
+  as there was some interest in performance testing for this type
+  of lookup method.
+- Slight refactoring of arguments for the lookup functions to
+  specify the new grid type option.
+- Documentation was added for the new -G grid type command line
+  argument.
+
+=====================================================================
 NEW IN VERSION 13
 =====================================================================
 - (Feature) Added in the ability for XSBench to write out a binary

@@ -6,7 +6,7 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 13
+                                   Version 14
 
 ==============================================================================
 Contact Information
@@ -38,8 +38,7 @@ Download----------------------------------------------------------------------
 	For the most up-to-date version of XSBench, we recommend that you
 	download from our git repository. This can be accomplished via
 	cloning the repository from the command line, or by downloading a zip
-	from our github page. Alternatively, you can download a tar file from
-	the CESAR website directly.
+	from our github page.
 
 	Git Repository Clone:
 		
@@ -57,26 +56,6 @@ Download----------------------------------------------------------------------
 		Simply use the "zip download" option on our webpage at:
 
 		https://github.com/jtramm/XSBench
-	
-	CESAR Tar Download:
-
-		A tar of the XSBench source code is available
-		on the CESAR website at the following URL:
-		
-		https://cesar.mcs.anl.gov/content/software/neutronics
-
-		Once downloaded, you can decompress XSBench using the following
-		command on a linux or Mac OSX system:
-
-		>$ tar -xvf XSBench-11.tar
-
-		This will decompress the tar file into a directory called
-		XSBench-11.
-
-		To begin use of the XSBench code, you will have to navigate to
-		the src directory:
-
-		>$ cd XSBench-11/src
 
 Compilation-------------------------------------------------------------------
 
@@ -99,8 +78,9 @@ Running XSBench---------------------------------------------------------------
 	  -t <threads>     Number of OpenMP threads to run
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)
 	  -g <gridpoints>  Number of gridpoints per nuclide
+	  -G <grid type>   Grid search type (unionized, nuclide). Defaults to unionized.
 	  -l <lookups>     Number of Cross-section (XS) lookups
-	Default (no arguments given) is equivalent to: -s large -l 15000000
+	Default (no arguments given) is equivalent to: -s large -l 15000000 -G unionized
 
 	-t <threads>
 
@@ -143,6 +123,18 @@ Running XSBench---------------------------------------------------------------
 
 		Note that this option will override the number of default grid
 		-points as set by the '-s' option.
+	
+	-G <grid type>
+
+		Sets the grid search type (unionized, nuclide). Defaults to unionized.
+		The unionized grid is what is typically used in Monte Carlo codes, as
+		it offers the fastest speed. However, the increase in speed comes in
+		a significant increase in memory usage as a union of all the separate
+		nuclide grids must be formed and stored in memory. The "nuclide" mode
+		uses only the basic nuclide grid data, with no unionization. This is
+		slower as a binary search must be performed on every nuclide for each
+		macroscopic XS lookup, rather than only once when using the unionized
+		grid.
 
 	-l <lookups>
 		
@@ -197,6 +189,11 @@ BINARY_READ = no
 -> Binary dump mode writes a binary file containing a randomized data set
    of cross sections. This can be used in tandem with the binary read mode
    to skip generation of cross section data every time the program is run.
+   Note that if you create the grid when specifying the -G flag as
+   "nuclide", data for the unionized energy grid will not be written, and
+   therefore any subsequent runs using that file in binary read mode must
+   also use the -G nuclide option. Files generated for the unionized grid
+   can also be used when running in the nuclide grid mode.
 
 -> Binary read mode reads the binary file created by the binary dump mode
    as a (usually) much faster substitution for randomly generating XS
@@ -301,6 +298,12 @@ Note that identical input parameters (problem size, etc) must be used
 when reading and writing a binary file. No runtime checks are made
 to validate that the file correctly corresponds to the selected input
 parameters.
+
+Also note that if you create the grid when specifying the -G flag as
+"nuclide", data for the unionized energy grid will not be written, and
+therefore any subsequent runs using that file in binary read mode must
+also use the "-G nuclide" option. Files generated for the full unionized grid
+can also be used when running in the nuclide grid mode.
 
 ==============================================================================
 Running on ANL BlueGene/Q (Vesta & Mira)

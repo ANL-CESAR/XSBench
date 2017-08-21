@@ -42,7 +42,11 @@ typedef struct{
 	long n_gridpoints;
 	int lookups;
 	char * HM;
+	int grid_type; // 0: Unionized Grid (default)    1: Nuclide Grid
 } Inputs;
+
+#define UNIONIZED 0
+#define NUCLIDE 1
 
 // Function Prototypes
 void logo(int version);
@@ -78,15 +82,16 @@ void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
 						   GridPoint * restrict energy_grid,
                            NuclideGridPoint ** restrict nuclide_grids,
 						   int ** restrict mats,
-                           double * restrict macro_xs_vector );
+                           double * restrict macro_xs_vector, int grid_type );
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids, int idx,
-                           double * restrict xs_vector );
+                           NuclideGridPoint ** restrict nuclide_grids, long idx,
+                           double * restrict xs_vector, int grid_type );
 
 long grid_search( long n, double quarry, GridPoint * A);
+long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A);
 
 int * load_num_nucs(long n_isotopes);
 int ** load_mats( int * num_nucs, long n_isotopes );
@@ -109,7 +114,9 @@ unsigned int hash(unsigned char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
-void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
-void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid);
+void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
+void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
+
+
 
 #endif

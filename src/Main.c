@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	int version = 13;
+	int version = 14;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
 	int i, thread, mat;
@@ -66,28 +66,36 @@ int main( int argc, char* argv[] )
 	sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
 	#endif
 
-	// Prepare Unionized Energy Grid Framework
-	#ifndef BINARY_READ
-	GridPoint * energy_grid = generate_energy_grid( in.n_isotopes,
-	                          in.n_gridpoints, nuclide_grids ); 	
-	#else
-	GridPoint * energy_grid = (GridPoint *)malloc( in.n_isotopes *
-	                           in.n_gridpoints * sizeof( GridPoint ) );
-	int * index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
-	                   * in.n_isotopes * sizeof(int));
-	for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
-		energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
-	#endif
+	// If using a unionized grid search, initialize the energy grid
+	// Otherwise, leave these as null
+	GridPoint * energy_grid = NULL;
+	int * index_data = NULL;
 
-	// Double Indexing. Filling in energy_grid with pointers to the
-	// nuclide_energy_grids.
-	#ifndef BINARY_READ
-	set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
-	#endif
+	if( in.grid_type == UNIONIZED )
+	{
+		// Prepare Unionized Energy Grid Framework
+		#ifndef BINARY_READ
+		energy_grid = generate_energy_grid( in.n_isotopes,
+											in.n_gridpoints, nuclide_grids ); 	
+		#else
+		energy_grid = (GridPoint *)malloc( in.n_isotopes *
+										   in.n_gridpoints * sizeof( GridPoint ) );
+		index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
+										   * in.n_isotopes * sizeof(int));
+		for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
+			energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
+		#endif
+
+		// Double Indexing. Filling in energy_grid with pointers to the
+		// nuclide_energy_grids.
+		#ifndef BINARY_READ
+		set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
+		#endif
+	}
 
 	#ifdef BINARY_READ
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
-	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
+	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, in.grid_type);
 	#endif
 	
 	// Get material data
@@ -104,7 +112,7 @@ int main( int argc, char* argv[] )
 
 	#ifdef BINARY_DUMP
 	if( mype == 0 ) printf("Dumping data to binary file...\n");
-	binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid);
+	binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, in.grid_type);
 	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
 	return 0;
 	#endif
@@ -191,9 +199,9 @@ int main( int argc, char* argv[] )
 			// to do anything with it in this program, so return value
 			// is written over.
 			calculate_macro_xs( p_energy, mat, in.n_isotopes,
-			                    in.n_gridpoints, num_nucs, concs,
-			                    energy_grid, nuclide_grids, mats,
-                                macro_xs_vector );
+								in.n_gridpoints, num_nucs, concs,
+								energy_grid, nuclide_grids, mats,
+								macro_xs_vector, in.grid_type );
 			
 			// Copy results from above function call onto heap
 			// so that compiler cannot optimize function out
