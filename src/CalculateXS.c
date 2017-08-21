@@ -11,6 +11,8 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	double f;
 	NuclideGridPoint * low, * high;
 
+	// If using only the nuclide grid, we must perform a binary search
+	// to find the energy location in this particular nuclide's grid.
 	if( grid_type == NUCLIDE )
 	{
 		// Perform binary search on the Nuclide Grid to find the index
@@ -23,7 +25,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		else
 			low = &nuclide_grids[nuc][idx];
 	}
-	else
+	else // Unionized Energy Grid - we already know the index, no binary search needed.
 	{
 		// pull ptr from energy grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
@@ -83,7 +85,11 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	for( int k = 0; k < 5; k++ )
 		macro_xs_vector[k] = 0;
 
-	// binary search for energy on unionized energy grid (UEG)
+	// If we are using the unionized energy grid (UEG), we only
+	// need to perform 1 binary search per macroscopic lookup.
+	// If we are using the nuclide grid search, it will have to be
+	// done inside of the "calculate_micro_xs" function for each different
+	// nuclide in the material.
 	if( grid_type == UNIONIZED )
 		idx = grid_search( n_isotopes * n_gridpoints, p_energy,
 	    	               energy_grid);	
