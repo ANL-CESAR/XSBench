@@ -15,7 +15,7 @@ Contact Information
 Organization:     Center for Exascale Simulation of Advanced Reactors (CESAR)
                   Argonne National Laboratory
 
-Development Lead: John Tramm   <jtramm@anl.gov>
+Development Lead: John Tramm   <jtramm@mit.edu>
                   Ron Rahaman  <rahaman@anl.gov>
                   Amanda Lund  <alund@anl.gov>
 
