@@ -39,36 +39,6 @@ int NGP_compare( const void * a, const void * b )
 		return 0;
 }
 
-
-
-// Binary Search function for nuclide grid
-// Returns ptr to energy less than the quarry that is closest to the quarry
-int binary_search( NuclideGridPoint * A, double quarry, int n )
-{
-	int min = 0;
-	int max = n-1;
-	int mid;
-	
-	// checks to ensure we're not reading off the end of the grid
-	if( A[0].energy > quarry )
-		return 0;
-	else if( A[n-1].energy < quarry )
-		return n-2;
-	
-	// Begins binary search	
-	while( max >= min )
-	{
-		mid = min + floor( (max-min) / 2.0);
-		if( A[mid].energy < quarry )
-			min = mid+1;
-		else if( A[mid].energy > quarry )
-			max = mid-1;
-		else
-			return mid;
-	}
-	return max;
-}
-
 // Park & Miller Multiplicative Conguential Algorithm
 // From "Numerical Recipes" Second Edition
 double rn(unsigned long * seed)
@@ -82,7 +52,6 @@ double rn(unsigned long * seed)
 	ret = (double) n1 / m;
 	return ret;
 }
-
 
 
 // RNG Used for Verification Option.
@@ -125,7 +94,6 @@ size_t estimate_mem_usage( Inputs in )
 		memtotal          = all_nuclide_grids + size_UEG;
 	else
 		memtotal          = all_nuclide_grids;
-	all_nuclide_grids = all_nuclide_grids / 1048576;
 	size_UEG          = size_UEG / 1048576;
 	memtotal          = memtotal / 1048576;
 	return memtotal;

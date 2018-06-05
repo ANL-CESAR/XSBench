@@ -122,7 +122,7 @@ void print_inputs(Inputs in, int nprocs, int version )
 	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 	#endif
 	border_print();
-	center_print("INITIALIZATION", 79);
+	center_print("INITIALIZATION - DO NOT PROFILE", 79);
 	border_print();
 }
 

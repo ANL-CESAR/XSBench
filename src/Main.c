@@ -9,14 +9,14 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	int version = 14;
+	int version = 15;
 	int mype = 0;
 	int max_procs = omp_get_num_procs();
 	int i, thread, mat;
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
 	unsigned long long vhash = 0;
-	int nprocs;
+	int nprocs = 1;
 
 	#ifdef MPI
 	MPI_Status stat;
@@ -89,7 +89,7 @@ int main( int argc, char* argv[] )
 		// Double Indexing. Filling in energy_grid with pointers to the
 		// nuclide_energy_grids.
 		#ifndef BINARY_READ
-		set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
+		initialization_do_not_profile_set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
 		#endif
 	}
 

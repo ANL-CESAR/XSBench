@@ -1,4 +1,40 @@
 =====================================================================
+NEW IN VERSION 15
+=====================================================================
+- Improved the method by which the unionized energy grid (UEG) is
+  initialized. Considering the following input parameters:
+    - N_gp = Number of energy grid points each nuclide has
+    - N_nuc = Number of nuclides in the simulation
+  the old algorithm was: O(N_gp * N_nuc^2 * log2(N_gp))
+  the new algorithm is : O(N_gp * N_nuc^2)
+  In serial, the initialzation phase of the program runs
+  about 10x faster than it did in version 14. However, as the new
+  function results in false sharing issues in the UEG, it is not
+  parallelized so can still take a significant portion of runtime
+  when the code is run in parallel with high thread counts. On
+  all machines I tested, I found that the new serial method at
+  worst ran in the same walltime as the old parallel method.
+  When doing performance analysis, it is still recommended to
+  use higher XS lookup counts (as specified with the "-l" argument)
+  to wash out time spent in this initialization phase.
+- Removed the binary_search() function, as it is no longer used in
+  initialization due to the improvement listed above.
+- Added a warning to the program output to not profile the
+  initialization region of the code. By default, if running on a
+  powerful node with a high core count, the majority of the runtime
+  of the code with default settings may be spent in the initialization
+  phase, which will result in confusing or misleading performance
+  characteristics. It is therefore not recommended to profile the
+  initialization phase of the code, and to only profile the simulation
+  region of the code. If that is not practical, it is recommended to
+  use higher XS lookup counts (as specified with the "-l" argument)
+  to wash out time spent in initialization.
+- The above changes in version 15 have no performance impacts at all
+  on the simulation region of the code. The changes only improve
+  the speed of initialization to serve as a "quality of life"
+  improvement for those running the code.
+
+=====================================================================
 NEW IN VERSION 14
 =====================================================================
 - (Feature) Added in the ability to only use a nuclide grid via the

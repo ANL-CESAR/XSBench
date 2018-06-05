@@ -115,11 +115,19 @@ GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
 	return energy_grid;
 }
 
-// Searches each nuclide grid for the closest energy level and assigns
-// pointer from unionized grid to the correct spot in the nuclide grid.
-// This process is time consuming, as the number of binary searches
-// required is:  binary searches = n_gridpoints * n_isotopes^2
-void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
+// Initializes the unionized energy grid, by locating the appropriate
+// location in the nulicde grid for each entry on the unionized grid.
+// This function should not be profiling when doing performance analysis or tuning.
+// This is because this function does not really represent
+// a real function in OpenMC, it is only necessary to initialize the UEG
+// in this mini-app for later use in the simulation region of the code. 
+// Analysts who find that this function is eating up a large portion of the runtime
+// should exclude it from their analysis, or otherwise wash it out by increasing
+// the amount of time spent in the simulation portion of the application by running
+// more lookups with the "-l" command line argument.
+// This function is not parallelized due to false sharing issues that arrise when writing
+// to the UEG.
+void initialization_do_not_profile_set_grid_ptrs( GridPoint * restrict energy_grid, NuclideGridPoint ** restrict nuclide_grids,
                     long n_isotopes, long n_gridpoints )
 {
 	int mype = 0;
@@ -127,36 +135,60 @@ void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
 	#ifdef MPI
 	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 	#endif
-	
+
 	if( mype == 0 ) printf("Assigning pointers to Unionized Energy Grid...\n");
-	#pragma omp parallel for default(none) \
-	shared( energy_grid, nuclide_grids, n_isotopes, n_gridpoints, mype )
-	for( long i = 0; i < n_isotopes * n_gridpoints ; i++ )
+
+	int * idx_low = (int *) calloc( n_isotopes, sizeof(int));
+	double * energy_high = (double *) malloc( n_isotopes * sizeof(double));
+
+	for( int i = 0; i < n_isotopes; i++ )
+		energy_high[i] = nuclide_grids[i][1].energy;
+
+	for( long e = 0; e < n_isotopes * n_gridpoints; e++ )
 	{
-		double quarry = energy_grid[i].energy;
-		if( INFO && mype == 0 && omp_get_thread_num() == 0 && i % 200 == 0 )
-			printf("\rAligning Unionized Grid...(%.0lf%% complete)",
-			       100.0 * (double) i / (n_isotopes*n_gridpoints /
-				                         omp_get_num_threads())     );
-		for( long j = 0; j < n_isotopes; j++ )
+		double unionized_energy = energy_grid[e].energy;
+		for( long i = 0; i < n_isotopes; i++ )
 		{
-			// j is the nuclide i.d.
-			// log n binary search
-			energy_grid[i].xs_ptrs[j] = 
-				binary_search( nuclide_grids[j], quarry, n_gridpoints);
+			if( unionized_energy < energy_high[i]  )
+				energy_grid[e].xs_ptrs[i] = idx_low[i];
+			else if( idx_low[i] == n_gridpoints - 2 )
+				energy_grid[e].xs_ptrs[i] = idx_low[i];
+			else
+			{
+				idx_low[i]++;
+				energy_grid[e].xs_ptrs[i] = idx_low[i];
+				energy_high[i] = nuclide_grids[i][idx_low[i]+1].energy;
+			}
+
 		}
 	}
-	if( mype == 0 ) printf("\n");
 
-	//test
-	/*
-	for( int i=0; i < n_isotopes * n_gridpoints; i++ )
-		for( int j = 0; j < n_isotopes; j++ )
-			printf("E = %.4lf\tNuclide %d->%p->%.4lf\n",
-			       energy_grid[i].energy,
-                   j,
-				   energy_grid[i].xs_ptrs[j],
-				   (energy_grid[i].xs_ptrs[j])->energy
-				   );
+	free(idx_low);
+	free(energy_high);
+
+	/* Alternative method with high stride access, less efficient
+	//#pragma omp parallel for schedule(dynamic,1)
+	for( long i = 0; i < n_isotopes; i++ )
+	{
+		int nuclide_grid_idx_low = 0;
+		double nuclide_energy_high = nuclide_grids[i][nuclide_grid_idx_low+1].energy;
+
+		// Loop over entries in the UEG
+		for( long e = 0; e < n_isotopes * n_gridpoints; e++ )
+		{
+			double unionized_energy = energy_grid[e].energy;
+
+			if( unionized_energy < nuclide_energy_high  )
+				energy_grid[e].xs_ptrs[i] = nuclide_grid_idx_low;
+			else if( nuclide_grid_idx_low == n_gridpoints - 2 )
+				energy_grid[e].xs_ptrs[i] = nuclide_grid_idx_low;
+			else
+			{
+				nuclide_grid_idx_low++;
+				energy_grid[e].xs_ptrs[i] = nuclide_grid_idx_low;
+				nuclide_energy_high = nuclide_grids[i][nuclide_grid_idx_low+1].energy;
+			}
+		}
+	}
 	*/
 }

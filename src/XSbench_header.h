@@ -71,7 +71,7 @@ void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
 GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
                                   NuclideGridPoint ** nuclide_grids);
 
-void set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
+void initialization_do_not_profile_set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
                     long n_isotopes, long n_gridpoints );
 
 int binary_search( NuclideGridPoint * A, double quarry, int n );

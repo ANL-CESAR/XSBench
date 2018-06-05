@@ -6,7 +6,7 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 14
+                                   Version 15
 
 ==============================================================================
 Contact Information
@@ -15,7 +15,7 @@ Contact Information
 Organization:     Center for Exascale Simulation of Advanced Reactors (CESAR)
                   Argonne National Laboratory
 
-Development Lead: John Tramm   <jtramm@mit.edu>
+Development Lead: John Tramm   <jtramm@anl.gov>
                   Ron Rahaman  <rahaman@anl.gov>
                   Amanda Lund  <alund@anl.gov>
 
@@ -170,7 +170,9 @@ BINARY_READ = no
 
 -> Debugging enables the -g flag.
 
--> Profiling enables the -pg flag.
+-> Profiling enables the -pg flag. When profiling the code, you may
+   wish to significantly increase the number of lookups (with the -l
+   flag) in order to wash out the initialization phase of the code.
 
 -> MPI enables MPI support in the code.
 
