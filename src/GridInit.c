@@ -4,6 +4,35 @@
 #include<mpi.h>
 #endif
 
+GridPoint * generate_hash_table( NuclideGridPoint ** nuclide_grids,
+                          long n_isotopes, long n_gridpoints, long hash_bins )
+{
+	printf("Generating Hash Grid...\n");
+
+	GridPoint * energy_grid = (GridPoint *)malloc( hash_bins * sizeof( GridPoint ) );
+	int * full = (int *) malloc( n_isotopes * hash_bins * sizeof(int) );
+
+	for( long i = 0; i < hash_bins; i++ )
+		energy_grid[i].xs_ptrs = &full[n_isotopes * i];
+
+	double du = 1.0 / hash_bins;
+
+	// For each energy level in the hash table
+	#pragma omp parallel for
+	for( long e = 0; e < hash_bins; e++ )
+	{
+		double energy = e * du;
+
+		// We need to determine the bounding energy levels for all isotopes
+		for( long i = 0; i < n_isotopes; i++ )
+		{
+			energy_grid[e].xs_ptrs[i] = grid_search_nuclide( n_gridpoints, energy, nuclide_grids[i], 0, n_gridpoints-1);
+		}
+	}
+
+	return energy_grid;
+}
+
 // Generates randomized energy grid for each nuclide
 // Note that this is done as part of initialization (serial), so
 // rand() is used.

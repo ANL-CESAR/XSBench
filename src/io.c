@@ -100,13 +100,21 @@ void print_inputs(Inputs in, int nprocs, int version )
 	#endif
 	if( in.grid_type == NUCLIDE )
 		printf("Grid Type:                    Nuclide Grid\n");
-	else
+	else if( in.grid_type == UNIONIZED )
 		printf("Grid Type:                    Unionized Grid\n");
+	else
+		printf("Grid Type:                    Hash\n");
+
 	printf("Materials:                    %d\n", 12);
 	printf("H-M Benchmark Size:           %s\n", in.HM);
 	printf("Total Nuclides:               %ld\n", in.n_isotopes);
 	printf("Gridpoints (per Nuclide):     ");
 	fancy_int(in.n_gridpoints);
+	if( in.grid_type == HASH )
+	{
+		printf("Hash Bins:                    ");
+		fancy_int(in.hash_bins);
+	}
 	if( in.grid_type == UNIONIZED )
 	{
 		printf("Unionized Energy Gridpoints:  ");
@@ -162,8 +170,9 @@ void print_CLI_error(void)
 	printf("  -t <threads>     Number of OpenMP threads to run\n");
 	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)\n");
 	printf("  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)\n");
-	printf("  -G <grid type>   Grid search type (unionized, nuclide). Defaults to unionized.\n");
+	printf("  -G <grid type>   Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
 	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
+	printf("  -h <hash bins>   Number of hash bins (only relevant when used with \"-G hash\")\n");
 	printf("Default is equivalent to: -s large -l 15000000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
@@ -187,6 +196,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// default to unionized grid
 	input.grid_type = UNIONIZED;
+
+	// default to unionized grid
+	input.hash_bins = 10000;
 	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
@@ -232,6 +244,14 @@ Inputs read_CLI( int argc, char * argv[] )
 			else
 				print_CLI_error();
 		}
+		// hash bins (-h)
+		else if( strcmp(arg, "-h") == 0 )
+		{
+			if( ++i < argc )
+				input.hash_bins = atoi(argv[i]);
+			else
+				print_CLI_error();
+		}
 		// HM (-s)
 		else if( strcmp(arg, "-s") == 0 )
 		{	
@@ -253,6 +273,8 @@ Inputs read_CLI( int argc, char * argv[] )
 				input.grid_type = UNIONIZED;
 			else if( strcmp(grid_type, "nuclide") == 0 )
 				input.grid_type = NUCLIDE;
+			else if( strcmp(grid_type, "hash") == 0 )
+				input.grid_type = HASH;
 			else
 				print_CLI_error();
 		}
@@ -276,6 +298,10 @@ Inputs read_CLI( int argc, char * argv[] )
 
 	// Validate lookups
 	if( input.lookups < 1 )
+		print_CLI_error();
+
+	// Validate Hash Bins 
+	if( input.hash_bins < 1 )
 		print_CLI_error();
 	
 	// Validate HM size

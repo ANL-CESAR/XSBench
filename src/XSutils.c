@@ -88,13 +88,16 @@ size_t estimate_mem_usage( Inputs in )
 	size_t all_nuclide_grids   = in.n_isotopes * single_nuclide_grid;
 	size_t size_GridPoint      = sizeof(GridPoint) + in.n_isotopes*sizeof(int);
 	size_t size_UEG            = in.n_isotopes*in.n_gridpoints * size_GridPoint;
+	size_t size_hash_grid      = in.hash_bins * size_GridPoint;
 	size_t memtotal;
 
 	if( in.grid_type == UNIONIZED )
 		memtotal          = all_nuclide_grids + size_UEG;
-	else
+	else if( in.grid_type == NUCLIDE )
 		memtotal          = all_nuclide_grids;
-	size_UEG          = size_UEG / 1048576;
+	else
+		memtotal          = all_nuclide_grids + size_hash_grid;
+
 	memtotal          = memtotal / 1048576;
 	return memtotal;
 }
@@ -145,4 +148,32 @@ void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide
 
 	fclose(fp);
 
+}
+
+// Binary Search function for nuclide grid
+// Returns ptr to energy less than the quarry that is closest to the quarry
+int binary_search( NuclideGridPoint * A, double quarry, int n, int low, int high)
+{
+	int min = low;
+	int max = high;
+	int mid;
+
+	// checks to ensure we're not reading off the end of the grid
+	if( A[0].energy > quarry )
+		return 0;
+	else if( A[n-1].energy < quarry )
+		return n-2;
+
+	// Begins binary search
+	while( max >= min )
+	{
+		mid = min + floor( (max-min) / 2.0);
+		if( A[mid].energy < quarry )
+			min = mid+1;
+		else if( A[mid].energy > quarry )
+			max = mid-1;
+		else
+			return mid;
+	}
+	return max;
 }

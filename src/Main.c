@@ -9,9 +9,8 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	int version = 15;
+	int version = 16;
 	int mype = 0;
-	int max_procs = omp_get_num_procs();
 	int i, thread, mat;
 	unsigned long seed;
 	double omp_start, omp_end, p_energy;
@@ -92,6 +91,10 @@ int main( int argc, char* argv[] )
 		initialization_do_not_profile_set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
 		#endif
 	}
+	else if( in.grid_type == HASH )
+	{
+		energy_grid = generate_hash_table( nuclide_grids, in.n_isotopes, in.n_gridpoints, in.hash_bins );
+	}
 
 	#ifdef BINARY_READ
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
@@ -150,7 +153,7 @@ int main( int argc, char* argv[] )
 	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
 	private(i, thread, p_energy, mat, seed) \
-	shared( max_procs, in, energy_grid, nuclide_grids, \
+	shared( in, energy_grid, nuclide_grids, \
 	        mats, concs, num_nucs, mype, vhash) 
 	{	
 		// Initialize parallel PAPI counters
@@ -201,7 +204,7 @@ int main( int argc, char* argv[] )
 			calculate_macro_xs( p_energy, mat, in.n_isotopes,
 								in.n_gridpoints, num_nucs, concs,
 								energy_grid, nuclide_grids, mats,
-								macro_xs_vector, in.grid_type );
+								macro_xs_vector, in.grid_type, in.hash_bins );
 			
 			// Copy results from above function call onto heap
 			// so that compiler cannot optimize function out

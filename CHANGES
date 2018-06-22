@@ -1,4 +1,71 @@
 =====================================================================
+NEW IN VERSION 16
+=====================================================================
+- (Feature) Added in an alternative XS lookup algorithm (known
+  as the logarithmic hash-based lookup), that has recently been
+  adopted by OpenMC and MCNP. This can be selected via the
+  "-G hash" command line argument. Additionally, the number of
+  hash bins can be set with the "-h <# hash bins>" argument, with
+  a default of 10,000.
+
+  The hash algorithm is much more memory efficient than the
+  unionized energy (UEG) grid algorithm that is default in
+  XSBench, while providing comparable speed to the UEG. More
+  details regarding the hash algorithm are available in:
+  
+  Forrest B Brown. New hash-based energy lookup algorithm for monte
+  carlo codes. Trans. Am. Nucl. Soc., 111:659–662, 2014.
+
+  As compared to the UEG algorithm, the basic idea of the hash
+  algorithm is that the acceleration grid no longer points to the
+  exact indices in the nuclide energy grids, but rather indicates
+  a small range in the nuclide grids where the appropriate data is
+  found. While in the UEG method the nuclide data can be accessed
+  directly, with the hash grid a binary search will still need to 
+  be performed in the range indicated by the acceleration grid.
+  This is still efficient however, as with enough hash bins, the area
+  in the nuclide grid being searched is small so the binary search
+  will be very fast.
+
+  One important thing to note is that the energy levels in XSBench
+  are stored in terms of lethargy, so no call to log() is necessary
+  when hashing into the energy grid as would be the case in OpenMC.
+  However, this call is not expensive as compared to the high
+  latency and bandwidth requirements for accessing the XS data, so
+  it is not expected to be substantial that lethargy is used instead
+  of regular energy.
+
+  We tested the new algorithm on a Skylake 8180 system (dual socket,
+  with 56 cores and 112 threads total), and adjusted the number
+  of hash bins to determine the optimal default setting. We found
+  our results to be similar to those of Brown, with about 10,000
+  hash bins resulting in good performance while only adding around
+  10 MB of additional data on top of the basic nuclide grid data.
+  Performance was good, and was only about 10% slower than the UEG,
+  while being 2.38x faster than the nuclide grid search alone. In
+  summary, on the architecture tested, the UEG is still the fastest
+  algorithm but the hash algorithm provides only a 10% performance
+  decrease but at the benefit of only using about 200 MB compared
+  to 5,678 MB that the UEG method uses.
+
+  We also tested two versions of the hash lookup algorithm, one
+  where a binary search O(log(n)) is performed on the specified
+  range in the nuclide grids, and a second version where a regular
+  iterative search O(n) is performed. The reason for testing is
+  that if the search range is low enough (e.g., less than 8),
+  for hardware reasons it may be better to simply iterate through
+  rather than jumping around out of order as would be done with
+  the binary search. We found that the iterative algorithm was
+  much slower when there were few hash bins (as would be expected).
+  For higher numbers of hash bins, the iterative algorithm was
+  usually competitive with the binary one, but any small benefits
+  in performance (at best a few percent) were outweighed by the
+  significant performance losses when only a few bins were
+  present. So, for these reasons, the hash lookup algorithm in
+  XSBench always does binary searches on the nuclide grids.
+
+
+=====================================================================
 NEW IN VERSION 15
 =====================================================================
 - Improved the method by which the unionized energy grid (UEG) is

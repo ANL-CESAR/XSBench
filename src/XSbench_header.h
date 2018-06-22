@@ -10,6 +10,7 @@
 #include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
+#include<assert.h>
 
 // Papi Header
 #ifdef PAPI
@@ -43,10 +44,12 @@ typedef struct{
 	int lookups;
 	char * HM;
 	int grid_type; // 0: Unionized Grid (default)    1: Nuclide Grid
+	int hash_bins;
 } Inputs;
 
 #define UNIONIZED 0
 #define NUCLIDE 1
+#define HASH 2
 
 // Function Prototypes
 void logo(int version);
@@ -74,24 +77,22 @@ GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
 void initialization_do_not_profile_set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
                     long n_isotopes, long n_gridpoints );
 
-int binary_search( NuclideGridPoint * A, double quarry, int n );
-
-void calculate_macro_xs(   double p_energy, int mat, long n_isotopes,
-                           long n_gridpoints, int * restrict num_nucs,
-                           double ** restrict concs,
-						   GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids,
-						   int ** restrict mats,
-                           double * restrict macro_xs_vector, int grid_type );
-
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids, long idx,
-                           double * restrict xs_vector, int grid_type );
+                           NuclideGridPoint ** restrict nuclide_grids,
+                           long idx, double * restrict xs_vector, int grid_type, int hash_bins );
+void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+                         long n_gridpoints, int * restrict num_nucs,
+                         double ** restrict concs,
+                         GridPoint * restrict energy_grid,
+                         NuclideGridPoint ** restrict nuclide_grids,
+                         int ** restrict mats,
+                         double * restrict macro_xs_vector, int grid_type, int hash_bins );
+
 
 long grid_search( long n, double quarry, GridPoint * A);
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A);
+long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 
 int * load_num_nucs(long n_isotopes);
 int ** load_mats( int * num_nucs, long n_isotopes );
@@ -117,6 +118,11 @@ void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned lo
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
 
+int binary_search( NuclideGridPoint * A, double quarry, int n, int low, int high);
+GridPoint * generate_hash_table( NuclideGridPoint ** nuclide_grids,
+                          long n_isotopes, long n_gridpoints, long M );
 
+void initialization_do_not_profile_set_hash( GridPoint * restrict energy_grid, NuclideGridPoint ** restrict nuclide_grids,
+                    long n_isotopes, long n_gridpoints );
 
 #endif
