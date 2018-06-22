@@ -78,8 +78,9 @@ Running XSBench---------------------------------------------------------------
 	  -t <threads>     Number of OpenMP threads to run
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)
 	  -g <gridpoints>  Number of gridpoints per nuclide
-	  -G <grid type>   Grid search type (unionized, nuclide). Defaults to unionized.
+	  -G <grid type>   Grid search type (unionized, nuclide, hash). Defaults to unionized.
 	  -l <lookups>     Number of Cross-section (XS) lookups
+	  -h <hash bins>   Number of hash bins (only relevant when used with "-G hash")
 	Default (no arguments given) is equivalent to: -s large -l 15000000 -G unionized
 
 	-t <threads>
@@ -126,7 +127,7 @@ Running XSBench---------------------------------------------------------------
 	
 	-G <grid type>
 
-		Sets the grid search type (unionized, nuclide). Defaults to unionized.
+		Sets the grid search type (unionized, nuclide, hash). Defaults to unionized.
 		The unionized grid is what is typically used in Monte Carlo codes, as
 		it offers the fastest speed. However, the increase in speed comes in
 		a significant increase in memory usage as a union of all the separate
@@ -136,6 +137,17 @@ Running XSBench---------------------------------------------------------------
 		macroscopic XS lookup, rather than only once when using the unionized
 		grid.
 
+		Finally, the "hash" mode is a newer algorithm now used by
+		many full Monte Carlo codes which offers speed nearly equivalent
+		to the unionized energy grid method, but with only a small fraction
+		of the memory overhead. More details on the hash lookup algorithm
+		can be found in the CHANGES file for version 16, or in the following
+		publication:
+  
+		Forrest B Brown. New hash-based energy lookup algorithm for monte
+		carlo codes. Trans. Am. Nucl. Soc., 111:659–662, 2014.
+		http://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-14-27037
+
 	-l <lookups>
 		
 		Sets the number of cross-section (XS) lookups to perform. By
@@ -144,6 +156,11 @@ Running XSBench---------------------------------------------------------------
 		XSBench, perhaps to produce more reliable performance counter
 		data - as extending the run will decrease the percentage of
 		runtime spent on initialization.
+
+	-h <hash bins>
+
+		Sets the number of hash bins (only relevant when using the hash
+		lookup algorithm, as selected with "-G hash"). Default is 10,000.
 
 ==============================================================================
 Debugging, Optimization & Profiling
