@@ -118,7 +118,6 @@ void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned lo
 void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
 void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
 
-int binary_search( NuclideGridPoint * A, double quarry, int n, int low, int high);
 GridPoint * generate_hash_table( NuclideGridPoint ** nuclide_grids,
                           long n_isotopes, long n_gridpoints, long M );
 

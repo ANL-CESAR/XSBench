@@ -149,31 +149,3 @@ void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide
 	fclose(fp);
 
 }
-
-// Binary Search function for nuclide grid
-// Returns ptr to energy less than the quarry that is closest to the quarry
-int binary_search( NuclideGridPoint * A, double quarry, int n, int low, int high)
-{
-	int min = low;
-	int max = high;
-	int mid;
-
-	// checks to ensure we're not reading off the end of the grid
-	if( A[0].energy > quarry )
-		return 0;
-	else if( A[n-1].energy < quarry )
-		return n-2;
-
-	// Begins binary search
-	while( max >= min )
-	{
-		mid = min + floor( (max-min) / 2.0);
-		if( A[mid].energy < quarry )
-			min = mid+1;
-		else if( A[mid].energy > quarry )
-			max = mid-1;
-		else
-			return mid;
-	}
-	return max;
-}
