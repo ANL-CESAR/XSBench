@@ -52,11 +52,20 @@ NEW IN VERSION 17
   to alter the number of particle histories they want to simulate.
   This can be controlled with the "-p" command line argument.
   By default, 500,000 particle histories will be simulated.
+  This is now the recommended argument for users to adjust if
+  the want to increase/decrease the runtime of the problem. Real
+  MC simulations may use anywhere from O(10^5) to O(10^10)
+  particles per power iteration, so a wide range of values here
+  is acceptable. 
 
 - (Option) The number of lookups to perform per particle history.
   This is the "-l" option, which defaults to 34.
   This option previously referred to the total number of lookups,
   but now refers to the number of lookups per particle.
+  The default value reflects the average number of XS lookups that
+  a particle will need over its lifetime in a light water reactor.
+  One may want to adjust this value if targeting a different
+  reactor type.
 
 - (Defaults) Due to the addition of the particle abstraction, the
   default parameters were changed slightly. With a new default of
