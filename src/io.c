@@ -40,7 +40,7 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 	unsigned long long vhash )
 {
 	// Calculate Lookups per sec
-	int lookups_per_sec = (int) ((double) in.lookups / runtime);
+	int lookups_per_sec = (int) ((double) in.lookups * in.particles / runtime);
 	
 	// If running in MPI, reduce timing statistics and calculate average
 	#ifdef MPI
@@ -69,12 +69,28 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		fancy_int(total_lookups / nprocs);
 		#else
 		printf("Runtime:     %.3lf seconds\n", runtime);
-		printf("Lookups:     "); fancy_int(in.lookups);
+		printf("Lookups:     "); fancy_int(in.lookups * in.particles);
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
-		printf("Verification checksum: %llu\n", vhash);
+
+		unsigned long long large = 779372;
+		unsigned long long small = 317697; 
+		if( strcmp(in.HM, "large") == 0 )
+		{
+			if( vhash == large )
+				printf("Verification checksum: %llu (Valid)\n", vhash);
+			else
+				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
+		}
+		else if( strcmp(in.HM, "small") == 0 )
+		{
+			if( vhash == small )
+				printf("Verification checksum: %llu (Valid)\n", vhash);
+			else
+				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
+		}
 		#endif
 		border_print();
 
@@ -120,7 +136,9 @@ void print_inputs(Inputs in, int nprocs, int version )
 		printf("Unionized Energy Gridpoints:  ");
 		fancy_int(in.n_isotopes*in.n_gridpoints);
 	}
-	printf("XS Lookups:                   "); fancy_int(in.lookups);
+	printf("Particle Histories:           "); fancy_int(in.particles);
+	printf("XS Lookups per Particle:      "); fancy_int(in.lookups);
+	printf("Total XS Lookups:             "); fancy_int(in.lookups * in.particles);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
 	printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
@@ -171,9 +189,10 @@ void print_CLI_error(void)
 	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)\n");
 	printf("  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)\n");
 	printf("  -G <grid type>   Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
-	printf("  -l <lookups>     Number of Cross-section (XS) lookups\n");
+	printf("  -p <particles>   Number of particle histories\n");
+	printf("  -l <lookups>     Number of Cross-section (XS) lookups per particle history\n");
 	printf("  -h <hash bins>   Number of hash bins (only relevant when used with \"-G hash\")\n");
-	printf("Default is equivalent to: -s large -l 15000000 -G unionized\n");
+	printf("Default is equivalent to: -s large -l 34 -p 500000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
 }
@@ -190,9 +209,12 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// defaults to 11303 (corresponding to H-M Large benchmark)
 	input.n_gridpoints = 11303;
+
+	// defaults to 500,000
+	input.particles = 500000;
 	
-	// defaults to 15,000,000
-	input.lookups = 15000000;
+	// defaults to 34
+	input.lookups = 34;
 	
 	// default to unionized grid
 	input.grid_type = UNIONIZED;
@@ -249,6 +271,14 @@ Inputs read_CLI( int argc, char * argv[] )
 		{
 			if( ++i < argc )
 				input.hash_bins = atoi(argv[i]);
+			else
+				print_CLI_error();
+		}
+		// particles (-p)
+		else if( strcmp(arg, "-p") == 0 )
+		{
+			if( ++i < argc )
+				input.particles = atoi(argv[i]);
 			else
 				print_CLI_error();
 		}

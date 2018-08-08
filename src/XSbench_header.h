@@ -45,6 +45,7 @@ typedef struct{
 	char * HM;
 	int grid_type; // 0: Unionized Grid (default)    1: Nuclide Grid
 	int hash_bins;
+	int particles;
 } Inputs;
 
 #define UNIONIZED 0
@@ -111,7 +112,7 @@ Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 double rn_v(void);
 double round_double( double input );
-unsigned int hash(unsigned char *str, int nbins);
+unsigned int hash(char *str, int nbins);
 size_t estimate_mem_usage( Inputs in );
 void print_inputs(Inputs in, int nprocs, int version);
 void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );

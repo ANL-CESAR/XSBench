@@ -71,7 +71,7 @@ double rn_v(void)
 	return ret;
 }
 
-unsigned int hash(unsigned char *str, int nbins)
+unsigned int hash(char *str, int nbins)
 {
 	unsigned int hash = 5381;
 	int c;

@@ -1,4 +1,75 @@
 =====================================================================
+NEW IN VERSION 17
+=====================================================================
+- In previous versions of XSBench, it was assumed that the method
+  of parallelism in the app would not be altered, as the app was
+  written to respect some loop dependencies of fully featured MC
+  applications. However, to foster more experimentation with
+  different methods of parallelizing the XS lookup kernel, we have
+  decided to add an extra loop (over particles) into XSBench so that
+  loop dependencies can be explicit in XSBench. This should make it
+  easier for people to optimize or port XSBench without worry that
+  they are breaking any implicit loop dependencies. All loop 
+  dependencies should now be apparent without requiring any knowledge
+  of full MC applications.
+
+  From a performance standpoint, the change does not really affect
+  anything regarding default performance, so performance results for
+  CPUs (run without modification of the source code) should be
+  virtually identical between v16 and v17.
+
+  XSBench now has its default OpenMP thread level parallelism
+  expressed over independent particle histories. Each particle
+  then executes 34 macro_xs lookups, which are dependent, meaning
+  that this loop cannot be parallelized as each iteration is
+  dependent on results from the previous iteration. For each
+  macro_xs, there is an independent inner loop over micro_xs lookups,
+  which is not parallelized by default in XSBench, but could be
+  if desired provided that atomic or controlled writes are used
+  for the reduction of the macroscopic XS vector.
+
+- (Performance) To re-iterate, there is no expected performance
+  change for CPU architectures running the default code. The addition
+  of the particle loop into the code was done only to allow those
+  altering the code to more transparently see loop dependencies as as
+  to avoid parallelizing or pre-processing loops in a manner which
+  would not be possible in a real MC app.
+
+- (Option) In support of this change, the user now has the ability
+  to alter the number of particle histories they want to simulate.
+  This can be controlled with the "-p" command line argument.
+  By default, 500,000 particle histories will be simulated.
+
+- (Option) The number of lookups to perform per particle history.
+  This is the "-l" option, which defaults to 34.
+  This option previously referred to the total number of lookups,
+  but now refers to the number of lookups per particle.
+
+- (Defaults) Due to the addition of the particle abstraction, the
+  default parameters were changed slightly. With a new default of
+  500,000 particles and 34 lookups/particle, a total of 17 million
+  XS lookups will be performed under the default configuration. This
+  is slightly larger to what was seen in v16, which only performed
+  15 million lookups.
+
+- (Optimization) Verification mode is now a lot faster due to how
+  the loop dependencies have been incorporated explicity into the
+  code. Verification mode no longer requires different threads to
+  share a locked RNG -- rather, the random seed is particle specific
+  so results should be consistent regardless of which thread is
+  handling which particle. In practice, I have found that verifcation
+  mode no longer results in a significant slow down. However, when
+  gathering performance results, it is still probably best not to
+  use verification mode, and to only use it after making changes to
+  the code to ensure it is getting the correct answer and that no
+  loop dependencies have been violated.
+
+- (IO Improvement) Verification mode now automatically checks against
+  the expected hash, rather than forcing the user to loop up the
+  correct hash from the readme to manually check. It will also warn
+  the user if an incorrect hash is generated.
+
+=====================================================================
 NEW IN VERSION 16
 =====================================================================
 - (Feature) Added in an alternative XS lookup algorithm (known

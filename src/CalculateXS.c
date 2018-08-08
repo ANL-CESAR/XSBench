@@ -135,6 +135,9 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// looked up & interpolatied (via calculate_micro_xs). Then, the
 	// micro XS is multiplied by the concentration of that nuclide
 	// in the material, and added to the total macro XS array.
+	// (Independent -- though if parallelizing, must use atomic operations
+	//  or otherwise control access to the xs_vector and macro_xs_vector to
+	//  avoid simulataneous writing to the same data structure)
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
 		p_nuc = mats[mat][j];

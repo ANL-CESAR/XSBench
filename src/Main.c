@@ -9,11 +9,10 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	int version = 16;
+	int version = 17;
 	int mype = 0;
-	int i, thread, mat;
-	unsigned long seed;
-	double omp_start, omp_end, p_energy;
+	int thread;
+	double omp_start, omp_end;
 	unsigned long long vhash = 0;
 	int nprocs = 1;
 
@@ -81,7 +80,7 @@ int main( int argc, char* argv[] )
 										   in.n_gridpoints * sizeof( GridPoint ) );
 		index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
 										   * in.n_isotopes * sizeof(int));
-		for( i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
+		for( int i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
 			energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
 		#endif
 
@@ -152,7 +151,7 @@ int main( int argc, char* argv[] )
 
 	// OpenMP compiler directives - declaring variables as shared or private
 	#pragma omp parallel default(none) \
-	private(i, thread, p_energy, mat, seed) \
+	private(thread) \
 	shared( in, energy_grid, nuclide_grids, \
 	        mats, concs, num_nucs, mype, vhash) 
 	{	
@@ -166,67 +165,75 @@ int main( int argc, char* argv[] )
 		}
 		#endif
 
-		double macro_xs_vector[5];
-		double * xs = (double *) calloc(5, sizeof(double));
-
 		// Initialize RNG seeds for threads
 		thread = omp_get_thread_num();
-		seed   = (thread+1)*19+17;
 
-		// XS Lookup Loop
+		// Particle loop
+		// (independent - can be processed in any order and in parallel)
 		#pragma omp for schedule(dynamic)
-		for( i = 0; i < in.lookups; i++ )
+		for( int p = 0; p < in.particles; p++ )
 		{
-			// Status text
-			if( INFO && mype == 0 && thread == 0 && i % 1000 == 0 )
-				printf("\rCalculating XS's... (%.0lf%% completed)",
-						(i / ( (double)in.lookups / (double) in.nthreads ))
-						/ (double) in.nthreads * 100.0);
+			// Particles are seeded by their particle ID
+			unsigned long seed = (p+1)*13371337;
 
 			// Randomly pick an energy and material for the particle
-			#ifdef VERIFICATION
-			#pragma omp critical
-			{
-				p_energy = rn_v();
-				mat      = pick_mat(&seed); 
-			}
-			#else
-			p_energy = rn(&seed);
-			mat      = pick_mat(&seed); 
-			#endif
-			
-			// debugging
-			//printf("E = %lf mat = %d\n", p_energy, mat);
-				
-			// This returns the macro_xs_vector, but we're not going
-			// to do anything with it in this program, so return value
-			// is written over.
-			calculate_macro_xs( p_energy, mat, in.n_isotopes,
-								in.n_gridpoints, num_nucs, concs,
-								energy_grid, nuclide_grids, mats,
-								macro_xs_vector, in.grid_type, in.hash_bins );
-			
-			// Copy results from above function call onto heap
-			// so that compiler cannot optimize function out
-			// (only occurs if -flto flag is used)
-			memcpy(xs, macro_xs_vector, 5*sizeof(double));
+			double p_energy = rn(&seed);
+			int mat      = pick_mat(&seed); 
 
-			// Verification hash calculation
-			// This method provides a consistent hash accross
-			// architectures and compilers.
-			#ifdef VERIFICATION
-			char line[256];
-			sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
-			       p_energy, mat,
-				   macro_xs_vector[0],
-				   macro_xs_vector[1],
-				   macro_xs_vector[2],
-				   macro_xs_vector[3],
-				   macro_xs_vector[4]);
-			unsigned long long vhash_local = hash(line, 10000);
-			#pragma omp atomic
-			vhash += vhash_local;
-			#endif
+			// Status text
+			if( INFO && mype == 0 && thread == 0 && p % 100 == 0 )
+				printf("\rCalculating XS's... (%.0lf%% completed)",
+						(p / ( (double)in.particles / (double) in.nthreads ))
+						/ (double) in.nthreads * 100.0);
+
+			// XS Lookup Loop
+			// (dependent! Next iteration uses data computed in previous iter.)
+			for( int i = 0; i < in.lookups; i++ )
+			{
+				// debugging
+				//printf("E = %lf mat = %d\n", p_energy, mat);
+				
+				double macro_xs_vector[5] = {0};
+					
+				// This returns the macro_xs_vector, but we're not going
+				// to do anything with it in this program, so return value
+				// is written over.
+				calculate_macro_xs( p_energy, mat, in.n_isotopes,
+									in.n_gridpoints, num_nucs, concs,
+									energy_grid, nuclide_grids, mats,
+									macro_xs_vector, in.grid_type, in.hash_bins );
+				
+				// Verification hash calculation
+				// This method provides a consistent hash accross
+				// architectures and compilers.
+				#ifdef VERIFICATION
+				char line[256];
+				sprintf(line, "%.5lf %d %.5lf %.5lf %.5lf %.5lf %.5lf",
+					   p_energy, mat,
+					   macro_xs_vector[0],
+					   macro_xs_vector[1],
+					   macro_xs_vector[2],
+					   macro_xs_vector[3],
+					   macro_xs_vector[4]);
+				unsigned long long vhash_local = hash(line, 10000);
+				#pragma omp atomic
+				vhash += vhash_local;
+				#endif
+
+				// Randomly pick next energy and material for the particle
+				// Also incorporates results from macro_xs lookup to
+				// enforce loop dependency.
+				// In a real MC app, this dependency is expressed in terms
+				// of branching physics sampling, whereas here we are just
+				// artificially enforcing this dependence based on altering
+				// the seed
+				for( int x = 0; x < 5; x++ )
+					seed += macro_xs_vector[x] * (x+1)*1337*1337;
+
+				p_energy = rn(&seed);
+				mat      = pick_mat(&seed); 
+
+			}
 		}
 
 		// Prints out thread local PAPI counters
@@ -256,6 +263,9 @@ int main( int argc, char* argv[] )
 	#endif
 
 	omp_end = omp_get_wtime();
+
+	// Final Hash Step
+	vhash = vhash % 1000000;
 	
 	// Print / Save Results and Exit
 	print_results( in, mype, omp_end-omp_start, nprocs, vhash );
