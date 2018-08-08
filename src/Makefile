@@ -2,14 +2,14 @@
 # User Options
 #===============================================================================
 
-COMPILER    = intel
+COMPILER    = gnu
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
 PAPI        = no
 VEC_INFO    = no
-VERIFY      = yes
+VERIFY      = no
 BENCHMARK   = no
 BINARY_DUMP = no
 BINARY_READ = no
