@@ -75,8 +75,8 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		#endif
 		#ifdef VERIFICATION
 
-		unsigned long long large = 779372;
-		unsigned long long small = 317697; 
+		unsigned long long large = 76214;
+		unsigned long long small = 211645; 
 		if( strcmp(in.HM, "large") == 0 )
 		{
 			if( vhash == large )

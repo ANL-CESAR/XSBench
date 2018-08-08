@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = gnu
+COMPILER    = intel
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -49,7 +49,7 @@ endif
 # Intel Compiler
 ifeq ($(COMPILER),intel)
   CC = icc
-  CFLAGS += -openmp 
+  CFLAGS += -qopenmp 
 endif
 
 # BG/Q gcc Cross-Compiler

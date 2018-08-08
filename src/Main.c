@@ -150,10 +150,12 @@ int main( int argc, char* argv[] )
 	#endif	
 
 	// OpenMP compiler directives - declaring variables as shared or private
+	// The reduction is only needed when in verification mode.
 	#pragma omp parallel default(none) \
 	private(thread) \
 	shared( in, energy_grid, nuclide_grids, \
-	        mats, concs, num_nucs, mype, vhash) 
+	        mats, concs, num_nucs, mype) \
+	reduction(+:vhash)
 	{	
 		// Initialize parallel PAPI counters
 		#ifdef PAPI
@@ -165,6 +167,8 @@ int main( int argc, char* argv[] )
 		}
 		#endif
 
+		double * xs = (double *) calloc(5, sizeof(double));
+
 		// Initialize RNG seeds for threads
 		thread = omp_get_thread_num();
 
@@ -174,7 +178,7 @@ int main( int argc, char* argv[] )
 		for( int p = 0; p < in.particles; p++ )
 		{
 			// Particles are seeded by their particle ID
-			unsigned long seed = (p+1)*13371337;
+			unsigned long seed = ((unsigned long) p+ (unsigned long)1)* (unsigned long) 13371337;
 
 			// Randomly pick an energy and material for the particle
 			double p_energy = rn(&seed);
@@ -202,6 +206,14 @@ int main( int argc, char* argv[] )
 									in.n_gridpoints, num_nucs, concs,
 									energy_grid, nuclide_grids, mats,
 									macro_xs_vector, in.grid_type, in.hash_bins );
+
+				// Copy results from above function call onto heap
+				// so that compiler cannot optimize function out
+				// (only occurs if -flto flag is used)
+				// This operation is only done to avoid optimizing out
+				// calculate_macro_xs -- we do not care about what is
+				// in the "xs" array
+				memcpy(xs, macro_xs_vector, 5*sizeof(double));
 				
 				// Verification hash calculation
 				// This method provides a consistent hash accross
@@ -216,7 +228,7 @@ int main( int argc, char* argv[] )
 					   macro_xs_vector[3],
 					   macro_xs_vector[4]);
 				unsigned long long vhash_local = hash(line, 10000);
-				#pragma omp atomic
+
 				vhash += vhash_local;
 				#endif
 
