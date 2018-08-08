@@ -31,9 +31,22 @@ NEW IN VERSION 17
 - (Performance) To re-iterate, there is no expected performance
   change for CPU architectures running the default code. The addition
   of the particle loop into the code was done only to allow those
-  altering the code to more transparently see loop dependencies as as
+  altering the code to more transparently see loop dependencies as
   to avoid parallelizing or pre-processing loops in a manner which
   would not be possible in a real MC app.
+
+  There is a slight change in performance in the smaller problem
+  size due to the OpenMP dynamic work chunk size. In v16, this was
+  set as 1 macro_xs lookup per chunk. In v17, as we are now
+  parallelizing over particle histories, the minimum chunk size
+  is now effectively 34 macro_xs lookups. For the large problem,
+  the thread work scheduling overhead is small compared to the
+  cost of a macro_xs lookup, so there isn't any difference. It's
+  just in the small problem size where the scheduling overhead
+  begins to be significant so the performance difference between
+  v16 and v17 shows up. v16 can be made equivalent in performance
+  to v17 by simply increasing the dynamic chunk size on the
+  macro_xs OpenMP loop.
 
 - (Option) In support of this change, the user now has the ability
   to alter the number of particle histories they want to simulate.

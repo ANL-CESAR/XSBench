@@ -77,11 +77,12 @@ Running XSBench---------------------------------------------------------------
 	Options include:
 	  -t <threads>     Number of OpenMP threads to run
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)
-	  -g <gridpoints>  Number of gridpoints per nuclide
+	  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)
 	  -G <grid type>   Grid search type (unionized, nuclide, hash). Defaults to unionized.
-	  -l <lookups>     Number of Cross-section (XS) lookups
+	  -p <particles>   Number of particle histories
+	  -l <lookups>     Number of Cross-section (XS) lookups per particle history
 	  -h <hash bins>   Number of hash bins (only relevant when used with "-G hash")
-	Default (no arguments given) is equivalent to: -s large -l 15000000 -G unionized
+	Default is equivalent to: -s large -l 34 -p 500000 -G unionized
 
 	-t <threads>
 
@@ -148,14 +149,26 @@ Running XSBench---------------------------------------------------------------
 		carlo codes. Trans. Am. Nucl. Soc., 111:659–662, 2014.
 		http://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-14-27037
 
-	-l <lookups>
+	-p <particles>
 		
-		Sets the number of cross-section (XS) lookups to perform. By
-		default, this value is set to 15,000,000. Users may want to
+		Sets the number of particle histories to simulate.
+		By default, this value is set to 500,000. Users may want to
 		increase this value if they wish to extend the runtime of
 		XSBench, perhaps to produce more reliable performance counter
 		data - as extending the run will decrease the percentage of
-		runtime spent on initialization.
+		runtime spent on initialization. Real MC simulations in a full
+		application may use up to several billion particles per generation,
+		so there is great flexibility in this variable.
+
+	-l <lookups>
+		
+		Sets the number of cross-section (XS) lookups to perform per particle.
+		By default, this value is set to 34, which represents the average
+		number of XS lookups per particle over the course of its lifetime in
+		a light water reactor problem. Users should only alter this value if
+		they are trying to capture the behavior of a different type of reactor
+		(e.g., one with a fast spectrum), where the number of lookups per
+		history may be different.
 
 	-h <hash bins>
 
@@ -254,23 +267,14 @@ then be verified against hashes that other versions or configurations of
 the code generate. For instance, running XSBench with 4 threads vs 8 threads
 (on a machine that supports that configuration) should generate the
 same hash number. Changing the model / run parameters should NOT generate
-the same hash number (i.e., increasing the number of lookups, number
+the same hash number (i.e., increasing the number of particles, number
 of gridpoints, etc, will result in different hashes). 
 
-Verification mode uses a RNG with a static seed. The randomized lookup
-parameters are generated within a critical region. This ensures that the
-same set of lookups are performed regardless of the number of threads
-used. Then, after each lookup is completed, the lookup parameters and
-the cross section vector are hashed together. This local hash is then
-atomically added to a global running hash.
-
-Note that the verification mode runs much slower, due to the use of
-atomics within the threading loop. 
-
-Below are the expected checksums for default runs of each size (-s):
-
-small : 74966788162
-large : 74994938929 
+Note that the verification mode runs a little slower, due to need to hash
+each macroscopic cross section result. Therefore, performance measurements
+should generally not be made when verification mode is on. Rather,
+verification mode should be used to ensure any changes to the code have not
+broken it, and then be disabled before performance metrics are recorded.
 
 ==============================================================================
 PAPI Performance Counters
