@@ -29,7 +29,7 @@ NEW IN VERSION 18
   collected with the event mode in v18. On most CPU architectures
   and with most compilers, the history and event based methods run
   in approximately the same time, with some CPUs showing a small
-  speedup with the event based method.
+  (less than 20%) speedup with the event based method.
 
 - Removed the "benchmark" feature that tested the code on different
   numbers of threads. This was removed as it can easily be implemented
