@@ -259,6 +259,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// Check if user sets these
 	int user_g = 0;
+
+	int default_lookups = 1;
+	int default_particles = 1;
 	
 	// Collect Raw Input
 	for( int i = 1; i < argc; i++ )
@@ -299,8 +302,11 @@ Inputs read_CLI( int argc, char * argv[] )
 			{
 				input.simulation_method = EVENT_BASED;
 				// Also resets default # of lookups
-				input.lookups =  input.lookups * input.particles;
-				input.particles = 0;
+				if( default_lookups && default_particles )
+				{
+					input.lookups =  input.lookups * input.particles;
+					input.particles = 0;
+				}
 			}
 			else
 				print_CLI_error();
@@ -309,7 +315,10 @@ Inputs read_CLI( int argc, char * argv[] )
 		else if( strcmp(arg, "-l") == 0 )
 		{
 			if( ++i < argc )
+			{
 				input.lookups = atoi(argv[i]);
+				default_lookups = 0;
+			}
 			else
 				print_CLI_error();
 		}
@@ -325,7 +334,10 @@ Inputs read_CLI( int argc, char * argv[] )
 		else if( strcmp(arg, "-p") == 0 )
 		{
 			if( ++i < argc )
+			{
 				input.particles = atoi(argv[i]);
+				default_particles = 0;
+			}
 			else
 				print_CLI_error();
 		}
