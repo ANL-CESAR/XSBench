@@ -9,8 +9,7 @@ PROFILE     = no
 MPI         = no
 PAPI        = no
 VEC_INFO    = no
-VERIFY      = no
-BENCHMARK   = no
+VERIFY      = yes
 BINARY_DUMP = no
 BINARY_READ = no
 
@@ -23,6 +22,7 @@ program = XSBench
 source = \
 Main.c \
 io.c \
+Simulation.c \
 CalculateXS.c \
 GridInit.c \
 XSutils.c \
@@ -98,12 +98,6 @@ endif
 # Verification of results mode
 ifeq ($(VERIFY),yes)
   CFLAGS += -DVERIFICATION
-endif
-
-# Adds outer 'benchmarking' loop to do multiple trials for
-# 1 < threads <= max_threads
-ifeq ($(BENCHMARK),yes)
-  CFLAGS += -DBENCHMARK
 endif
 
 # Binary dump for file I/O based initialization

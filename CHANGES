@@ -1,4 +1,50 @@
 =====================================================================
+NEW IN VERSION 18
+=====================================================================
+- (Feature) Added in an option to
+  use an event based simulation algorithm as opposed to the default
+  history based algorithm. This mode can be enabled with the "-m
+  event" command line option. The central difference between the
+  default history based algorithm and the event based algorithm is
+  the dependence or independence of macroscopic cross section
+  lookups. In the default history based method, the simulation
+  parallelism is expressed over a large number of independent
+  particle "histories", with each particle history requiring (by
+  default) 34 sequential and dependent macroscopic cross section
+  lookups to be executed. In the event based method, all macroscopic
+  cross sections are pooled together in a way that allows them to
+  be executed independently in any order. On CPU architectures,
+  both algorithms run in approximately the same speed, though in
+  full Monte Carlo applications there are some added costs associated
+  with the event based method (namely, the need to frequently store
+  and load particle states) that is not represented in XSBench.
+  However, the model event based algorithm in XSBench is useful for
+  examining how the dependence or independence of the loop over
+  macroscopic cross sections may affect performance on different
+  computer architectures.
+
+  The event based mode in XSBench is very similar to the algorithm
+  expressed prior to v16 and before, so performance results collected
+  with v16 and previous should be comparable to performance results
+  collected with the event mode in v18. On most CPU architectures
+  and with most compilers, the history 
+
+- Removed the "benchmark" feature that tested the code on different
+  numbers of threads. This was removed as it can easily be implemented
+  in shell script form, and unnecessarily complicated the code.
+
+- With the addition of the different event and history based options,
+  the main function of the code has been broken down into some
+  smaller functions. Notably, the main parallel simulation phase
+  has been moved to a history and event based function in the
+  "Simulation.c" file.
+
+- Slight change to some integer castings in the verification mode
+  to get consitent results between gnu and intel compilers. This
+  changed the correct verification checksums, which are automatically
+  checked against.
+
+=====================================================================
 NEW IN VERSION 17
 =====================================================================
 - In previous versions of XSBench, it was assumed that the method

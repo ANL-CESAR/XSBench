@@ -6,7 +6,7 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 17
+                                   Version 18
 
 ==============================================================================
 Contact Information
@@ -75,6 +75,7 @@ Running XSBench---------------------------------------------------------------
 
 	Usage: ./XSBench <options>
 	Options include:
+	  -m <simulation method>   Simulation method (history, event)
 	  -t <threads>     Number of OpenMP threads to run
 	  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)
 	  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)
@@ -83,6 +84,21 @@ Running XSBench---------------------------------------------------------------
 	  -l <lookups>     Number of Cross-section (XS) lookups per particle history
 	  -h <hash bins>   Number of hash bins (only relevant when used with "-G hash")
 	Default is equivalent to: -s large -l 34 -p 500000 -G unionized
+
+	-m <simulation method>
+
+		Sets the simulation method, either "history" or "event". These
+		options represent the history based or event based algorithms
+		respectively. The default is the history based method. These two
+		methods represent different methods of parallelizing the Monte
+		Carlo transport method. In the history based method, the central
+		mode of parallelism is expressed over particles, which each require
+		some number of macroscopic cross sections to be executed in series
+		and in a dependent order. The event based method expresses its
+		parallelism over a large pool of independent macroscopic cross
+		section lookups that can be executed in any order without dependence.
+		They key difference between the two methods is the dependence/independence
+		of the macroscopic cross section loop.
 
 	-t <threads>
 
@@ -192,7 +208,6 @@ PAPI      = no
 VEC_INFO  = no
 VERIFY    = no
 PAUSE     = no
-BENCHMARK = no
 BINARY_DUMP = no
 BINARY_READ = no
 
@@ -213,10 +228,6 @@ BINARY_READ = no
    compilation.
 
 -> VERIFY enables a verification mode, the details of which are explained below.
-
--> Benchmark mode tests all possible thread configurations on the given
-   computer. I.e., if your computer supports 16 threads, XSBench will
-   automatically do 1 <= nthreads <= 16 lookup loops
 
 -> Binary dump mode writes a binary file containing a randomized data set
    of cross sections. This can be used in tandem with the binary read mode

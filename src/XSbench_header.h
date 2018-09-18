@@ -46,11 +46,15 @@ typedef struct{
 	int grid_type; // 0: Unionized Grid (default)    1: Nuclide Grid
 	int hash_bins;
 	int particles;
+	int simulation_method;
 } Inputs;
 
 #define UNIONIZED 0
 #define NUCLIDE 1
 #define HASH 2
+
+#define HISTORY_BASED 1
+#define EVENT_BASED 2
 
 // Function Prototypes
 void logo(int version);
@@ -124,5 +128,8 @@ GridPoint * generate_hash_table( NuclideGridPoint ** nuclide_grids,
 
 void initialization_do_not_profile_set_hash( GridPoint * restrict energy_grid, NuclideGridPoint ** restrict nuclide_grids,
                     long n_isotopes, long n_gridpoints );
+
+void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
+void run_history_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
 
 #endif

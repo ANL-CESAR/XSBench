@@ -40,7 +40,12 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 	unsigned long long vhash )
 {
 	// Calculate Lookups per sec
-	int lookups_per_sec = (int) ((double) in.lookups * in.particles / runtime);
+	int lookups = 0;
+	if( in.simulation_method == HISTORY_BASED )
+		lookups = in.lookups * in.particles;
+	else if( in.simulation_method == EVENT_BASED )
+		lookups = in.lookups;
+	int lookups_per_sec = (int) ((double) lookups / runtime);
 	
 	// If running in MPI, reduce timing statistics and calculate average
 	#ifdef MPI
@@ -69,14 +74,24 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		fancy_int(total_lookups / nprocs);
 		#else
 		printf("Runtime:     %.3lf seconds\n", runtime);
-		printf("Lookups:     "); fancy_int(in.lookups * in.particles);
+		printf("Lookups:     "); fancy_int(lookups);
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
 		#endif
 		#ifdef VERIFICATION
 
-		unsigned long long large = 76214;
-		unsigned long long small = 211645; 
+		unsigned long long large = 0;
+		unsigned long long small = 0; 
+		if( in.simulation_method == EVENT_BASED )
+		{
+			small = 166267;
+			large = 890568;
+		}
+		else if( in.simulation_method == HISTORY_BASED )
+		{
+			large = 76214;
+			small = 211645; 
+		}
 		if( strcmp(in.HM, "large") == 0 )
 		{
 			if( vhash == large )
@@ -114,6 +129,10 @@ void print_inputs(Inputs in, int nprocs, int version )
 	#ifdef VERIFICATION
 	printf("Verification Mode:            on\n");
 	#endif
+	if( in.simulation_method == EVENT_BASED )
+		printf("Simulation Method:            Event Based\n");
+	else
+		printf("Simulation Method:            History Based\n");
 	if( in.grid_type == NUCLIDE )
 		printf("Grid Type:                    Nuclide Grid\n");
 	else if( in.grid_type == UNIONIZED )
@@ -136,9 +155,12 @@ void print_inputs(Inputs in, int nprocs, int version )
 		printf("Unionized Energy Gridpoints:  ");
 		fancy_int(in.n_isotopes*in.n_gridpoints);
 	}
-	printf("Particle Histories:           "); fancy_int(in.particles);
-	printf("XS Lookups per Particle:      "); fancy_int(in.lookups);
-	printf("Total XS Lookups:             "); fancy_int(in.lookups * in.particles);
+	if( in.simulation_method == HISTORY_BASED )
+	{
+		printf("Particle Histories:           "); fancy_int(in.particles);
+		printf("XS Lookups per Particle:      "); fancy_int(in.lookups);
+	}
+	printf("Total XS Lookups:             "); fancy_int(in.lookups);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
 	printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
@@ -185,14 +207,15 @@ void print_CLI_error(void)
 {
 	printf("Usage: ./XSBench <options>\n");
 	printf("Options include:\n");
-	printf("  -t <threads>     Number of OpenMP threads to run\n");
-	printf("  -s <size>        Size of H-M Benchmark to run (small, large, XL, XXL)\n");
-	printf("  -g <gridpoints>  Number of gridpoints per nuclide (overrides -s defaults)\n");
-	printf("  -G <grid type>   Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
-	printf("  -p <particles>   Number of particle histories\n");
-	printf("  -l <lookups>     Number of Cross-section (XS) lookups per particle history\n");
-	printf("  -h <hash bins>   Number of hash bins (only relevant when used with \"-G hash\")\n");
-	printf("Default is equivalent to: -s large -l 34 -p 500000 -G unionized\n");
+	printf("  -m <simulation method>   Simulation method (history, event)\n");
+	printf("  -t <threads>             Number of OpenMP threads to run\n");
+	printf("  -s <size>                Size of H-M Benchmark to run (small, large, XL, XXL)\n");
+	printf("  -g <gridpoints>          Number of gridpoints per nuclide (overrides -s defaults)\n");
+	printf("  -G <grid type>           Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
+	printf("  -p <particles>           Number of particle histories\n");
+	printf("  -l <lookups>             History Based: Number of Cross-section (XS) lookups per particle. Event Based: Total number of XS lookups.\n");
+	printf("  -h <hash bins>           Number of hash bins (only relevant when used with \"-G hash\")\n");
+	printf("Default is equivalent to: -m history -s large -l 34 -p 500000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
 }
@@ -200,6 +223,9 @@ void print_CLI_error(void)
 Inputs read_CLI( int argc, char * argv[] )
 {
 	Inputs input;
+
+	// defaults to the history based simulation method
+	input.simulation_method = HISTORY_BASED;
 	
 	// defaults to max threads on the system	
 	input.nthreads = omp_get_num_procs();
@@ -254,6 +280,27 @@ Inputs read_CLI( int argc, char * argv[] )
 			{
 				user_g = 1;
 				input.n_gridpoints = atol(argv[i]);
+			}
+			else
+				print_CLI_error();
+		}
+		// Simulation Method (-m)
+		else if( strcmp(arg, "-m") == 0 )
+		{
+			char * sim_type;
+			if( ++i < argc )
+				sim_type = argv[i];
+			else
+				print_CLI_error();
+
+			if( strcmp(sim_type, "history") == 0 )
+				input.simulation_method = HISTORY_BASED;
+			else if( strcmp(sim_type, "event") == 0 )
+			{
+				input.simulation_method = EVENT_BASED;
+				// Also resets default # of lookups
+				input.lookups =  input.lookups * input.particles;
+				input.particles = 0;
 			}
 			else
 				print_CLI_error();
@@ -313,7 +360,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	}
 
 	// Validate Input
-
+	
 	// Validate nthreads
 	if( input.nthreads < 1 )
 		print_CLI_error();
