@@ -9,7 +9,7 @@ PROFILE     = no
 MPI         = no
 PAPI        = no
 VEC_INFO    = no
-VERIFY      = yes
+VERIFY      = no
 BINARY_DUMP = no
 BINARY_READ = no
 

@@ -134,7 +134,7 @@ void run_history_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGri
 		// Particle loop 
 		// (independent - can be processed in any order and in parallel)
 		// Only present in History based method (default)
-		#pragma omp for schedule(dynamic)
+		#pragma omp for schedule(guided)
 		for( int p = 0; p < in.particles; p++ )
 		{
 			// Particles are seeded by their particle ID

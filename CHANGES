@@ -17,7 +17,7 @@ NEW IN VERSION 18
   both algorithms run in approximately the same speed, though in
   full Monte Carlo applications there are some added costs associated
   with the event based method (namely, the need to frequently store
-  and load particle states) that is not represented in XSBench.
+  and load particle states) that are not represented in XSBench.
   However, the model event based algorithm in XSBench is useful for
   examining how the dependence or independence of the loop over
   macroscopic cross sections may affect performance on different
@@ -27,7 +27,9 @@ NEW IN VERSION 18
   expressed prior to v16 and before, so performance results collected
   with v16 and previous should be comparable to performance results
   collected with the event mode in v18. On most CPU architectures
-  and with most compilers, the history 
+  and with most compilers, the history and event based methods run
+  in approximately the same time, with some CPUs showing a small
+  speedup with the event based method.
 
 - Removed the "benchmark" feature that tested the code on different
   numbers of threads. This was removed as it can easily be implemented
