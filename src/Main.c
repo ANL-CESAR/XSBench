@@ -143,8 +143,11 @@ int main( int argc, char* argv[] )
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 		run_event_based_simulation(in, energy_grid, nuclide_grids, num_nucs, mats, concs, mype, &vhash);
-	else if( in.simulation_method == HISTORY_BASED )
-		run_history_based_simulation(in, energy_grid, nuclide_grids, num_nucs, mats, concs, mype, &vhash);
+	else
+	{
+		printf("History based simulation not supported by XSBench on accelerators. Use flag \"-m event\" for event based simulation.\n");
+		exit(1);
+	}
 
 	#ifndef PAPI
 	if( mype == 0)	

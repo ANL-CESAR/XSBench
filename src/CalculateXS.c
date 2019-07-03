@@ -3,8 +3,8 @@
 // Calculates the microscopic cross section for a given nuclide & energy
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids,
+                           double * restrict egrid, int * restrict index_data,
+                           NuclideGridPoint * restrict nuclide_grids,
                            long idx, double * restrict xs_vector, int grid_type, int hash_bins ){
 	// Variables
 	double f;
@@ -15,53 +15,66 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	if( grid_type == NUCLIDE )
 	{
 		// Perform binary search on the Nuclide Grid to find the index
-		idx = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids[nuc], 0, n_gridpoints-1);
+		//idx = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids[nuc], 0, n_gridpoints-1);
+		idx = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], 0, n_gridpoints-1);
 
 		// pull ptr from nuclide grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
 		if( idx == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc][idx - 1];
+			//low = &nuclide_grids[nuc][idx - 1];
+			low = &nuclide_grids[nuc*n_gridpoints + idx - 1];
 		else
-			low = &nuclide_grids[nuc][idx];
+			//low = &nuclide_grids[nuc][idx];
+			low = &nuclide_grids[nuc*n_gridpoints + idx];
 	}
 	else if( grid_type == UNIONIZED) // Unionized Energy Grid - we already know the index, no binary search needed.
 	{
 		// pull ptr from energy grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
-		if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc] - 1];
+		//if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
+		if( index_data[idx * n_isotopes + nuc] == n_gridpoints - 1 )
+			//low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc] - 1];
+			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc] - 1];
 		else
-			low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
+			//low = &nuclide_grids[nuc][energy_grid[idx].xs_ptrs[nuc]];
+			//low = &nuclide_grids[nuc*n_gridpoints + energy_grid[idx].xs_ptrs[nuc]];
+			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc]];
 	}
 	else // Hash grid
 	{
 		// load lower bounding index
-		int u_low = energy_grid[idx].xs_ptrs[nuc];
+		//int u_low = energy_grid[idx].xs_ptrs[nuc];
+		int u_low = index_data[idx * n_isotopes + nuc];
 
 		// Determine higher bounding index
 		int u_high;
 		if( idx == hash_bins - 1 )
 			u_high = n_gridpoints - 1;
 		else
-			u_high = energy_grid[idx+1].xs_ptrs[nuc] + 1;
+			//u_high = energy_grid[idx+1].xs_ptrs[nuc] + 1;
+			u_high = index_data[(idx+1)*n_isotopes + nuc] + 1;
 
 		// Check edge cases to make sure energy is actually between these
 		// Then, if things look good, search for gridpoint in the nuclide grid
 		// within the lower and higher limits we've calculated.
-		double e_low  = nuclide_grids[nuc][u_low].energy;
-		double e_high = nuclide_grids[nuc][u_high].energy;
+		//double e_low  = nuclide_grids[nuc][u_low].energy;
+		double e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
+		double e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
 		int lower;
 		if( p_energy <= e_low )
 			lower = 0;
 		else if( p_energy >= e_high )
 			lower = n_gridpoints - 1;
 		else
-			lower = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids[nuc], u_low, u_high);
+			//lower = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids[nuc], u_low, u_high);
+			lower = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], u_low, u_high);
 
 		if( lower == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc][lower - 1];
+			//low = &nuclide_grids[nuc][lower - 1];
+			low = &nuclide_grids[nuc*n_gridpoints + lower - 1];
 		else
-			low = &nuclide_grids[nuc][lower];
+			//low = &nuclide_grids[nuc][lower];
+			low = &nuclide_grids[nuc*n_gridpoints + lower];
 	}
 	
 	high = low + 1;
@@ -100,11 +113,11 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 // Calculates macroscopic cross section based on a given material & energy 
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * restrict num_nucs,
-                         double ** restrict concs,
-                         GridPoint * restrict energy_grid,
-                         NuclideGridPoint ** restrict nuclide_grids,
-                         int ** restrict mats,
-                         double * restrict macro_xs_vector, int grid_type, int hash_bins ){
+                         double * restrict concs,
+                         double * restrict egrid, int * restrict index_data,
+                         NuclideGridPoint * restrict nuclide_grids,
+                         int * restrict mats,
+                         double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	double xs_vector[5];
 	int p_nuc; // the nuclide we are looking up
 	long idx = -1;	
@@ -120,8 +133,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// done inside of the "calculate_micro_xs" function for each different
 	// nuclide in the material.
 	if( grid_type == UNIONIZED )
-		idx = grid_search( n_isotopes * n_gridpoints, p_energy,
-	    	               energy_grid);	
+		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
 	else if( grid_type == HASH )
 	{
 		double du = 1.0 / hash_bins;
@@ -140,10 +152,10 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	//  avoid simulataneous writing to the same data structure)
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
-		p_nuc = mats[mat][j];
-		conc = concs[mat][j];
+		p_nuc = mats[mat*max_num_nucs + j];
+		conc = concs[mat*max_num_nucs + j];
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
-		                    n_gridpoints, energy_grid,
+		                    n_gridpoints, egrid, index_data,
 		                    nuclide_grids, idx, xs_vector, grid_type, hash_bins );
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
@@ -160,7 +172,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 
 // (fixed) binary search for energy on unionized energy grid
 // returns lower index
-long grid_search( long n, double quarry, GridPoint * A)
+long grid_search( long n, double quarry, double * restrict A)
 {
 	long lowerLimit = 0;
 	long upperLimit = n-1;
@@ -171,7 +183,7 @@ long grid_search( long n, double quarry, GridPoint * A)
 	{
 		examinationPoint = lowerLimit + ( length / 2 );
 		
-		if( A[examinationPoint].energy > quarry )
+		if( A[examinationPoint] > quarry )
 			upperLimit = examinationPoint;
 		else
 			lowerLimit = examinationPoint;

@@ -84,19 +84,19 @@ void initialization_do_not_profile_set_grid_ptrs( GridPoint * energy_grid, Nucli
 
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           GridPoint * restrict energy_grid,
-                           NuclideGridPoint ** restrict nuclide_grids,
+                           double * restrict egrid, int * restrict index_data,
+                           NuclideGridPoint * restrict nuclide_grids,
                            long idx, double * restrict xs_vector, int grid_type, int hash_bins );
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * restrict num_nucs,
-                         double ** restrict concs,
-                         GridPoint * restrict energy_grid,
-                         NuclideGridPoint ** restrict nuclide_grids,
-                         int ** restrict mats,
-                         double * restrict macro_xs_vector, int grid_type, int hash_bins );
+                         double * restrict concs,
+                         double * restrict egrid, int * restrict index_data,
+                         NuclideGridPoint * restrict nuclide_grids,
+                         int * restrict mats,
+                         double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 
 
-long grid_search( long n, double quarry, GridPoint * A);
+long grid_search( long n, double quarry, double * restrict A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 
 int * load_num_nucs(long n_isotopes);
