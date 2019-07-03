@@ -78,14 +78,13 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
 		#endif
-		#ifdef VERIFICATION
 
 		unsigned long long large = 0;
 		unsigned long long small = 0; 
 		if( in.simulation_method == EVENT_BASED )
 		{
-			small = 166267;
-			large = 890568;
+			small = 387203;
+			large = 666382;
 		}
 		else if( in.simulation_method == HISTORY_BASED )
 		{
@@ -106,7 +105,6 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 			else
 				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
 		}
-		#endif
 		border_print();
 
 		// For bechmarking, output lookup/s data to file
@@ -126,9 +124,6 @@ void print_inputs(Inputs in, int nprocs, int version )
 	logo(version);
 	center_print("INPUT SUMMARY", 79);
 	border_print();
-	#ifdef VERIFICATION
-	printf("Verification Mode:            on\n");
-	#endif
 	if( in.simulation_method == EVENT_BASED )
 		printf("Simulation Method:            Event Based\n");
 	else

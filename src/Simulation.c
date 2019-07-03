@@ -83,29 +83,25 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////
+	// SUMMARY: Data Structure Manifest
+	// Heap arrays (and lengths) that would need to be offloaded to an accelerator
+	////////////////////////////////////////////////////////////////////////////////
+	// int * num_nucs   :::: Length = 12
+	// double * concs_t :::: Length = length_concs
+	// int * mats_t     :::: Length = length_mats
+	// double * egrid   :::: Length = length_energy_grid
+	// int * index_data :::: Length = length_index_grid
+	// NuclideGridPoint * nuclide_grids_t :::: Length = length_nuclide_grids
+	// 
+	// Note: "egrid" and "index_data" could be of length 0, if nuclide grid only
+	// method was selected by user, i.e., if in.grid_type == NUCLIDE
+	////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////////////
 	// Begin Actual Simulation Loop 
 	////////////////////////////////////////////////////////////////////////////////
-
-	unsigned long long verification_x0 = 0;
-	unsigned long long verification_x1 = 0;
-	unsigned long long verification_x2 = 0;
-	unsigned long long verification_x3 = 0;
-	unsigned long long verification_x4 = 0;
-
-	////////////////////////////////////////////////////////////////////////////////
-	// Data Structure Manifest:
-	// Heap data, and lengths, that need to be offloaded to an accelerator
-	////////////////////////////////////////////////////////////////////////////////
-	// int * num_nucs :::: Length = 12
-	// double * concs_t :::: Length = length_concs
-	// int * mats_t :::: Length = length_mats
-	// double * egrid :::: Length = length_energy_grid (could be 0, if using nuclide grid only method)
-	// int * index_data :::: Length = length_index_grid (could be 0, if using nuclide grid only method)
-	// NuclideGridPoint * nuclide_grids_t :::: Length = length_nuclide_grids
-	////////////////////////////////////////////////////////////////////////////////
-
-	// The reduction is only needed when in verification mode.
-	#pragma omp parallel for schedule(guided) reduction(+:verification_x0, verification_x1, verification_x2, verification_x3, verification_x4)
+	unsigned long long verification = 0;
+	#pragma omp parallel for schedule(guided) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Particles are seeded by their particle ID
@@ -129,8 +125,13 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 			egrid, index_data, nuclide_grids_t, mats_t,
 			macro_xs_vector, in.grid_type, in.hash_bins, max_num_nucs );
 
-		#ifdef VERIFICATION
-		// Finds maximum XS index from lookup:
+		// For verification, and to prevent the compiler from optimizing
+		// all work out, we interrogate the returned macro_xs_vector array
+		// to find its maximum value index, then increment the verification
+		// value by that index. In this implementation, we prevent thread
+		// contention by using an OMP reduction on it. For other accelerators,
+		// a different approach might be required (e.g., atomics, reduction
+		// of thread-specific values in large array via CUDA thrust, etc)
 		double max = -1.0;
 		int max_idx = 0;
 		for(int i = 0; i < 5; i++ )
@@ -141,35 +142,7 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 				max_idx = i;
 			}
 		}
-		// Tally to verification histogram 
-		if( max_idx == 0 )
-			verification_x0++;
-		if( max_idx == 1 )
-			verification_x1++;
-		if( max_idx == 2 )
-			verification_x2++;
-		if( max_idx == 3 )
-			verification_x3++;
-		else
-			verification_x4++;
-		#endif
+		verification += max_idx;
 	}
-	#ifdef VERIFICATION
-	// Print verification histogram
-	printf("Verification Histogram:\n");
-	printf("%llu\n", verification_x0);
-	printf("%llu\n", verification_x1);
-	printf("%llu\n", verification_x2);
-	printf("%llu\n", verification_x3);
-	printf("%llu\n", verification_x4);
-	char line[256];
-	sprintf(line, "%llu %llu %llu %llu %llu",
-			verification_x0,
-			verification_x1,
-			verification_x2,
-			verification_x3,
-			verification_x4);
-	*vhash_result = hash(line, 10000);
-	#endif
-
+	*vhash_result = verification;
 }

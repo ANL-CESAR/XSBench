@@ -24,11 +24,7 @@ int main( int argc, char* argv[] )
 
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
-	#ifdef VERIFICATION
 	srand(26);
-	#else
-	srand(time(NULL));
-	#endif
 
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
@@ -51,11 +47,7 @@ int main( int argc, char* argv[] )
 
 	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 
-	#ifdef VERIFICATION
 	generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
-	#else
-	generate_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
-	#endif
 
 	// Sort grids by energy
 	#ifndef BINARY_READ
@@ -105,11 +97,7 @@ int main( int argc, char* argv[] )
 	int *num_nucs  = load_num_nucs(in.n_isotopes);
 	int **mats     = load_mats(num_nucs, in.n_isotopes);
 
-	#ifdef VERIFICATION
 	double **concs = load_concs_v(num_nucs);
-	#else
-	double **concs = load_concs(num_nucs);
-	#endif
 
 	#ifdef BINARY_DUMP
 	if( mype == 0 ) printf("Dumping data to binary file...\n");
