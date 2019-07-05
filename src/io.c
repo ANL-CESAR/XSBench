@@ -88,8 +88,8 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		}
 		else if( in.simulation_method == HISTORY_BASED )
 		{
-			large = 76214;
-			small = 211645; 
+			large = 658515;
+			small = 385793; 
 		}
 		if( strcmp(in.HM, "large") == 0 )
 		{

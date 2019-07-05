@@ -90,8 +90,7 @@ int main( int argc, char* argv[] )
 		verification = run_event_based_simulation(in, SD, mype);
 	else
 	{
-		printf("History based simulation not supported by XSBench on accelerators. Use flag \"-m event\" for event based simulation.\n");
-		exit(1);
+		verification = run_history_based_simulation(in, SD, mype);
 	}
 
 	#ifndef PAPI
