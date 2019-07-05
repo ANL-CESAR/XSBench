@@ -1,4 +1,45 @@
 =====================================================================
+NEW IN VERSION 19
+=====================================================================
+- (Feature) Ports of XSBench in a variety of accelerator oriented
+  programming models have been added to the repo. The traditional
+  OpenMP threading model of XSBench is now located in the 
+  "XSBench/src/openmp-threading" directory. The other programming
+  models are:
+
+    - OpenMP target offloading, for use with OpenMP 4.5+ compilers
+    that can target a variety of acecelerator architectures.
+
+    - CUDA for use on NVIDIA GPUs.
+
+    - OpenCL for use on CPU and accelerators. Note that this port
+      may need to be heavily re-optimized if running on a non-GPU
+      architecture.
+
+  Note that the accelerator-oriented models only implement the event
+  based model of parallelism, as this model is expected to be 
+  superior to the history-based model for accelerator architectures.
+  As such, running with the accelerator models will require the
+  "-m event" flag to be used.
+
+- (Feature) Verification mode is now default and required, so is no
+  longer an option in the Makefile. A new and faster method of
+  verifying results was developed and added, making it have much less
+  of an impact on performance than the previous methods did. As the
+  new method generates a different hash than the old one, the expected
+  has values have changed in v19.
+
+- (Feature) Changed the binary file read/write capability in XSBench
+  to be a command line argument rather than requiring re-compilation
+  with makefile flags. This can be set with the "-b <read, write>"
+  argument.
+
+- (Removal) Removed PAPI performance counters from code and Makefile.
+
+- (Removal) A number of optional/outdated Makefile options were
+  removed in an effort to clean up the code base and simplify things.
+
+=====================================================================
 NEW IN VERSION 18
 =====================================================================
 - (Feature) Added in an option to
