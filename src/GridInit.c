@@ -78,14 +78,6 @@ SimulationData flat_grid_init( Inputs in )
 	// Keep track of how much data we're allocating
 	size_t nbytes = 0;
 
-	////////////////////////////////////////////////////////////////////
-	// Initialize Materials and Concentrations
-	////////////////////////////////////////////////////////////////////
-	
-	int *num_nucs  = load_num_nucs(in.n_isotopes);
-	int **mats     = load_mats(num_nucs, in.n_isotopes);
-
-	double **concs = load_concs_v(num_nucs);
 
 
 	////////////////////////////////////////////////////////////////////
@@ -196,6 +188,25 @@ SimulationData flat_grid_init( Inputs in )
 		//energy_grid = generate_hash_table( nuclide_grids, in.n_isotopes, in.n_gridpoints, in.hash_bins );
 	}
 
+	////////////////////////////////////////////////////////////////////
+	// Initialize Materials and Concentrations
+	////////////////////////////////////////////////////////////////////
+	
+	// Set the number of nuclides in each material
+	SD.num_nucs  = load_num_nucs(in.n_isotopes);
+	SD.length_num_nucs = 12; // There are always 12 materials in XSBench
+
+	// Intialize the flattened 2D grid of material data. The grid holds
+	// a list of nuclide indices for each of the 12 material types. The
+	// grid is allocated as a full square grid, even though not all
+	// materials have the same number of nuclides.
+	SD.mats = load_mats(SD.num_nucs, in.n_isotopes, &SD.max_num_nucs);
+
+	// Intialize the flattened 2D grid of nuclide concentration data. The grid holds
+	// a list of nuclide concentrations for each of the 12 material types. The
+	// grid is allocated as a full square grid, even though not all
+	// materials have the same number of nuclides.
+	SD.concs = load_concs_v(SD.num_nucs, SD.max_num_nucs);
 
 
 	return SD;

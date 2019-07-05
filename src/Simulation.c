@@ -1,7 +1,8 @@
 #include "XSbench_header.h"
 
 //void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
-void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
+//void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
+void run_event_based_simulation(Inputs in, SimulationData SD, int mype, unsigned long long * vhash_result)
 {
 	if( mype == 0)	
 		printf("Beginning event based simulation...\n");
@@ -56,7 +57,6 @@ void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, in
 	NuclideGridPoint * nuclide_grids_t = nuclide_grids[0];
 	int length_nuclide_grids   = in.n_isotopes * in.n_gridpoints;
 
-	*/
 
 	// Convert the materials and concentrations (jagged) 2D arrays to 1D.
 	// Since they're jagged, need to figure out maximum element and allocate
@@ -87,6 +87,7 @@ void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, in
 		}
 	}
 	
+	*/
 	////////////////////////////////////////////////////////////////////////////////
 	// SUMMARY: Data Structure Manifest
 	// Heap arrays (and lengths) that would need to be offloaded to an accelerator
@@ -145,9 +146,9 @@ void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, in
 			*/
 		// Flat call
 		calculate_macro_xs( p_energy, mat, in.n_isotopes,
-			in.n_gridpoints, num_nucs, concs_t,
-			SD.unionized_energy_array, SD.index_grid, SD.nuclide_grid, mats_t,
-			macro_xs_vector, in.grid_type, in.hash_bins, max_num_nucs );
+			in.n_gridpoints, SD.num_nucs, SD.concs,
+			SD.unionized_energy_array, SD.index_grid, SD.nuclide_grid, SD.mats,
+			macro_xs_vector, in.grid_type, in.hash_bins, SD.max_num_nucs );
 
 
 		// For verification, and to prevent the compiler from optimizing

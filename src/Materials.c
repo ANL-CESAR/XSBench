@@ -31,11 +31,16 @@ int * load_num_nucs(long n_isotopes)
 }
 
 // Assigns an array of nuclide ID's to each material
-int ** load_mats( int * num_nucs, long n_isotopes )
+int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs )
 {
-	int ** mats = (int **) malloc( 12 * sizeof(int *) );
-	for( int i = 0; i < 12; i++ )
-		mats[i] = (int *) malloc(num_nucs[i] * sizeof(int) );
+	*max_num_nucs = 0;
+	int num_mats = 12;
+	for( int m = 0; m < num_mats; m++ )
+	{
+		if( num_nucs[m] > *max_num_nucs )
+			*max_num_nucs = num_nucs[m];
+	}
+	int * mats = (int *) malloc( num_mats * (*max_num_nucs) * sizeof(int) );
 
 	// Small H-M has 34 fuel nuclides
 	int mats0_Sml[] =  { 58, 59, 60, 61, 40, 42, 43, 44, 45, 46, 1, 2, 3, 7,
@@ -70,30 +75,22 @@ int ** load_mats( int * num_nucs, long n_isotopes )
 	
 	// H-M large v small dependency
 	if( n_isotopes == 68 )
-		memcpy( mats[0],  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
+		memcpy( mats,  mats0_Sml,  num_nucs[0]  * sizeof(int) );	
 	else
-		memcpy( mats[0],  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
+		memcpy( mats,  mats0_Lrg,  num_nucs[0]  * sizeof(int) );
 	
 	// Copy other materials
-	memcpy( mats[1],  mats1,  num_nucs[1]  * sizeof(int) );	
-	memcpy( mats[2],  mats2,  num_nucs[2]  * sizeof(int) );	
-	memcpy( mats[3],  mats3,  num_nucs[3]  * sizeof(int) );	
-	memcpy( mats[4],  mats4,  num_nucs[4]  * sizeof(int) );	
-	memcpy( mats[5],  mats5,  num_nucs[5]  * sizeof(int) );	
-	memcpy( mats[6],  mats6,  num_nucs[6]  * sizeof(int) );	
-	memcpy( mats[7],  mats7,  num_nucs[7]  * sizeof(int) );	
-	memcpy( mats[8],  mats8,  num_nucs[8]  * sizeof(int) );	
-	memcpy( mats[9],  mats9,  num_nucs[9]  * sizeof(int) );	
-	memcpy( mats[10], mats10, num_nucs[10] * sizeof(int) );	
-	memcpy( mats[11], mats11, num_nucs[11] * sizeof(int) );	
-	
-	// test
-	/*
-	for( int i = 0; i < 12; i++ )
-		for( int j = 0; j < num_nucs[i]; j++ )
-			printf("material %d - Nuclide %d: %d\n",
-			       i, j, mats[i][j]);
-	*/
+	memcpy( mats + *max_num_nucs * 1,  mats1,  num_nucs[1]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 2,  mats2,  num_nucs[2]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 3,  mats3,  num_nucs[3]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 4,  mats4,  num_nucs[4]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 5,  mats5,  num_nucs[5]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 6,  mats6,  num_nucs[6]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 7,  mats7,  num_nucs[7]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 8,  mats8,  num_nucs[8]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 9,  mats9,  num_nucs[9]  * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 10, mats10, num_nucs[10] * sizeof(int) );	
+	memcpy( mats + *max_num_nucs * 11, mats11, num_nucs[11] * sizeof(int) );	
 
 	return mats;
 }
@@ -121,16 +118,13 @@ double ** load_concs( int * num_nucs )
 }
 
 // Verification version of this function (tighter control over RNG)
-double ** load_concs_v( int * num_nucs )
+double * load_concs_v( int * num_nucs, int max_num_nucs )
 {
-	double ** concs = (double **)malloc( 12 * sizeof( double *) );
-	
-	for( int i = 0; i < 12; i++ )
-		concs[i] = (double *)malloc( num_nucs[i] * sizeof(double) );
+	double * concs = (double *) malloc( 12 * max_num_nucs * sizeof( double ) );
 	
 	for( int i = 0; i < 12; i++ )
 		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i][j] = rn_v();
+			concs[i * max_num_nucs + j] = rn_v();
 
 	// test
 	/*

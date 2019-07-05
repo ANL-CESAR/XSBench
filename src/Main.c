@@ -98,10 +98,12 @@ int main( int argc, char* argv[] )
 	// Get material data
 	if( mype == 0 )
 		printf("Loading Mats...\n");
+	/*
 	int *num_nucs  = load_num_nucs(in.n_isotopes);
 	int **mats     = load_mats(num_nucs, in.n_isotopes);
 
 	double **concs = load_concs_v(num_nucs);
+	*/
 
 	#ifdef BINARY_DUMP
 	if( mype == 0 ) printf("Dumping data to binary file...\n");
@@ -135,7 +137,8 @@ int main( int argc, char* argv[] )
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 		//run_event_based_simulation(in, energy_grid, nuclide_grids, num_nucs, mats, concs, mype, &vhash);
-		run_event_based_simulation(in, SD, num_nucs, mats, concs, mype, &vhash);
+		//run_event_based_simulation(in, SD, num_nucs, mats, concs, mype, &vhash);
+		run_event_based_simulation(in, SD, mype, &vhash);
 	else
 	{
 		printf("History based simulation not supported by XSBench on accelerators. Use flag \"-m event\" for event based simulation.\n");

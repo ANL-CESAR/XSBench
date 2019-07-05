@@ -59,17 +59,19 @@ typedef struct{
 } Inputs;
 
 typedef struct{
-	int * num_nucs;                     // Length = 12
+	int * num_nucs;                     // Length = length_num_nucs;
 	double * concs;                     // Length = length_concs
 	int * mats;                         // Length = length_mats
 	double * unionized_energy_array;    // Length = length_unionized_energy_array
 	int * index_grid;                   // Length = length_index_grid
 	NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
+	int length_num_nucs;
 	int length_concs;
 	int length_mats;
 	int length_unionized_energy_array;
 	int length_index_grid;
 	int length_nuclide_grid;
+	int max_num_nucs;
 } SimulationData;
 
 // Function Prototypes
@@ -117,9 +119,9 @@ long grid_search( long n, double quarry, double * restrict A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 
 int * load_num_nucs(long n_isotopes);
-int ** load_mats( int * num_nucs, long n_isotopes );
+int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double ** load_concs( int * num_nucs );
-double ** load_concs_v( int * num_nucs );
+double * load_concs_v( int * num_nucs, int max_num_nucs );
 int pick_mat(unsigned long * seed);
 double rn(unsigned long * seed);
 int rn_int(unsigned long * seed);
@@ -147,7 +149,8 @@ void initialization_do_not_profile_set_hash( GridPoint * restrict energy_grid, N
                     long n_isotopes, long n_gridpoints );
 
 //void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
-void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
+//void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
+void run_event_based_simulation(Inputs in, SimulationData SD, int mype, unsigned long long * vhash_result);
 void run_history_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
 
 #endif
