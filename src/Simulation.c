@@ -1,6 +1,7 @@
 #include "XSbench_header.h"
 
-void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
+//void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
+void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
 {
 	if( mype == 0)	
 		printf("Beginning event based simulation...\n");
@@ -10,6 +11,8 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 	// to 1D for easier target transfers
 	////////////////////////////////////////////////////////////////////////////////
 	
+	/*
+
 	// Figure out some sizing parameters, based on type of lookup method used
 	int length_energy_grid;
 	int length_index_grid;
@@ -52,6 +55,8 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 	// allocated 2D array so just need to grab the data pointer.
 	NuclideGridPoint * nuclide_grids_t = nuclide_grids[0];
 	int length_nuclide_grids   = in.n_isotopes * in.n_gridpoints;
+
+	*/
 
 	// Convert the materials and concentrations (jagged) 2D arrays to 1D.
 	// Since they're jagged, need to figure out maximum element and allocate
@@ -97,7 +102,7 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 	// method was selected by user, i.e., if in.grid_type == NUCLIDE
 	////////////////////////////////////////////////////////////////////////////////
 
-	SimulationData SD = flat_grid_init( in );
+	//SimulationData SD = flat_grid_init( in );
 
 	/*
 	for( int i = 0; i < length_energy_grid; i++ )
@@ -141,7 +146,7 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 		// Flat call
 		calculate_macro_xs( p_energy, mat, in.n_isotopes,
 			in.n_gridpoints, num_nucs, concs_t,
-			SD.unionized_energy_array, SD.index_grid, nuclide_grids_t, mats_t,
+			SD.unionized_energy_array, SD.index_grid, SD.nuclide_grid, mats_t,
 			macro_xs_vector, in.grid_type, in.hash_bins, max_num_nucs );
 
 

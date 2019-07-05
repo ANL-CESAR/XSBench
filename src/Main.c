@@ -46,8 +46,8 @@ int main( int argc, char* argv[] )
 	#endif
 	
 	SimulationData SD = flat_grid_init( in );
-	return 0;
 
+	/*
 	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 
 	generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
@@ -88,6 +88,7 @@ int main( int argc, char* argv[] )
 	{
 		energy_grid = generate_hash_table( nuclide_grids, in.n_isotopes, in.n_gridpoints, in.hash_bins );
 	}
+	*/
 
 	#ifdef BINARY_READ
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
@@ -133,7 +134,8 @@ int main( int argc, char* argv[] )
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
-		run_event_based_simulation(in, energy_grid, nuclide_grids, num_nucs, mats, concs, mype, &vhash);
+		//run_event_based_simulation(in, energy_grid, nuclide_grids, num_nucs, mats, concs, mype, &vhash);
+		run_event_based_simulation(in, SD, num_nucs, mats, concs, mype, &vhash);
 	else
 	{
 		printf("History based simulation not supported by XSBench on accelerators. Use flag \"-m event\" for event based simulation.\n");

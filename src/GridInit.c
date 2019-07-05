@@ -79,6 +79,16 @@ SimulationData flat_grid_init( Inputs in )
 	size_t nbytes = 0;
 
 	////////////////////////////////////////////////////////////////////
+	// Initialize Materials and Concentrations
+	////////////////////////////////////////////////////////////////////
+	
+	int *num_nucs  = load_num_nucs(in.n_isotopes);
+	int **mats     = load_mats(num_nucs, in.n_isotopes);
+
+	double **concs = load_concs_v(num_nucs);
+
+
+	////////////////////////////////////////////////////////////////////
 	// Initialize Nuclide Grids
 	////////////////////////////////////////////////////////////////////
 
@@ -108,21 +118,18 @@ SimulationData flat_grid_init( Inputs in )
 	}
 
 	// Sort so that each nuclide has data stored in ascending energy order.
-	// Note that we don't actually need to sort the XS grid too, as data was randomized.
-	// HOWEVER -- to get the same answer as the legacy XSBench, we will. This means we
-	// will have to use a custom quicksort implementation, as we'll be moving data from
-	// two different data structures.
 	for( int i = 0; i < in.n_isotopes; i++ )
 		qsort( &SD.nuclide_grid[i*in.n_gridpoints], in.n_gridpoints, sizeof(NuclideGridPoint), NGP_compare);
 	
 	// error debug check
+	/*
 	for( int i = 0; i < in.n_isotopes; i++ )
 	{
 		printf("NUCLIDE %d ==============================\n", i);
 		for( int j = 0; j < in.n_gridpoints; j++ )
 			printf("E%d = %lf\n", j, SD.nuclide_grid[i * in.n_gridpoints + j].energy);
 	}
-	return SD;
+	*/
 	
 	// If we are not using an acceleration structure, then we are all done
 	if( in.grid_type == NUCLIDE )
