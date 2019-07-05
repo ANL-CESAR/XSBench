@@ -79,7 +79,7 @@ void logo(int version);
 void center_print(const char *s, int width);
 void border_print(void);
 void fancy_int(long a);
-SimulationData flat_grid_init( Inputs in );
+SimulationData grid_init_do_not_profile( Inputs in );
 
 NuclideGridPoint ** gpmatrix(size_t m, size_t n);
 

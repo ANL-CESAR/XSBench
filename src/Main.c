@@ -45,7 +45,7 @@ int main( int argc, char* argv[] )
 	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	#endif
 	
-	SimulationData SD = flat_grid_init( in );
+	SimulationData SD = grid_init_do_not_profile( in );
 
 	#ifdef BINARY_READ
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
