@@ -3,13 +3,9 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-#include<time.h>
-#include<string.h>
-#include<strings.h>
 #include<math.h>
-#include<unistd.h>
-#include<sys/time.h>
 #include<assert.h>
+#include<cuda.h>
 
 // Grid types
 #define UNIONIZED 0
@@ -24,6 +20,16 @@
 #define NONE 0
 #define READ 1
 #define WRITE 2
+
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+	if (code != cudaSuccess) 
+	{
+		fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+		if (abort) exit(code);
+	}
+}
 
 // Structures
 typedef struct{
@@ -78,23 +84,24 @@ SimulationData binary_read( Inputs in );
 
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
-
-// CalculateXS.c
-void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+__global__ void lookup_kernel(Inputs in, SimulationData GSD, unsigned long * verification );
+__device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * __restrict__ egrid, int * __restrict__ index_data,
                            NuclideGridPoint * __restrict__ nuclide_grids,
                            long idx, double * __restrict__ xs_vector, int grid_type, int hash_bins );
-void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+__device__ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * __restrict__ num_nucs,
                          double * __restrict__ concs,
                          double * __restrict__ egrid, int * __restrict__ index_data,
                          NuclideGridPoint * __restrict__ nuclide_grids,
                          int * __restrict__ mats,
                          double * __restrict__ macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-long grid_search( long n, double quarry, double * __restrict__ A);
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
+__device__ long grid_search( long n, double quarry, double * __restrict__ A);
+__device__ long grid_search_nuclide_device( long n, double quarry, NuclideGridPoint * A, long low, long high);
+__host__ __device__ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
+__device__ double rn(unsigned long * seed);
+__device__ int pick_mat( unsigned long * seed );
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
@@ -102,7 +109,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype );
 // XSutils.c
 int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
-double rn(unsigned long * seed);
 double rn_v(void);
 size_t estimate_mem_usage( Inputs in );
 double get_time(void);
@@ -111,5 +117,4 @@ double get_time(void);
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double * load_concs_v( int * num_nucs, int max_num_nucs );
-int pick_mat(unsigned long * seed);
 #endif

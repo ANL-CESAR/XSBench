@@ -17,7 +17,6 @@ source = \
 Main.cu \
 io.cu \
 Simulation.cu \
-CalculateXS.cu \
 GridInit.cu \
 XSutils.cu \
 Materials.cu
@@ -37,7 +36,7 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),nvidia)
   CC = nvcc
-  CFLAGS += -Xcompiler -flto -Xcompiler -Wall -Xcompiler -O3 -arch=sm_70
+  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_70
 endif
 
 # Debug Flags
