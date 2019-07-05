@@ -1,8 +1,5 @@
-#include "XSbench_header.h"
+#include "XSbench_header.cuh"
 
-#ifdef MPI
-#include<mpi.h>
-#endif
 
 int main( int argc, char* argv[] )
 {
@@ -15,22 +12,12 @@ int main( int argc, char* argv[] )
 	int nprocs = 1;
 	unsigned long long verification;
 
-	#ifdef MPI
-	MPI_Status stat;
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
-	#endif
-
 	// rand() is only used in the serial initialization stages.
 	// A custom RNG is used in parallel portions.
 	srand(26);
 
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
-
-	// Set number of OpenMP Threads
-	omp_set_num_threads(in.nthreads); 
 
 	// Print-out of Input Summary
 	if( mype == 0 )
@@ -73,13 +60,16 @@ int main( int argc, char* argv[] )
 	}
 
 	// Start Simulation Timer
-	omp_start = omp_get_wtime();
+	omp_start = get_time();
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 		verification = run_event_based_simulation(in, SD, mype);
 	else
-		verification = run_history_based_simulation(in, SD, mype);
+	{
+		printf("History-based simulation not implemented in CUDA code. Use event-based method with \"-m event\" argument\n");
+		exit(1);
+	}
 
 	if( mype == 0)	
 	{	
@@ -88,7 +78,7 @@ int main( int argc, char* argv[] )
 	}
 
 	// End Simulation Timer
-	omp_end = omp_get_wtime();
+	omp_end = get_time();
 
 	// =====================================================================
 	// Output Results & Finalize
@@ -99,10 +89,6 @@ int main( int argc, char* argv[] )
 
 	// Print / Save Results and Exit
 	print_results( in, mype, omp_end-omp_start, nprocs, verification );
-
-	#ifdef MPI
-	MPI_Finalize();
-	#endif
 
 	return 0;
 }

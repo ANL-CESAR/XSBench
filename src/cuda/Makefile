@@ -29,7 +29,7 @@ obj = $(source:.cu=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall
+CFLAGS := 
 
 # Linker Flags
 LDFLAGS = -lm
@@ -37,7 +37,7 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),nvidia)
   CC = nvcc
-  CFLAGS += -fopenmp -flto
+  CFLAGS += -Xcompiler -flto -Xcompiler -Wall -Xcompiler -O3 -arch=sm_70
 endif
 
 # Debug Flags
@@ -71,7 +71,7 @@ clean:
 	rm -rf $(program) $(obj)
 
 edit:
-	vim -p $(source) XSbench_header.h
+	vim -p $(source) XSbench_header.cuh
 
 run:
 	./$(program)

@@ -7,15 +7,9 @@
 #include<string.h>
 #include<strings.h>
 #include<math.h>
-#include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
 #include<assert.h>
-
-// Papi Header
-#ifdef PAPI
-#include "papi.h"
-#endif
 
 // Grid types
 #define UNIONIZED 0
@@ -89,17 +83,17 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 // CalculateXS.c
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           double * restrict egrid, int * restrict index_data,
-                           NuclideGridPoint * restrict nuclide_grids,
-                           long idx, double * restrict xs_vector, int grid_type, int hash_bins );
+                           double * __restrict__ egrid, int * __restrict__ index_data,
+                           NuclideGridPoint * __restrict__ nuclide_grids,
+                           long idx, double * __restrict__ xs_vector, int grid_type, int hash_bins );
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int * restrict num_nucs,
-                         double * restrict concs,
-                         double * restrict egrid, int * restrict index_data,
-                         NuclideGridPoint * restrict nuclide_grids,
-                         int * restrict mats,
-                         double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-long grid_search( long n, double quarry, double * restrict A);
+                         long n_gridpoints, int * __restrict__ num_nucs,
+                         double * __restrict__ concs,
+                         double * __restrict__ egrid, int * __restrict__ index_data,
+                         NuclideGridPoint * __restrict__ nuclide_grids,
+                         int * __restrict__ mats,
+                         double * __restrict__ macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
+long grid_search( long n, double quarry, double * __restrict__ A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 
 // GridInit.c
@@ -111,6 +105,7 @@ int double_compare(const void * a, const void * b);
 double rn(unsigned long * seed);
 double rn_v(void);
 size_t estimate_mem_usage( Inputs in );
+double get_time(void);
 
 // Materials.c
 int * load_num_nucs(long n_isotopes);

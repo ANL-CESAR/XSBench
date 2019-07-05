@@ -1,4 +1,4 @@
-#include "XSbench_header.h"
+#include "XSbench_header.cuh"
 
 int double_compare(const void * a, const void * b)
 {
@@ -77,3 +77,18 @@ size_t estimate_mem_usage( Inputs in )
 	return memtotal;
 }
 
+double get_time(void)
+{
+	#ifdef MPI
+	return MPI_Wtime();
+	#endif
+
+	#ifdef OPENMP
+	return omp_get_wtime();
+	#endif
+
+	time_t time;
+	time = clock();
+
+	return (double) time / (double) CLOCKS_PER_SEC;
+}

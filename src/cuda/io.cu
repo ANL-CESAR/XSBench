@@ -1,8 +1,4 @@
-#include "XSbench_header.h"
-
-#ifdef MPI
-#include<mpi.h>
-#endif
+#include "XSbench_header.cuh"
 
 // Prints program logo
 void logo(int version)
@@ -47,13 +43,6 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		lookups = in.lookups;
 	int lookups_per_sec = (int) ((double) lookups / runtime);
 	
-	// If running in MPI, reduce timing statistics and calculate average
-	#ifdef MPI
-	int total_lookups = 0;
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Reduce(&lookups_per_sec, &total_lookups, 1, MPI_INT,
-	           MPI_SUM, 0, MPI_COMM_WORLD);
-	#endif
 	
 	// Print output
 	if( mype == 0 )
@@ -64,20 +53,10 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 
 		// Print the results
 		printf("Threads:     %d\n", in.nthreads);
-		#ifdef MPI
-		printf("MPI ranks:   %d\n", nprocs);
-		#endif
-		#ifdef MPI
-		printf("Total Lookups/s:            ");
-		fancy_int(total_lookups);
-		printf("Avg Lookups/s per MPI rank: ");
-		fancy_int(total_lookups / nprocs);
-		#else
 		printf("Runtime:     %.3lf seconds\n", runtime);
 		printf("Lookups:     "); fancy_int(lookups);
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
-		#endif
 
 		unsigned long long large = 0;
 		unsigned long long small = 0; 
@@ -223,7 +202,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.simulation_method = HISTORY_BASED;
 	
 	// defaults to max threads on the system	
-	input.nthreads = omp_get_num_procs();
+	input.nthreads = 1;
 	
 	// defaults to 355 (corresponding to H-M Large benchmark)
 	input.n_isotopes = 355;
