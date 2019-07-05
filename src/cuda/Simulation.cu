@@ -68,12 +68,16 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	int nblocks = ceil( (double) in.lookups / 32.0);
 
 	lookup_kernel<<<nblocks, nthreads>>>( in, GSD, verification );
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, verification, verification + in.lookups, 0);
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
 
 	return verification_scalar;
 }
