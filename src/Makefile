@@ -7,11 +7,6 @@ OPTIMIZE    = yes
 DEBUG       = yes
 PROFILE     = no
 MPI         = no
-PAPI        = no
-VEC_INFO    = no
-VERIFY      = no
-BINARY_DUMP = no
-BINARY_READ = no
 
 #===============================================================================
 # Program name & source code list
@@ -49,12 +44,7 @@ endif
 # Intel Compiler
 ifeq ($(COMPILER),intel)
   CC = icc
-  CFLAGS += -qopenmp 
-endif
-
-# BG/Q gcc Cross-Compiler
-ifeq ($(MACHINE),bluegene)
-  CC = mpicc
+  CFLAGS += -qopenmp -ipo
 endif
 
 # Debug Flags
@@ -74,42 +64,11 @@ ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
 endif
 
-# Compiler Vectorization (needs -O3 flag) information
-ifeq ($(VEC_INFO),yes)
-  CFLAGS += -ftree-vectorizer-verbose=6
-endif
-
-# PAPI source (you may need to provide -I and -L pointing
-# to PAPI depending on your installation
-ifeq ($(PAPI),yes)
-  source += papi.c
-  CFLAGS += -DPAPI
-  #CFLAGS += -I/soft/apps/packages/papi/papi-5.1.1/include
-  #LDFLAGS += -L/soft/apps/packages/papi/papi-5.1.1/lib -lpapi
-  LDFLAGS += -lpapi
-endif
-
 # MPI
 ifeq ($(MPI),yes)
   CC = mpicc
   CFLAGS += -DMPI
 endif
-
-# Verification of results mode
-ifeq ($(VERIFY),yes)
-  CFLAGS += -DVERIFICATION
-endif
-
-# Binary dump for file I/O based initialization
-ifeq ($(BINARY_DUMP),yes)
-  CFLAGS += -DBINARY_DUMP
-endif
-
-# Binary read for file I/O based initialization
-ifeq ($(BINARY_READ),yes)
-  CFLAGS += -DBINARY_READ
-endif
-
 
 #===============================================================================
 # Targets to Build
@@ -118,17 +77,14 @@ endif
 $(program): $(obj) XSbench_header.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.c Makefile
+%.o: %.c XSbench_header.h Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(program) $(obj)
 
 edit:
-	vim -p $(source) papi.c XSbench_header.h
+	vim -p $(source) XSbench_header.h
 
 run:
 	./$(program)
-
-bgqrun:
-	qsub -t 10 -n 1 -O test XSBench

@@ -106,14 +106,6 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
 		}
 		border_print();
-
-		// For bechmarking, output lookup/s data to file
-		if( SAVE )
-		{
-			FILE * out = fopen( "results.txt", "a" );
-			fprintf(out, "%d\t%d\n", in.nthreads, lookups_per_sec);
-			fclose(out);
-		}
 	}
 }
 
@@ -164,6 +156,13 @@ void print_inputs(Inputs in, int nprocs, int version )
 	printf("Threads:                      %d\n", in.nthreads);
 	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 	#endif
+	printf("Binary File Mode:             ");
+	if( in.binary_mode == NONE )
+		printf("Off\n");
+	else if( in.binary_mode == READ)
+		printf("Read\n");
+	else
+		printf("Write\n");
 	border_print();
 	center_print("INITIALIZATION - DO NOT PROFILE", 79);
 	border_print();
@@ -210,6 +209,7 @@ void print_CLI_error(void)
 	printf("  -p <particles>           Number of particle histories\n");
 	printf("  -l <lookups>             History Based: Number of Cross-section (XS) lookups per particle. Event Based: Total number of XS lookups.\n");
 	printf("  -h <hash bins>           Number of hash bins (only relevant when used with \"-G hash\")\n");
+	printf("  -b <binary mode>         Read or write all data structures to file. If reading, this will skip initialization phase. (read, write)\n");
 	printf("Default is equivalent to: -m history -s large -l 34 -p 500000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
@@ -242,6 +242,9 @@ Inputs read_CLI( int argc, char * argv[] )
 
 	// default to unionized grid
 	input.hash_bins = 10000;
+
+	// default to no binary read/write
+	input.binary_mode = NONE;
 	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
@@ -362,6 +365,22 @@ Inputs read_CLI( int argc, char * argv[] )
 			else
 				print_CLI_error();
 		}
+		// binary mode (-b)
+		else if( strcmp(arg, "-b") == 0 )
+		{
+			char * binary_mode;
+			if( ++i < argc )
+				binary_mode = argv[i];
+			else
+				print_CLI_error();
+
+			if( strcmp(binary_mode, "read") == 0 )
+				input.binary_mode = READ;
+			else if( strcmp(binary_mode, "write") == 0 )
+				input.binary_mode = WRITE;
+			else
+				print_CLI_error();
+		}
 		else
 			print_CLI_error();
 	}
@@ -406,4 +425,58 @@ Inputs read_CLI( int argc, char * argv[] )
 
 	// Return input struct
 	return input;
+}
+
+void binary_write( Inputs in, SimulationData SD )
+{
+	char * fname = "XS_data.dat";
+	printf("Writing all data structures to binary file %s...\n", fname);
+	FILE * fp = fopen(fname, "w");
+
+	// Write SimulationData Object. Include pointers, even though we won't be using them.
+	fwrite(&SD, sizeof(SimulationData), 1, fp);
+
+	// Write heap arrays in SimulationData Object
+	fwrite(SD.num_nucs,       sizeof(int), SD.length_num_nucs, fp);
+	fwrite(SD.concs,          sizeof(double), SD.length_concs, fp);
+	fwrite(SD.mats,           sizeof(int), SD.length_mats, fp);
+	fwrite(SD.nuclide_grid,   sizeof(NuclideGridPoint), SD.length_nuclide_grid, fp); 
+	fwrite(SD.index_grid, sizeof(int), SD.length_index_grid, fp);
+	fwrite(SD.unionized_energy_array, sizeof(double), SD.length_unionized_energy_array, fp);
+
+	fclose(fp);
+}
+
+SimulationData binary_read( Inputs in )
+{
+	SimulationData SD;
+	
+	char * fname = "XS_data.dat";
+	printf("Reading all data structures from binary file %s...\n", fname);
+
+	FILE * fp = fopen(fname, "r");
+	assert(fp != NULL);
+
+	// Read SimulationData Object. Include pointers, even though we won't be using them.
+	fread(&SD, sizeof(SimulationData), 1, fp);
+
+	// Allocate space for arrays on heap
+	SD.num_nucs = (int *) malloc(SD.length_num_nucs * sizeof(int));
+	SD.concs = (double *) malloc(SD.length_concs * sizeof(double));
+	SD.mats = (int *) malloc(SD.length_mats * sizeof(int));
+	SD.nuclide_grid = (NuclideGridPoint *) malloc(SD.length_nuclide_grid * sizeof(NuclideGridPoint));
+	SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int));
+	SD.unionized_energy_array = (double *) malloc( SD.length_unionized_energy_array * sizeof(double));
+
+	// Read heap arrays into SimulationData Object
+	fread(SD.num_nucs,       sizeof(int), SD.length_num_nucs, fp);
+	fread(SD.concs,          sizeof(double), SD.length_concs, fp);
+	fread(SD.mats,           sizeof(int), SD.length_mats, fp);
+	fread(SD.nuclide_grid,   sizeof(NuclideGridPoint), SD.length_nuclide_grid, fp); 
+	fread(SD.index_grid, sizeof(int), SD.length_index_grid, fp);
+	fread(SD.unionized_energy_array, sizeof(double), SD.length_unionized_energy_array, fp);
+
+	fclose(fp);
+
+	return SD;
 }

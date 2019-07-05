@@ -17,11 +17,6 @@
 #include "papi.h"
 #endif
 
-// I/O Specifiers
-#define INFO 1
-#define DEBUG 1
-#define SAVE 1
-
 // Grid types
 #define UNIONIZED 0
 #define NUCLIDE 1
@@ -30,6 +25,11 @@
 // Simulation types
 #define HISTORY_BASED 1
 #define EVENT_BASED 2
+
+// Binary Mode Type
+#define NONE 0
+#define READ 1
+#define WRITE 2
 
 // Structures
 typedef struct{
@@ -42,11 +42,6 @@ typedef struct{
 } NuclideGridPoint;
 
 typedef struct{
-	double energy;
-	int * xs_ptrs;
-} GridPoint;
-
-typedef struct{
 	int nthreads;
 	long n_isotopes;
 	long n_gridpoints;
@@ -56,6 +51,7 @@ typedef struct{
 	int hash_bins;
 	int particles;
 	int simulation_method;
+	int binary_mode;
 } Inputs;
 
 typedef struct{
@@ -74,33 +70,23 @@ typedef struct{
 	int max_num_nucs;
 } SimulationData;
 
-// Function Prototypes
+// io.c
 void logo(int version);
 void center_print(const char *s, int width);
 void border_print(void);
 void fancy_int(long a);
-SimulationData grid_init_do_not_profile( Inputs in );
+Inputs read_CLI( int argc, char * argv[] );
+void print_CLI_error(void);
+void print_inputs(Inputs in, int nprocs, int version);
+void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+void binary_write( Inputs in, SimulationData SD );
+SimulationData binary_read( Inputs in );
 
-NuclideGridPoint ** gpmatrix(size_t m, size_t n);
+// Simulation.c
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
+unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
 
-void gpmatrix_free( NuclideGridPoint ** M );
-
-int NGP_compare( const void * a, const void * b );
-
-void generate_grids( NuclideGridPoint ** nuclide_grids,
-                     long n_isotopes, long n_gridpoints );
-void generate_grids_v( NuclideGridPoint ** nuclide_grids,
-                     long n_isotopes, long n_gridpoints );
-
-void sort_nuclide_grids( NuclideGridPoint ** nuclide_grids, long n_isotopes,
-                         long n_gridpoints );
-
-GridPoint * generate_energy_grid( long n_isotopes, long n_gridpoints,
-                                  NuclideGridPoint ** nuclide_grids);
-
-void initialization_do_not_profile_set_grid_ptrs( GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids,
-                    long n_isotopes, long n_gridpoints );
-
+// CalculateXS.c
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * restrict egrid, int * restrict index_data,
@@ -113,44 +99,22 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          NuclideGridPoint * restrict nuclide_grids,
                          int * restrict mats,
                          double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-
-
 long grid_search( long n, double quarry, double * restrict A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 
+// GridInit.c
+SimulationData grid_init_do_not_profile( Inputs in, int mype );
+
+// XSutils.c
+int NGP_compare( const void * a, const void * b );
+int double_compare(const void * a, const void * b);
+double rn(unsigned long * seed);
+double rn_v(void);
+size_t estimate_mem_usage( Inputs in );
+
+// Materials.c
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
-double ** load_concs( int * num_nucs );
 double * load_concs_v( int * num_nucs, int max_num_nucs );
 int pick_mat(unsigned long * seed);
-double rn(unsigned long * seed);
-int rn_int(unsigned long * seed);
-void counter_stop( int * eventset, int num_papi_events );
-void counter_init( int * eventset, int * num_papi_events );
-void do_flops(void);
-void do_loads( int nuc,
-               NuclideGridPoint ** restrict nuclide_grids,
-		       long n_gridpoints );	
-Inputs read_CLI( int argc, char * argv[] );
-void print_CLI_error(void);
-double rn_v(void);
-double round_double( double input );
-unsigned int hash(char *str, int nbins);
-size_t estimate_mem_usage( Inputs in );
-void print_inputs(Inputs in, int nprocs, int version);
-void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
-void binary_dump(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
-void binary_read(long n_isotopes, long n_gridpoints, NuclideGridPoint ** nuclide_grids, GridPoint * energy_grid, int grid_type);
-
-GridPoint * generate_hash_table( NuclideGridPoint ** nuclide_grids,
-                          long n_isotopes, long n_gridpoints, long M );
-
-void initialization_do_not_profile_set_hash( GridPoint * restrict energy_grid, NuclideGridPoint ** restrict nuclide_grids,
-                    long n_isotopes, long n_gridpoints );
-
-//void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
-//void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
-
 #endif

@@ -28,7 +28,6 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	{
 		// pull ptr from energy grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
-		//if( energy_grid[idx].xs_ptrs[nuc] == n_gridpoints - 1 )
 		if( index_data[idx * n_isotopes + nuc] == n_gridpoints - 1 )
 			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc] - 1];
 		else

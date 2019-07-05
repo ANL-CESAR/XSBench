@@ -6,13 +6,13 @@
                    / /^\ \/\__/ / |_/ /  __/ | | | (__| | | |                   
                    \/   \/\____/\____/ \___|_| |_|\___|_| |_|                   
 
-                                   Version 18
+                                   Version 19
 
 ==============================================================================
 Contact Information
 ==============================================================================
 
-Organization:     Center for Exascale Simulation of Advanced Reactors (CESAR)
+Organization:     Computational Science Division
                   Argonne National Laboratory
 
 Development Lead: John Tramm   <jtramm@anl.gov>
@@ -27,7 +27,8 @@ XSBench is a mini-app representing a key computational kernel of the
 Monte Carlo neutronics application OpenMC.
 
 A full explanation of the theory and purpose of XSBench is provided in
-docs/XSBench_Theory.pdf.
+docs/XSBench_Theory.pdf. More information is also available in the publications
+listed at the bottom of this document.
 
 ==============================================================================
 Quick Start Guide
@@ -57,10 +58,49 @@ Download----------------------------------------------------------------------
 
 		https://github.com/jtramm/XSBench
 
+Selecting A Source Version----------------------------------------------------
+
+	XSBench has been implemented in multiple different languages to target
+	a variety of computational architectures and accelerators. The available
+	implementations can be found in the "XSBench/src" directory:
+
+	1. XSBench/src/openmp-threading
+
+	This is the "default" version of XSBench that is appropriate for serial
+	and multicore CPU architectures. The method of parallelism is via the
+	OpenMP threading model.
+
+	2. XSBench/src/openmp-offload
+
+	This method of parallelism uses OpenMP 4.5 (or newer) to map program
+	data to a remote accelerator memory space and run targeted kernels on
+	the accelerator. This method of parallelism could be used for a wide
+	variety of architectures (besides CPUs) that support OpenMP 4.5 targeting.
+
+	NOTE: The Makefile will likely not work by default and will need to be
+	adjusted to utilize your OpenMP accelerator compiler.
+
+	3. XSBench/src/CUDA
+
+	This version of XSBench is written in CUDA for use with NVIDIA GPU
+	architectures.
+
+	NOTE: You will likely want to specify in the makefile the SM version
+	for the card you are running on.
+
+	4. XSBench/src/OpenCL
+
+	This version of XSBench is written in OpenCL, and can be used for CPU,
+	GPU, FPGA, or other architecture that supports OpenCL. It was written
+	with GPUs in mind, so if running on other architectures you may need to
+	heavily re-optimize the code. You will also likely need to edit the
+	makefile to supply the path to your OpenCL compiler.
+	
+
 Compilation-------------------------------------------------------------------
 
-	To compile XSBench with default settings, use the following
-	command:
+	To compile XSBench with default settings, navigate to your selected src
+	directory and use the following command:
 
 	>$ make
 
@@ -83,6 +123,7 @@ Running XSBench---------------------------------------------------------------
 	  -p <particles>   Number of particle histories
 	  -l <lookups>     Number of Cross-section (XS) lookups per particle history
 	  -h <hash bins>   Number of hash bins (only relevant when used with "-G hash")
+	  -b <binary mode> Read or write all data structures to file. If reading, this will skip initialization phase. (read, write)
 	Default is equivalent to: -s large -l 34 -p 500000 -G unionized
 
 	-m <simulation method>
@@ -191,6 +232,21 @@ Running XSBench---------------------------------------------------------------
 		Sets the number of hash bins (only relevant when using the hash
 		lookup algorithm, as selected with "-G hash"). Default is 10,000.
 
+	-b <binary mode>
+
+		This optional mode can read or write the simulation data structures
+		to disk. Options are ("read" or "write"). This may be useful if
+		it is necessary to minimize the initialization phase of the program,
+		which has a non-trivial runtime. The generated file is named
+		"XS_data.dat" and will be located in the current working directory.
+		The same file name and location will be used when reading. Note that
+		as the file is binary, it may not be portable between compilers and
+		computer systems. NOTE: When running in the "read" mode, you must
+		be running with an identical program configuration as when the file
+		was generated. E.g., if the file was generated with the "-G nuclide"
+		argument, subsequent runs reading from that file must use the same
+		configuration flags.
+
 ==============================================================================
 Debugging, Optimization & Profiling
 ==============================================================================
@@ -204,12 +260,6 @@ OPTIMIZE  = yes
 DEBUG     = no
 PROFILE   = no
 MPI       = no
-PAPI      = no
-VEC_INFO  = no
-VERIFY    = no
-PAUSE     = no
-BINARY_DUMP = no
-BINARY_READ = no
 
 -> Optimization enables the -O3 optimization flag.
 
@@ -220,29 +270,6 @@ BINARY_READ = no
    flag) in order to wash out the initialization phase of the code.
 
 -> MPI enables MPI support in the code.
-
--> The PAPI flag is explained below.
-
--> VEC_INFO enables some additional information regarding the success or
-   failure of the compiler's use of vectorization techniques during
-   compilation.
-
--> VERIFY enables a verification mode, the details of which are explained below.
-
--> Binary dump mode writes a binary file containing a randomized data set
-   of cross sections. This can be used in tandem with the binary read mode
-   to skip generation of cross section data every time the program is run.
-   Note that if you create the grid when specifying the -G flag as
-   "nuclide", data for the unionized energy grid will not be written, and
-   therefore any subsequent runs using that file in binary read mode must
-   also use the -G nuclide option. Files generated for the unionized grid
-   can also be used when running in the nuclide grid mode.
-
--> Binary read mode reads the binary file created by the binary dump mode
-   as a (usually) much faster substitution for randomly generating XS
-   data on-the-fly. This mode is particularly useful if running on
-   simulators where walltime minimization is extremely critical for
-   logistical reasons.
 
 ==============================================================================
 MPI Support
@@ -266,65 +293,37 @@ make use of your desired compiler.
 Verification Support
 ==============================================================================
 
-XSBench has the ability to verify that consistent and correct results are
-achieved. This mode is enabled by altering the "VERIFY" setting to 'yes' in
-the makefile, i.e.:
+Legacy versions of XSBench had a special "Veriication" compiler flag option
+to enable verification of the results. However, a much more performant and
+portable verification scheme was developed and is now used for all
+configurations -- therefore, it is not necessary to compile with or without
+the verification mode as it is always enabled by default.
 
-VERIFY = yes
-
-Once enabled, the code will generate a hash of the results and display it
-with the other data once the code has completed executing. This hash can
+XSBench generates a hash of the results at the end of the simulation and displays
+it with the other data once the code has completed executing. This hash can
 then be verified against hashes that other versions or configurations of
 the code generate. For instance, running XSBench with 4 threads vs 8 threads
 (on a machine that supports that configuration) should generate the
 same hash number. Changing the model / run parameters should NOT generate
 the same hash number (i.e., increasing the number of particles, number
-of gridpoints, etc, will result in different hashes). 
-
-Note that the verification mode runs a little slower, due to need to hash
-each macroscopic cross section result. Therefore, performance measurements
-should generally not be made when verification mode is on. Rather,
-verification mode should be used to ensure any changes to the code have not
-broken it, and then be disabled before performance metrics are recorded.
-
-==============================================================================
-PAPI Performance Counters
-==============================================================================
-
-PAPI performance counters is a performance counting library that can
-offer information regarding the frequency of specific events (such as
-memory loads, cache misses, branch prediction failures, etc) that occur
-when the code is executed. XSBench supports use of these performance
-counters, although it is left to the user to select the particular
-performance counters and locations to instrument.
-
-By default, PAPI is disabled.
-
-To enable PAPI, set in the makefile:
-
-PAPI = yes
-
-Note that you may need to change the relevant library paths for papi to
-work (as these are dependent on your machine).  The library path can be
-specified in the makefile, and the header path is specified in the
-XSBench_header.h file.
-
-To select the performance counters you are interested in, open
-the file papi.c and alter the events[] array to the events
-you would like to count. 
+of gridpoints, etc, will result in different hashes). However, changing
+the type of lookup performed (e.g., nuclide, unionized, or hash) should result
+in the same hash being generated. Changing the simulation mode (history or
+event) will generate different hashes. 
 
 ==============================================================================
 Binary File Support
 ==============================================================================
 
-The flags:
-
-BINARY_DUMP = no
-BINARY_READ = no
+Instead of initializing the randomized synthetic cross section data structres
+in XSBench everytime it is run, you may optionally have XSBench generate
+a data set and write it to file. It can then be read on subsequent runs to
+speed up initialization. This process is controlled with the 
+"-b (read, write)" command line argument.
 
 Can be set to yes in order to write or read a binary file containing
-a randomized XS data set (both nuclide grids and unionized grids). This
-feature may be extremely useful for users running on simulators where
+a randomized XS data set (both nuclide grids, hash grids, and unionized grids).
+This feature may be extremely useful for users running on simulators where
 walltime minimization is critical for logistical purposes, or for users
 who are doing many sequential runs.
 
@@ -336,44 +335,7 @@ parameters.
 Also note that if you create the grid when specifying the -G flag as
 "nuclide", data for the unionized energy grid will not be written, and
 therefore any subsequent runs using that file in binary read mode must
-also use the "-G nuclide" option. Files generated for the full unionized grid
-can also be used when running in the nuclide grid mode.
-
-==============================================================================
-Running on ANL BlueGene/Q (Vesta & Mira)
-==============================================================================
-
-Compilation is done using the included makefile, as follows:
-
->$ make MACHINE=bluegene
-
-Note that the INFO macro in the XSbench_header.h file should be set to
-0 when running on BG/Q to remove the run status portions of the output,
-which cuts down on unnecessary file I/O, i.e.:
-
-#define INFO 0
-
-Also, note that you may need to add the following line to your .soft
-file in order to use the mpicc compiler wrapper:
-
-+mpiwrapper-gcc
-
-Then, be sure to use the "resoft" command to update your software, i.e.,:
-
->$ resoft
-
-When running in c16 mode, the maximum number of gridpoints per nuclide
-is 900 (when running in "Large" mode). More points will cause the 1GB
-memory limit to be broken.
-
-A basic test run on 1 node can be achieved (assuming you have an allocation)
-using the makefile and the following command:
-
->$ make bgqrun
-
-Further information on queuing can be found at:
-
-https://www.alcf.anl.gov/resource-guides/vesta-queuing
+also use the "-G nuclide" option.
 
 ==============================================================================
 Citing XSBench

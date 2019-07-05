@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	// Initialization & Command Line Read-In
 	// =====================================================================
-	int version = 18;
+	int version = 19;
 	int mype = 0;
 	double omp_start, omp_end;
 	int nprocs = 1;
@@ -38,33 +38,30 @@ int main( int argc, char* argv[] )
 
 	// =====================================================================
 	// Prepare Nuclide Energy Grids, Unionized Energy Grid, & Material Data
+	// This is not reflective of a real Monte Carlo simulation workload,
+	// therefore, do not profile this region!
 	// =====================================================================
-
-	// Allocate & fill energy grids
-	#ifndef BINARY_READ
-	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
-	#endif
 	
-	SimulationData SD = grid_init_do_not_profile( in );
+	SimulationData SD;
 
-	#ifdef BINARY_READ
-	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
-	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, in.grid_type);
-	#endif
+	// If read from file mode is selected, skip initialization and load
+	// all simulation data structures from file instead
+	if( in.binary_mode == READ )
+		SD = binary_read(in);
+	else
+		SD = grid_init_do_not_profile( in, mype );
 
-	// Get material data
-	if( mype == 0 )
-		printf("Loading Mats...\n");
+	// If writing from file mode is selected, write all simulation data
+	// structures to file
+	if( in.binary_mode == WRITE && mype == 0 )
+		binary_write(in, SD);
 
-	#ifdef BINARY_DUMP
-	if( mype == 0 ) printf("Dumping data to binary file...\n");
-	binary_dump(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, in.grid_type);
-	if( mype == 0 ) printf("Binary file \"XS_data.dat\" written! Exiting...\n");
-	return 0;
-	#endif
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation
+	// This is the section that should be profiled, as it reflects a 
+	// realistic continuous energy Monte Carlo macroscopic cross section
+	// lookup kernel.
 	// =====================================================================
 
 	if( mype == 0 )
@@ -75,32 +72,22 @@ int main( int argc, char* argv[] )
 		border_print();
 	}
 
+	// Start Simulation Timer
 	omp_start = omp_get_wtime();
-
-	//initialize papi with one thread (master) here
-	#ifdef PAPI
-	if ( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT){
-		fprintf(stderr, "PAPI library init error!\n");
-		exit(1);
-	}
-	#endif	
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 		verification = run_event_based_simulation(in, SD, mype);
 	else
-	{
 		verification = run_history_based_simulation(in, SD, mype);
-	}
 
-	#ifndef PAPI
 	if( mype == 0)	
 	{	
 		printf("\n" );
 		printf("Simulation complete.\n" );
 	}
-	#endif
 
+	// End Simulation Timer
 	omp_end = omp_get_wtime();
 
 	// =====================================================================

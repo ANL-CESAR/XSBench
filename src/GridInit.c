@@ -1,36 +1,6 @@
 #include "XSbench_header.h"
 
-#ifdef MPI
-#include<mpi.h>
-#endif
-
-int double_compare(const void * a, const void * b)
-{
-	double A = *((double *) a);
-	double B = *((double *) b);
-
-	if( A > B )
-		return 1;
-	else if( A < B )
-		return -1;
-	else
-		return 0;
-}
-
-int NGP_compare(const void * a, const void * b)
-{
-	NuclideGridPoint A = *((NuclideGridPoint *) a);
-	NuclideGridPoint B = *((NuclideGridPoint *) b);
-
-	if( A.energy > B.energy )
-		return 1;
-	else if( A.energy < B.energy )
-		return -1;
-	else
-		return 0;
-}
-
-SimulationData grid_init_do_not_profile( Inputs in )
+SimulationData grid_init_do_not_profile( Inputs in, int mype )
 {
 	// Structure to hold all allocated simuluation data arrays
 	SimulationData SD;
@@ -41,6 +11,8 @@ SimulationData grid_init_do_not_profile( Inputs in )
 	////////////////////////////////////////////////////////////////////
 	// Initialize Nuclide Grids
 	////////////////////////////////////////////////////////////////////
+	
+	if(mype == 0) printf("Intializing nuclide grids...\n");
 
 	// First, we need to initialize our nuclide grid. This comes in the form
 	// of a flattened 2D array that hold all the information we need to define
@@ -95,6 +67,8 @@ SimulationData grid_init_do_not_profile( Inputs in )
 	
 	if( in.grid_type == UNIONIZED )
 	{
+		if(mype == 0) printf("Intializing unionized grid...\n");
+
 		// Allocate space to hold the union of all nuclide energy data
 		SD.length_unionized_energy_array = in.n_isotopes * in.n_gridpoints;
 		SD.unionized_energy_array = (double *) malloc( SD.length_unionized_energy_array * sizeof(double));
@@ -147,6 +121,7 @@ SimulationData grid_init_do_not_profile( Inputs in )
 
 	if( in.grid_type == HASH )
 	{
+		if(mype == 0) printf("Intializing hash grid...\n");
 		SD.length_unionized_energy_array = 0;
 		SD.length_index_grid  = in.hash_bins * in.n_isotopes;
 		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int)); 
@@ -172,6 +147,7 @@ SimulationData grid_init_do_not_profile( Inputs in )
 	////////////////////////////////////////////////////////////////////
 	// Initialize Materials and Concentrations
 	////////////////////////////////////////////////////////////////////
+	if(mype == 0) printf("Intializing material data...\n");
 	
 	// Set the number of nuclides in each material
 	SD.num_nucs  = load_num_nucs(in.n_isotopes);
@@ -182,13 +158,16 @@ SimulationData grid_init_do_not_profile( Inputs in )
 	// grid is allocated as a full square grid, even though not all
 	// materials have the same number of nuclides.
 	SD.mats = load_mats(SD.num_nucs, in.n_isotopes, &SD.max_num_nucs);
+	SD.length_mats = SD.length_num_nucs * SD.max_num_nucs;
 
 	// Intialize the flattened 2D grid of nuclide concentration data. The grid holds
 	// a list of nuclide concentrations for each of the 12 material types. The
 	// grid is allocated as a full square grid, even though not all
 	// materials have the same number of nuclides.
 	SD.concs = load_concs_v(SD.num_nucs, SD.max_num_nucs);
+	SD.length_concs = SD.length_mats;
 
+	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data.\n", nbytes/1024.0/1024.0 );
 
 	return SD;
 
