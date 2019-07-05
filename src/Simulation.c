@@ -97,6 +97,17 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 	// method was selected by user, i.e., if in.grid_type == NUCLIDE
 	////////////////////////////////////////////////////////////////////////////////
 
+	SimulationData SD = flat_grid_init( in );
+
+	/*
+	for( int i = 0; i < length_energy_grid; i++ )
+	{
+		printf("egrid[%d] = %lf, unionized_energy_array[%d] = %lf\n",
+				i, egrid[i], i, SD.unionized_energy_array[i]);
+		assert(egrid[i] == SD.unionized_energy_array[i]);
+	}
+	*/
+
 	////////////////////////////////////////////////////////////////////////////////
 	// Begin Actual Simulation Loop 
 	////////////////////////////////////////////////////////////////////////////////
@@ -120,10 +131,19 @@ void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridP
 		// to do anything with it in this program, so return value
 		// is written over.
 	
+		// Original call
+		/*
 		calculate_macro_xs( p_energy, mat, in.n_isotopes,
 			in.n_gridpoints, num_nucs, concs_t,
 			egrid, index_data, nuclide_grids_t, mats_t,
 			macro_xs_vector, in.grid_type, in.hash_bins, max_num_nucs );
+			*/
+		// Flat call
+		calculate_macro_xs( p_energy, mat, in.n_isotopes,
+			in.n_gridpoints, num_nucs, concs_t,
+			SD.unionized_energy_array, SD.index_grid, nuclide_grids_t, mats_t,
+			macro_xs_vector, in.grid_type, in.hash_bins, max_num_nucs );
+
 
 		// For verification, and to prevent the compiler from optimizing
 		// all work out, we interrogate the returned macro_xs_vector array

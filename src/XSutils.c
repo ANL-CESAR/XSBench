@@ -23,21 +23,6 @@ void gpmatrix_free( NuclideGridPoint ** M )
 	free( M );
 }
 
-// Compare function for two grid points. Used for sorting during init
-int NGP_compare( const void * a, const void * b )
-{
-	NuclideGridPoint *i, *j;
-
-	i = (NuclideGridPoint *) a;
-	j = (NuclideGridPoint *) b;
-
-	if( i->energy > j->energy )
-		return 1;
-	else if ( i->energy < j->energy)
-		return -1;
-	else
-		return 0;
-}
 
 // Park & Miller Multiplicative Conguential Algorithm
 // From "Numerical Recipes" Second Edition

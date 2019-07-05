@@ -44,6 +44,9 @@ int main( int argc, char* argv[] )
 	#ifndef BINARY_READ
 	if( mype == 0) printf("Generating Nuclide Energy Grids...\n");
 	#endif
+	
+	SimulationData SD = flat_grid_init( in );
+	return 0;
 
 	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
 

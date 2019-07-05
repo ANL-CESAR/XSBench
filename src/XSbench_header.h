@@ -22,6 +22,15 @@
 #define DEBUG 1
 #define SAVE 1
 
+// Grid types
+#define UNIONIZED 0
+#define NUCLIDE 1
+#define HASH 2
+
+// Simulation types
+#define HISTORY_BASED 1
+#define EVENT_BASED 2
+
 // Structures
 typedef struct{
 	double energy;
@@ -49,18 +58,26 @@ typedef struct{
 	int simulation_method;
 } Inputs;
 
-#define UNIONIZED 0
-#define NUCLIDE 1
-#define HASH 2
-
-#define HISTORY_BASED 1
-#define EVENT_BASED 2
+typedef struct{
+	int * num_nucs;                     // Length = 12
+	double * concs;                     // Length = length_concs
+	int * mats;                         // Length = length_mats
+	double * unionized_energy_array;    // Length = length_unionized_energy_array
+	int * index_grid;                   // Length = length_index_grid
+	NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
+	int length_concs;
+	int length_mats;
+	int length_unionized_energy_array;
+	int length_index_grid;
+	int length_nuclide_grid;
+} SimulationData;
 
 // Function Prototypes
 void logo(int version);
 void center_print(const char *s, int width);
 void border_print(void);
 void fancy_int(long a);
+SimulationData flat_grid_init( Inputs in );
 
 NuclideGridPoint ** gpmatrix(size_t m, size_t n);
 
