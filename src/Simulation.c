@@ -1,118 +1,25 @@
 #include "XSbench_header.h"
 
-//void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
-//void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result)
-void run_event_based_simulation(Inputs in, SimulationData SD, int mype, unsigned long long * vhash_result)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
 {
 	if( mype == 0)	
 		printf("Beginning event based simulation...\n");
 	
 	////////////////////////////////////////////////////////////////////////////////
-	// First, we convert our various 2D arrays (some of which are jagged)
-	// to 1D for easier target transfers
-	////////////////////////////////////////////////////////////////////////////////
-	
-	/*
-
-	// Figure out some sizing parameters, based on type of lookup method used
-	int length_energy_grid;
-	int length_index_grid;
-	if( in.grid_type == UNIONIZED )
-	{
-		length_energy_grid = in.n_isotopes * in.n_gridpoints;
-		length_index_grid  = length_energy_grid * in.n_isotopes;
-	}
-	else if( in.grid_type == HASH )
-	{
-		length_energy_grid = in.hash_bins;
-		length_index_grid  = length_energy_grid * in.n_isotopes;
-	}
-	else
-	{
-		length_energy_grid = 0;
-		length_index_grid  = 0;
-	}
-
-	// Convert Energy Grid Compount structure to separate egrid and index 1D arrays
-	// (Not necessary if only using the nuclide grid)
-	double * egrid = NULL;
-	int * index_data = NULL;
-
-	if( in.grid_type == UNIONIZED || in.grid_type == HASH )
-	{
-		egrid = (double *) malloc( length_energy_grid * sizeof(double));
-		index_data =  (int *) malloc( length_index_grid  * sizeof(int));
-		for( int gp = 0; gp < length_energy_grid; gp++ )
-		{
-			egrid[gp] = energy_grid[gp].energy;
-			for( int n = 0; n < in.n_isotopes; n++ )
-			{
-				index_data[gp * in.n_isotopes + n] = energy_grid[gp].xs_ptrs[n];
-			}
-		}
-	}
-
-	// Convert 2D nuclide grid array to 1D. This was a contiguously
-	// allocated 2D array so just need to grab the data pointer.
-	NuclideGridPoint * nuclide_grids_t = nuclide_grids[0];
-	int length_nuclide_grids   = in.n_isotopes * in.n_gridpoints;
-
-
-	// Convert the materials and concentrations (jagged) 2D arrays to 1D.
-	// Since they're jagged, need to figure out maximum element and allocate
-	// full size 1D array with extra delements.
-	
-	// Determine maximum number of nuclides for all materials
-	int num_mats = 12;
-	int max_num_nucs = 0;
-	for( int m = 0; m < num_mats; m++ )
-	{
-		if( num_nucs[m] > max_num_nucs )
-			max_num_nucs = num_nucs[m];
-	}
-	
-	int length_mats  = num_mats * max_num_nucs;
-	int length_concs = length_mats;
-
-	// Copy materials and concs jagged 2D vectors over to 1D
-	int * mats_t     = (int *)    calloc( length_mats,  sizeof(int)); 
-	double * concs_t = (double *) calloc( length_concs, sizeof(double));
-
-	for( int m = 0; m < num_mats; m++ )
-	{
-		for( int n = 0; n < num_nucs[m]; n++ ) 
-		{
-			mats_t[m*max_num_nucs + n] = mats[m][n];
-			concs_t[m*max_num_nucs + n] = concs[m][n];
-		}
-	}
-	
-	*/
-	////////////////////////////////////////////////////////////////////////////////
-	// SUMMARY: Data Structure Manifest
+	// SUMMARY: Simulation Data Structure Manifest of "SD" Object
 	// Heap arrays (and lengths) that would need to be offloaded to an accelerator
 	////////////////////////////////////////////////////////////////////////////////
-	// int * num_nucs   :::: Length = 12
-	// double * concs_t :::: Length = length_concs
-	// int * mats_t     :::: Length = length_mats
-	// double * egrid   :::: Length = length_energy_grid
-	// int * index_data :::: Length = length_index_grid
-	// NuclideGridPoint * nuclide_grids_t :::: Length = length_nuclide_grids
-	// 
+	// int * num_nucs;                     // Length = length_num_nucs;
+	// double * concs;                     // Length = length_concs
+	// int * mats;                         // Length = length_mats
+	// double * unionized_energy_array;    // Length = length_unionized_energy_array
+	// int * index_grid;                   // Length = length_index_grid
+	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
+	 
 	// Note: "egrid" and "index_data" could be of length 0, if nuclide grid only
 	// method was selected by user, i.e., if in.grid_type == NUCLIDE
 	////////////////////////////////////////////////////////////////////////////////
 
-	//SimulationData SD = flat_grid_init( in );
-
-	/*
-	for( int i = 0; i < length_energy_grid; i++ )
-	{
-		printf("egrid[%d] = %lf, unionized_energy_array[%d] = %lf\n",
-				i, egrid[i], i, SD.unionized_energy_array[i]);
-		assert(egrid[i] == SD.unionized_energy_array[i]);
-	}
-	*/
 
 	////////////////////////////////////////////////////////////////////////////////
 	// Begin Actual Simulation Loop 
@@ -133,23 +40,23 @@ void run_event_based_simulation(Inputs in, SimulationData SD, int mype, unsigned
 
 		double macro_xs_vector[5] = {0};
 
-		// This returns the macro_xs_vector, but we're not going
-		// to do anything with it in this program, so return value
-		// is written over.
-	
-		// Original call
-		/*
-		calculate_macro_xs( p_energy, mat, in.n_isotopes,
-			in.n_gridpoints, num_nucs, concs_t,
-			egrid, index_data, nuclide_grids_t, mats_t,
-			macro_xs_vector, in.grid_type, in.hash_bins, max_num_nucs );
-			*/
-		// Flat call
-		calculate_macro_xs( p_energy, mat, in.n_isotopes,
-			in.n_gridpoints, SD.num_nucs, SD.concs,
-			SD.unionized_energy_array, SD.index_grid, SD.nuclide_grid, SD.mats,
-			macro_xs_vector, in.grid_type, in.hash_bins, SD.max_num_nucs );
-
+		// Perform macroscopic Cross Section Lookup
+		calculate_macro_xs(
+				p_energy,        // Sampled neutron energy (in lethargy)
+				mat,             // Sampled material type neutron is in
+				in.n_isotopes,   // Total number of isotopes in simulation
+				in.n_gridpoints, // Number of gridpoints per isotope in simulation
+				SD.num_nucs,     // 1-D array with number of nuclides per material
+				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				SD.unionized_energy_array, // 1-D Unionized energy array
+				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				SD.mats,         // Flattened 2-D array with nuclide indices for each type of material
+				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
+				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
+				in.hash_bins,    // Number of hash bins used (if using hash lookups)
+				SD.max_num_nucs  // Maximum number of nuclides present in any material
+				);
 
 		// For verification, and to prevent the compiler from optimizing
 		// all work out, we interrogate the returned macro_xs_vector array
@@ -170,5 +77,6 @@ void run_event_based_simulation(Inputs in, SimulationData SD, int mype, unsigned
 		}
 		verification += max_idx;
 	}
-	*vhash_result = verification;
+
+	return verification;
 }

@@ -12,8 +12,8 @@ int main( int argc, char* argv[] )
 	int version = 18;
 	int mype = 0;
 	double omp_start, omp_end;
-	unsigned long long vhash = 0;
 	int nprocs = 1;
+	unsigned long long verification;
 
 	#ifdef MPI
 	MPI_Status stat;
@@ -47,49 +47,6 @@ int main( int argc, char* argv[] )
 	
 	SimulationData SD = flat_grid_init( in );
 
-	/*
-	NuclideGridPoint ** nuclide_grids = gpmatrix(in.n_isotopes,in.n_gridpoints);
-
-	generate_grids_v( nuclide_grids, in.n_isotopes, in.n_gridpoints );	
-
-	// Sort grids by energy
-	#ifndef BINARY_READ
-	if( mype == 0) printf("Sorting Nuclide Energy Grids...\n");
-	sort_nuclide_grids( nuclide_grids, in.n_isotopes, in.n_gridpoints );
-	#endif
-
-	// If using a unionized grid search, initialize the energy grid
-	// Otherwise, leave these as null
-	GridPoint * energy_grid = NULL;
-	int * index_data = NULL;
-
-	if( in.grid_type == UNIONIZED )
-	{
-		// Prepare Unionized Energy Grid Framework
-		#ifndef BINARY_READ
-		energy_grid = generate_energy_grid( in.n_isotopes,
-				in.n_gridpoints, nuclide_grids ); 	
-		#else
-		energy_grid = (GridPoint *)malloc( in.n_isotopes *
-				in.n_gridpoints * sizeof( GridPoint ) );
-		index_data = (int *) malloc( in.n_isotopes * in.n_gridpoints
-				* in.n_isotopes * sizeof(int));
-		for( int i = 0; i < in.n_isotopes*in.n_gridpoints; i++ )
-			energy_grid[i].xs_ptrs = &index_data[i*in.n_isotopes];
-		#endif
-
-		// Double Indexing. Filling in energy_grid with pointers to the
-		// nuclide_energy_grids.
-		#ifndef BINARY_READ
-		initialization_do_not_profile_set_grid_ptrs( energy_grid, nuclide_grids, in.n_isotopes, in.n_gridpoints );
-		#endif
-	}
-	else if( in.grid_type == HASH )
-	{
-		energy_grid = generate_hash_table( nuclide_grids, in.n_isotopes, in.n_gridpoints, in.hash_bins );
-	}
-	*/
-
 	#ifdef BINARY_READ
 	if( mype == 0 ) printf("Reading data from \"XS_data.dat\" file...\n");
 	binary_read(in.n_isotopes, in.n_gridpoints, nuclide_grids, energy_grid, in.grid_type);
@@ -98,12 +55,6 @@ int main( int argc, char* argv[] )
 	// Get material data
 	if( mype == 0 )
 		printf("Loading Mats...\n");
-	/*
-	int *num_nucs  = load_num_nucs(in.n_isotopes);
-	int **mats     = load_mats(num_nucs, in.n_isotopes);
-
-	double **concs = load_concs_v(num_nucs);
-	*/
 
 	#ifdef BINARY_DUMP
 	if( mype == 0 ) printf("Dumping data to binary file...\n");
@@ -136,9 +87,7 @@ int main( int argc, char* argv[] )
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
-		//run_event_based_simulation(in, energy_grid, nuclide_grids, num_nucs, mats, concs, mype, &vhash);
-		//run_event_based_simulation(in, SD, num_nucs, mats, concs, mype, &vhash);
-		run_event_based_simulation(in, SD, mype, &vhash);
+		verification = run_event_based_simulation(in, SD, mype);
 	else
 	{
 		printf("History based simulation not supported by XSBench on accelerators. Use flag \"-m event\" for event based simulation.\n");
@@ -160,10 +109,10 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 
 	// Final Hash Step
-	vhash = vhash % 1000000;
+	verification = verification % 1000000;
 
 	// Print / Save Results and Exit
-	print_results( in, mype, omp_end-omp_start, nprocs, vhash );
+	print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
 	#ifdef MPI
 	MPI_Finalize();

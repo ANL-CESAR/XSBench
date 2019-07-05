@@ -4,46 +4,6 @@
 #include<mpi.h>
 #endif
 
-void swap(double * energy_a, NuclideGridPoint * xs_a, double * energy_b, NuclideGridPoint * xs_b) 
-{ 
-	double energy_tmp       = *energy_a;
-	NuclideGridPoint xs_tmp = *xs_a;
-
-	*energy_a = *energy_b;
-	*xs_a     = *xs_b;
-
-	*energy_b = energy_tmp;
-	*xs_b     = xs_tmp;
-} 
-  
-int partition(double * energy_grid, NuclideGridPoint * xs_grid, int low, int high) 
-{ 
-    double pivot = energy_grid[high];
-    int i = (low - 1);
-  
-    for (int j = low; j < high ; j++) 
-    { 
-        if(energy_grid[j] <= pivot) 
-        { 
-            i++;
-			swap(&energy_grid[i], &xs_grid[i], &energy_grid[j], &xs_grid[j]);
-        } 
-    } 
-
-	swap(&energy_grid[i+1], &xs_grid[i+1], &energy_grid[high], &xs_grid[high]);
-    return i + 1; 
-} 
-
-void quickSort(double * energy_grid, NuclideGridPoint * xs_grid, int low, int high) 
-{ 
-    if(low < high) 
-    { 
-        int idx = partition(energy_grid, xs_grid, low, high); 
-        quickSort(energy_grid, xs_grid, low, idx - 1); 
-        quickSort(energy_grid, xs_grid, idx + 1, high); 
-    } 
-} 
-
 int double_compare(const void * a, const void * b)
 {
 	double A = *((double *) a);
@@ -78,8 +38,6 @@ SimulationData flat_grid_init( Inputs in )
 	// Keep track of how much data we're allocating
 	size_t nbytes = 0;
 
-
-
 	////////////////////////////////////////////////////////////////////
 	// Initialize Nuclide Grids
 	////////////////////////////////////////////////////////////////////
@@ -98,6 +56,7 @@ SimulationData flat_grid_init( Inputs in )
 	// Initialize Nuclide Grid
 	SD.length_nuclide_grid = in.n_isotopes * in.n_gridpoints;
 	SD.nuclide_grid     = (NuclideGridPoint *) malloc( SD.length_nuclide_grid * sizeof(NuclideGridPoint));
+	assert(SD.nuclide_grid != NULL);
 	nbytes += SD.length_nuclide_grid * sizeof(NuclideGridPoint);
 	for( int i = 0; i < SD.length_nuclide_grid; i++ )
 	{
@@ -123,23 +82,23 @@ SimulationData flat_grid_init( Inputs in )
 	}
 	*/
 	
-	// If we are not using an acceleration structure, then we are all done
-	if( in.grid_type == NUCLIDE )
-	{
-		SD.length_unionized_energy_array = 0;
-		SD.length_index_grid = 0;
-		return SD;
-	}
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize Acceleration Structure
 	////////////////////////////////////////////////////////////////////
+	
+	if( in.grid_type == NUCLIDE )
+	{
+		SD.length_unionized_energy_array = 0;
+		SD.length_index_grid = 0;
+	}
 	
 	if( in.grid_type == UNIONIZED )
 	{
 		// Allocate space to hold the union of all nuclide energy data
 		SD.length_unionized_energy_array = in.n_isotopes * in.n_gridpoints;
 		SD.unionized_energy_array = (double *) malloc( SD.length_unionized_energy_array * sizeof(double));
+		assert(SD.unionized_energy_array != NULL );
 		nbytes += SD.length_unionized_energy_array * sizeof(double);
 
 		// Copy energy data over from the nuclide energy grid
@@ -152,11 +111,14 @@ SimulationData flat_grid_init( Inputs in )
 		// Allocate space to hold the acceleration grid indices
 		SD.length_index_grid = SD.length_unionized_energy_array * in.n_isotopes;
 		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int));
+		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
 
 		// Generates the double indexing grid
 		int * idx_low = (int *) calloc( in.n_isotopes, sizeof(int));
+		assert(idx_low != NULL );
 		double * energy_high = (double *) malloc( in.n_isotopes * sizeof(double));
+		assert(energy_high != NULL );
 
 		for( int i = 0; i < in.n_isotopes; i++ )
 			energy_high[i] = SD.nuclide_grid[i * in.n_gridpoints + 1].energy;
@@ -183,9 +145,28 @@ SimulationData flat_grid_init( Inputs in )
 		free(energy_high);
 	}
 
-	else if( in.grid_type == HASH )
+	if( in.grid_type == HASH )
 	{
-		//energy_grid = generate_hash_table( nuclide_grids, in.n_isotopes, in.n_gridpoints, in.hash_bins );
+		SD.length_unionized_energy_array = 0;
+		SD.length_index_grid  = in.hash_bins * in.n_isotopes;
+		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int)); 
+		assert(SD.index_grid != NULL);
+		nbytes += SD.length_index_grid * sizeof(int);
+
+		double du = 1.0 / in.hash_bins;
+
+		// For each energy level in the hash table
+		#pragma omp parallel for
+		for( long e = 0; e < in.hash_bins; e++ )
+		{
+			double energy = e * du;
+
+			// We need to determine the bounding energy levels for all isotopes
+			for( long i = 0; i < in.n_isotopes; i++ )
+			{
+				SD.index_grid[e * in.n_isotopes + i] = grid_search_nuclide( in.n_gridpoints, energy, SD.nuclide_grid + i * in.n_gridpoints, 0, in.n_gridpoints-1);
+			}
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////

@@ -150,7 +150,7 @@ void initialization_do_not_profile_set_hash( GridPoint * restrict energy_grid, N
 
 //void run_event_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
 //void run_event_based_simulation(Inputs in, SimulationData SD, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
-void run_event_based_simulation(Inputs in, SimulationData SD, int mype, unsigned long long * vhash_result);
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
 void run_history_based_simulation(Inputs in, GridPoint * energy_grid, NuclideGridPoint ** nuclide_grids, int * num_nucs, int ** mats, double ** concs, int mype, unsigned long long * vhash_result);
 
 #endif
