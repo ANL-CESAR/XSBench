@@ -68,6 +68,8 @@ typedef struct{
 	int length_index_grid;
 	int length_nuclide_grid;
 	int max_num_nucs;
+	unsigned long * verification;
+	int length_verification;
 } SimulationData;
 
 // io.c
@@ -84,7 +86,7 @@ SimulationData binary_read( Inputs in );
 
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-__global__ void lookup_kernel(Inputs in, SimulationData GSD, unsigned long * verification );
+__global__ void lookup_kernel(Inputs in, SimulationData GSD );
 __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * __restrict__ egrid, int * __restrict__ index_data,

@@ -2,87 +2,42 @@
 
 #include <thrust/reduce.h>
 
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData GSD, int mype)
 {
-	if( mype == 0)	
-		printf("Beginning event based simulation...\n");
 	
 	////////////////////////////////////////////////////////////////////////////////
-	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
-	// Here we list all heap arrays (and lengths) in SD that would need to be
-	// offloaded manually if using an accelerator with a seperate memory space
+	// Configure & Launch Simulation Kernel
 	////////////////////////////////////////////////////////////////////////////////
-	// int * num_nucs;                     // Length = length_num_nucs;
-	// double * concs;                     // Length = length_concs
-	// int * mats;                         // Length = length_mats
-	// double * unionized_energy_array;    // Length = length_unionized_energy_array
-	// int * index_grid;                   // Length = length_index_grid
-	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
-	// 
-	// Note: "unionized_energy_array" and "index_grid" can be of zero length
-	//        depending on lookup method.
-	//
-	// Note: "Lengths" are given as the number of objects in the array, not the
-	//       number of bytes.
-	////////////////////////////////////////////////////////////////////////////////
-	size_t sz;
-
-	// Shallow copy of CPU simulation data to GPU simulation data
-	SimulationData GSD = SD;
-
-	// Move data to GPU memory space
-	sz = GSD.length_num_nucs * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.num_nucs, sz) );
-	gpuErrchk( cudaMemcpy(GSD.num_nucs, SD.num_nucs, sz, cudaMemcpyHostToDevice) );
-
-	sz = GSD.length_concs * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.concs, sz) );
-	gpuErrchk( cudaMemcpy(GSD.concs, SD.concs, sz, cudaMemcpyHostToDevice) );
-
-	sz = GSD.length_mats * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mats, sz) );
-	gpuErrchk( cudaMemcpy(GSD.mats, SD.mats, sz, cudaMemcpyHostToDevice) );
-	
-	sz = GSD.length_unionized_energy_array * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.unionized_energy_array, sz) );
-	gpuErrchk( cudaMemcpy(GSD.unionized_energy_array, SD.unionized_energy_array, sz, cudaMemcpyHostToDevice) );
-
-	sz = GSD.length_index_grid * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.index_grid, sz) );
-	gpuErrchk( cudaMemcpy(GSD.index_grid, SD.index_grid, sz, cudaMemcpyHostToDevice) );
-
-	sz = GSD.length_nuclide_grid * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.nuclide_grid, sz) );
-	gpuErrchk( cudaMemcpy(GSD.nuclide_grid, SD.nuclide_grid, sz, cudaMemcpyHostToDevice) );
-	
-	// Allocate verification array on device
-	unsigned long * verification;
-	sz = in.lookups * sizeof(unsigned long);
-	gpuErrchk( cudaMalloc((void **) &verification, sz) );
-
-	////////////////////////////////////////////////////////////////////////////////
-	// Begin Actual Simulation Loop 
-	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Beginning event based simulation...\n");
 
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 
-	lookup_kernel<<<nblocks, nthreads>>>( in, GSD, verification );
+	lookup_kernel<<<nblocks, nthreads>>>( in, GSD );
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Reducing verification results...\n");
 
-	unsigned long verification_scalar = thrust::reduce(thrust::device, verification, verification + in.lookups, 0);
+	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
 
 	return verification_scalar;
 }
 
-__global__ void lookup_kernel(Inputs in, SimulationData GSD, unsigned long * verification )
+// Alternative kernel ideas:
+// - Outer kernel call loop over material type. No sorting/ordering, just quitting if we get the wrong lookup type!
+// - Kernel splitting: Do sampling, then sort, then do lookup loop by material type
+// - Outer kernel call loop, but just between fuel vs. non-fuel
+
+// In this kernel, we perform a single lookup with each thread. Threads within a warp
+// do not really have any relation to each other, and divergence due to high nuclide count fuel
+// material lookups are costly. This kernel constitutes baseline performance.
+__global__ void lookup_kernel(Inputs in, SimulationData GSD )
 {
 	// The lookup ID. Used to set the seed, and to store the verification value
 	const int i = blockIdx.x *blockDim.x + threadIdx.x;
@@ -133,7 +88,7 @@ __global__ void lookup_kernel(Inputs in, SimulationData GSD, unsigned long * ver
 			max_idx = j;
 		}
 	}
-	verification[i] = max_idx;
+	GSD.verification[i] = max_idx;
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy

@@ -29,20 +29,7 @@ int main( int argc, char* argv[] )
 	// therefore, do not profile this region!
 	// =====================================================================
 	
-	SimulationData SD;
-
-	// If read from file mode is selected, skip initialization and load
-	// all simulation data structures from file instead
-	if( in.binary_mode == READ )
-		SD = binary_read(in);
-	else
-		SD = grid_init_do_not_profile( in, mype );
-
-	// If writing from file mode is selected, write all simulation data
-	// structures to file
-	if( in.binary_mode == WRITE && mype == 0 )
-		binary_write(in, SD);
-
+	SimulationData GSD = grid_init_do_not_profile( in, mype );
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation
@@ -64,7 +51,7 @@ int main( int argc, char* argv[] )
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
-		verification = run_event_based_simulation(in, SD, mype);
+		verification = run_event_based_simulation(in, GSD, mype);
 	else
 	{
 		printf("History-based simulation not implemented in CUDA code. Use event-based method with \"-m event\" argument\n");

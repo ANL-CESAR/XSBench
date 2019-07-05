@@ -4,7 +4,7 @@
 
 COMPILER    = nvidia
 OPTIMIZE    = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 
 #===============================================================================
@@ -36,13 +36,13 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),nvidia)
   CC = nvcc
-  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_70
+  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_60
 endif
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
-  CFLAGS += -g
-  LDFLAGS  += -g
+  CFLAGS += -g -G
+  LDFLAGS  += -g -G
 endif
 
 # Profiling Flags

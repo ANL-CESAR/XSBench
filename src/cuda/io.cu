@@ -95,6 +95,11 @@ void print_inputs(Inputs in, int nprocs, int version )
 	logo(version);
 	center_print("INPUT SUMMARY", 79);
 	border_print();
+	cudaDeviceProp prop;
+	int device;
+	cudaGetDevice(&device);
+	cudaGetDeviceProperties ( &prop, device );
+		printf("CUDA Device:                  %s\n", prop.name); 
 	if( in.simulation_method == EVENT_BASED )
 		printf("Simulation Method:            Event Based\n");
 	else
