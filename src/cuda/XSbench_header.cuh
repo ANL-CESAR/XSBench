@@ -107,6 +107,7 @@ __device__ int pick_mat( unsigned long * seed );
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
+SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationData SD );
 
 // XSutils.c
 int NGP_compare( const void * a, const void * b );

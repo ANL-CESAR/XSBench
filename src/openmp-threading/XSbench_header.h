@@ -85,8 +85,6 @@ SimulationData binary_read( Inputs in );
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
 unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
-
-// CalculateXS.c
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * restrict egrid, int * restrict index_data,
@@ -101,6 +99,8 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 long grid_search( long n, double quarry, double * restrict A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
+double rn(unsigned long * seed);
+int pick_mat(unsigned long * seed);
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
@@ -108,7 +108,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype );
 // XSutils.c
 int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
-double rn(unsigned long * seed);
 double rn_v(void);
 size_t estimate_mem_usage( Inputs in );
 
@@ -116,5 +115,4 @@ size_t estimate_mem_usage( Inputs in );
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double * load_concs_v( int * num_nucs, int max_num_nucs );
-int pick_mat(unsigned long * seed);
 #endif
