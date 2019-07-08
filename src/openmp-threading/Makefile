@@ -18,7 +18,6 @@ source = \
 Main.c \
 io.c \
 Simulation.c \
-CalculateXS.c \
 GridInit.c \
 XSutils.c \
 Materials.c
