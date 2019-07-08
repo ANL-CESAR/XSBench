@@ -85,8 +85,8 @@ void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.c
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-__global__ void lookup_kernel(Inputs in, SimulationData GSD );
+unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData SD, int mype);
+__global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD );
 __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * __restrict__ egrid, int * __restrict__ index_data,
@@ -100,7 +100,6 @@ __device__ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          int * __restrict__ mats,
                          double * __restrict__ macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 __device__ long grid_search( long n, double quarry, double * __restrict__ A);
-__device__ long grid_search_nuclide_device( long n, double quarry, NuclideGridPoint * A, long low, long high);
 __host__ __device__ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 __device__ double rn(unsigned long * seed);
 __device__ int pick_mat( unsigned long * seed );

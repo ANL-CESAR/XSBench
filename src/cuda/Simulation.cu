@@ -1,10 +1,8 @@
 #include "XSbench_header.cuh"
-
 #include <thrust/reduce.h>
 
-unsigned long long run_event_based_simulation(Inputs in, SimulationData GSD, int mype)
+unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData GSD, int mype)
 {
-	
 	////////////////////////////////////////////////////////////////////////////////
 	// Configure & Launch Simulation Kernel
 	////////////////////////////////////////////////////////////////////////////////
@@ -13,7 +11,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData GSD, int
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 
-	lookup_kernel<<<nblocks, nthreads>>>( in, GSD );
+	xs_lookup_kernel_baseline<<<nblocks, nthreads>>>( in, GSD );
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
 	
@@ -37,7 +35,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData GSD, int
 // In this kernel, we perform a single lookup with each thread. Threads within a warp
 // do not really have any relation to each other, and divergence due to high nuclide count fuel
 // material lookups are costly. This kernel constitutes baseline performance.
-__global__ void lookup_kernel(Inputs in, SimulationData GSD )
+__global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD )
 {
 	// The lookup ID. Used to set the seed, and to store the verification value
 	const int i = blockIdx.x *blockDim.x + threadIdx.x;
@@ -76,7 +74,7 @@ __global__ void lookup_kernel(Inputs in, SimulationData GSD )
 	// all work out, we interrogate the returned macro_xs_vector array
 	// to find its maximum value index, then increment the verification
 	// value by that index. In this implementation, we have each thread
-	// write to it's thread_id index in an array, which we will reduce
+	// write to its thread_id index in an array, which we will reduce
 	// with a thrust reduction kernel after the main simulation kernel.
 	double max = -1.0;
 	int max_idx = 0;

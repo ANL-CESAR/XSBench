@@ -1,6 +1,5 @@
 #include "XSbench_header.cuh"
 
-
 int main( int argc, char* argv[] )
 {
 	// =====================================================================
@@ -52,12 +51,11 @@ int main( int argc, char* argv[] )
 	// realistic continuous energy Monte Carlo macroscopic cross section
 	// lookup kernel.
 	// =====================================================================
-
 	if( mype == 0 )
 	{
 		printf("\n");
 		border_print();
-		center_print("SIMULATION", 79);
+		center_print("SIMULATION - BASELINE KERNEL", 79);
 		border_print();
 	}
 
@@ -66,7 +64,7 @@ int main( int argc, char* argv[] )
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
-		verification = run_event_based_simulation(in, GSD, mype);
+		verification = run_event_based_simulation_baseline(in, GSD, mype);
 	else
 	{
 		printf("History-based simulation not implemented in CUDA code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
@@ -81,10 +79,6 @@ int main( int argc, char* argv[] )
 
 	// End Simulation Timer
 	omp_end = get_time();
-
-	// =====================================================================
-	// Output Results & Finalize
-	// =====================================================================
 
 	// Final Hash Step
 	verification = verification % 1000000;
