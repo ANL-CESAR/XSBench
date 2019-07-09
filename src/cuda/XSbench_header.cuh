@@ -130,7 +130,7 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 __global__ void xs_lookup_kernel_optimization_4(Inputs in, SimulationData GSD, int m, int n_lookups, int offset );
 
 unsigned long long run_event_based_simulation_optimization_5(Inputs in, SimulationData GSD, int mype);
-__global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, int is_fuel, int n_lookups, int offset );
+__global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, int n_lookups, int offset );
 
 unsigned long long run_event_based_simulation_optimization_6(Inputs in, SimulationData GSD, int mype);
 
