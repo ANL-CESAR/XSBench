@@ -1048,7 +1048,7 @@ __global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, i
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_6(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 6 - All Material Lookup Kernels + Full Material Sort + Energy SOrt";
+	char * optimization_name = "Optimization 6 - All Material Lookup Kernels + Full Material Sort + Energy Sort";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -1088,11 +1088,10 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 	for( int m = 0; m < 12; m++ )
 		n_lookups_per_material[m] = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, m);
 
-	//int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
-	//printf("Going to perform %d fuel lookups...\n", n_fuel_lookups);
+	// Sort by material first
 	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
 
-	// Now, sort each nuclide by energy
+	// Now, sort each material by energy
 	int offset = 0;
 	for( int m = 0; m < 12; m++ )
 	{
