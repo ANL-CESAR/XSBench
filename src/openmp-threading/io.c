@@ -36,7 +36,7 @@ void center_print(const char *s, int width)
 	fputs("\n", stdout);
 }
 
-void print_results( Inputs in, int mype, double runtime, int nprocs,
+int print_results( Inputs in, int mype, double runtime, int nprocs,
 	unsigned long long vhash )
 {
 	// Calculate Lookups per sec
@@ -54,6 +54,8 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 	MPI_Reduce(&lookups_per_sec, &total_lookups, 1, MPI_INT,
 	           MPI_SUM, 0, MPI_COMM_WORLD);
 	#endif
+
+	int is_invalid_result = 1;
 	
 	// Print output
 	if( mype == 0 )
@@ -83,30 +85,38 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		unsigned long long small = 0; 
 		if( in.simulation_method == EVENT_BASED )
 		{
-			small = 945140;
-			large = 951281;
+			small = 945990;
+			large = 952131;
 		}
 		else if( in.simulation_method == HISTORY_BASED )
 		{
-			small = 940685;
-			large = 953468; 
+			small = 941535;
+			large = 954318; 
 		}
 		if( strcmp(in.HM, "large") == 0 )
 		{
 			if( vhash == large )
+			{
 				printf("Verification checksum: %llu (Valid)\n", vhash);
+				is_invalid_result = 0;
+			}
 			else
 				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
 		}
 		else if( strcmp(in.HM, "small") == 0 )
 		{
 			if( vhash == small )
+			{
 				printf("Verification checksum: %llu (Valid)\n", vhash);
+				is_invalid_result = 0;
+			}
 			else
 				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
 		}
 		border_print();
 	}
+
+	return is_invalid_result;
 }
 
 void print_inputs(Inputs in, int nprocs, int version )

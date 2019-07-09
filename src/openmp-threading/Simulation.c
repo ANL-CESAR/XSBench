@@ -83,7 +83,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				max_idx = j;
 			}
 		}
-		verification += max_idx;
+		verification += max_idx+1;
 	}
 
 	return verification;
@@ -177,7 +177,7 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 					max_idx = j;
 				}
 			}
-			verification += max_idx;
+			verification += max_idx+1;
 
 			// Randomly pick next energy and material for the particle
 			// Also incorporates results from macro_xs lookup to

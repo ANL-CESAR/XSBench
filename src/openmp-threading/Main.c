@@ -91,14 +91,14 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 
 	// Final Hash Step
-	verification = verification % 1000000;
+	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	print_results( in, mype, omp_end-omp_start, nprocs, verification );
+	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
 	#ifdef MPI
 	MPI_Finalize();
 	#endif
 
-	return 0;
+	return is_invalid_result;
 }
