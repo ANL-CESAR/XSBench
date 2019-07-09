@@ -74,8 +74,15 @@ double get_time(void)
 	return omp_get_wtime();
 	#endif
 
+	// If using regular C, we can do this:
+	/*
 	time_t time;
 	time = clock();
 
 	return (double) time / (double) CLOCKS_PER_SEC;
+	*/
+
+	// If using C++, we can do this:
+	unsigned long us_since_epoch = std::chrono::high_resolution_clock::now().time_since_epoch() / std::chrono::microseconds(1);
+	return (double) us_since_epoch / 1.0e6;
 }

@@ -51,7 +51,7 @@ int main( int argc, char* argv[] )
 	{
 		printf("\n");
 		border_print();
-		center_print("SIMULATION - BASELINE KERNEL", 79);
+		center_print("SIMULATION", 79);
 		border_print();
 	}
 

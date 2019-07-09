@@ -65,6 +65,7 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	sz = in.lookups * sizeof(unsigned long);
 	gpuErrchk( cudaMalloc((void **) &GSD.verification, sz) );
 	total_sz += sz;
+	GSD.length_verification = in.lookups;
 	
 	// Synchronize
 	gpuErrchk( cudaPeekAtLastError() );

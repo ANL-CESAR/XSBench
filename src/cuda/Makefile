@@ -6,7 +6,7 @@ COMPILER    = nvidia
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
-SM_VERSION  = 60
+SM_VERSION  = 70
 
 #===============================================================================
 # Program name & source code list
@@ -37,7 +37,7 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),nvidia)
   CC = nvcc
-  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION)
+  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11
 endif
 
 # Debug Flags

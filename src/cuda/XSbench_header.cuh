@@ -8,6 +8,7 @@
 #include<cuda.h>
 #include <thrust/reduce.h>
 #include<stdint.h>
+#include <chrono> 
 
 // Grid types
 #define UNIONIZED 0
@@ -76,6 +77,10 @@ typedef struct{
 	int max_num_nucs;
 	unsigned long * verification;
 	int length_verification;
+	double * p_energy_samples;
+	int length_p_energy_samples;
+	int * mat_samples;
+	int length_mat_samples;
 } SimulationData;
 
 // io.cu
@@ -112,6 +117,7 @@ __host__ __device__ double LCG_random_double(uint64_t * seed);
 __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData GSD, int mype);
+__global__ void sampling_kernel(Inputs in, SimulationData GSD );
 __global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD );
 
 // GridInit.cu

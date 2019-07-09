@@ -17,7 +17,7 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	////////////////////////////////////////////////////////////////////////////////
 	// Configure & Launch Simulation Kernel
 	////////////////////////////////////////////////////////////////////////////////
-	if( mype == 0)	printf("Beginning event based simulation...\n");
+	if( mype == 0)	printf("Running baseline event-based simulation...\n");
 
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
@@ -387,6 +387,9 @@ __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 // OPTIMIZED VARIANT FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////
 // This section contains a number of optimized variants of some of the above
@@ -395,16 +398,54 @@ __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 // must be specifically selected using the "-k <optimized variant ID>" command
 // line argument.
 ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////
+// Optimization 1 -- Basic kernel splitting of sampling & lookup routines
+////////////////////////////////////////////////////////////////////////////////////
+// This optimization requires a little extra data to store all material IDs and 
+// energies for the sampled particles between kernel calls. By itself, this
+// optimization is likely actually a bit of a slowdown compared to the baseline
+// kernel. However, it will be used by better optimization kernels down the line.
+////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData GSD, int mype)
 {
+	char * optimization_name = "Optimization 1 - basic sample/lookup kernel splitting";
+	
+	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Allocate Additional Data Structures Needed by Optimized Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Allocating additional device data required by kernel...\n");
+	size_t sz;
+	size_t total_sz = 0;
+
+	sz = in.lookups * sizeof(double);
+	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	total_sz += sz;
+	GSD.length_p_energy_samples = in.lookups;
+
+	sz = in.lookups * sizeof(int);
+	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	total_sz += sz;
+	GSD.length_mat_samples = in.lookups;
+	
+	if( mype == 0)	printf("Allocated an additional %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0);
+
 	////////////////////////////////////////////////////////////////////////////////
 	// Configure & Launch Simulation Kernel
 	////////////////////////////////////////////////////////////////////////////////
-	if( mype == 0)	printf("Beginning event based simulation...\n");
+	if( mype == 0)	printf("Beginning optimized simulation...\n");
 
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
+	
+	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
 
 	xs_lookup_kernel_optimization_1<<<nblocks, nthreads>>>( in, GSD );
 	gpuErrchk( cudaPeekAtLastError() );
@@ -422,9 +463,9 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	return verification_scalar;
 }
 
-__global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD )
+__global__ void sampling_kernel(Inputs in, SimulationData GSD )
 {
-	// The lookup ID. Used to set the seed, and to store the verification value
+	// The lookup ID.
 	const int i = blockIdx.x *blockDim.x + threadIdx.x;
 
 	if( i > in.lookups )
@@ -439,13 +480,26 @@ __global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD )
 	// Randomly pick an energy and material for the particle
 	double p_energy = LCG_random_double(&seed);
 	int mat         = pick_mat(&seed); 
+
+	// Store sample data in state array
+	GSD.p_energy_samples[i] = p_energy;
+	GSD.mat_samples[i] = mat;
+}
+
+__global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD )
+{
+	// The lookup ID. Used to set the seed, and to store the verification value
+	const int i = blockIdx.x *blockDim.x + threadIdx.x;
+
+	if( i > in.lookups )
+		return;
 		
 	double macro_xs_vector[5] = {0};
 		
 	// Perform macroscopic Cross Section Lookup
 	calculate_macro_xs(
-			p_energy,        // Sampled neutron energy (in lethargy)
-			mat,             // Sampled material type index neutron is in
+			GSD.p_energy_samples[i],        // Sampled neutron energy (in lethargy)
+			GSD.mat_samples[i],             // Sampled material type index neutron is in
 			in.n_isotopes,   // Total number of isotopes in simulation
 			in.n_gridpoints, // Number of gridpoints per isotope in simulation
 			GSD.num_nucs,     // 1-D array with number of nuclides per material
