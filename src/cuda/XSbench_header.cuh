@@ -127,7 +127,10 @@ unsigned long long run_event_based_simulation_optimization_3(Inputs in, Simulati
 __global__ void xs_lookup_kernel_optimization_3(Inputs in, SimulationData GSD, int m );
 
 unsigned long long run_event_based_simulation_optimization_4(Inputs in, SimulationData GSD, int mype);
-__global__ void xs_lookup_kernel_optimization_4(Inputs in, SimulationData GSD, int m );
+__global__ void xs_lookup_kernel_optimization_4(Inputs in, SimulationData GSD, int m, int n_lookups, int offset );
+
+unsigned long long run_event_based_simulation_optimization_5(Inputs in, SimulationData GSD, int mype);
+__global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, int m, int n_lookups );
 
 // GridInit.cu
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
