@@ -118,5 +118,5 @@ size_t estimate_mem_usage( Inputs in );
 // Materials.c
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
-double * load_concs_v( int * num_nucs, int max_num_nucs );
+double * load_concs( int * num_nucs, int max_num_nucs );
 #endif

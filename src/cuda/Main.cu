@@ -11,10 +11,6 @@ int main( int argc, char* argv[] )
 	int nprocs = 1;
 	unsigned long long verification;
 
-	// rand() is only used in the serial initialization stages.
-	// A custom RNG is used in parallel portions.
-	srand(26);
-
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
 
@@ -68,10 +64,10 @@ int main( int argc, char* argv[] )
 		if( in.kernel_id == 0 )
 			verification = run_event_based_simulation_baseline(in, GSD, mype);
 		else if( in.kernel_id == 1 )
-			verification = run_event_based_simulation_optimization_0(in, GSD, mype);
+			verification = run_event_based_simulation_optimization_1(in, GSD, mype);
 		else
 		{
-			printf("Error: No kernel ID %d found!\n");
+			printf("Error: No kernel ID %d found!\n", in.kernel_id);
 			exit(1);
 		}
 	}
@@ -91,10 +87,10 @@ int main( int argc, char* argv[] )
 	omp_end = get_time();
 
 	// Final Hash Step
-	verification = verification % 1000000;
+	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	print_results( in, mype, omp_end-omp_start, nprocs, verification );
+	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
-	return 0;
+	return is_invalid_result;
 }

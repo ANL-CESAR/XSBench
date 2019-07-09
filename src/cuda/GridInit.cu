@@ -83,6 +83,9 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 
 	// Keep track of how much data we're allocating
 	size_t nbytes = 0;
+	
+	// Set the initial seed value
+	uint64_t seed = 42;	
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize Nuclide Grids
@@ -108,12 +111,12 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	nbytes += SD.length_nuclide_grid * sizeof(NuclideGridPoint);
 	for( int i = 0; i < SD.length_nuclide_grid; i++ )
 	{
-		SD.nuclide_grid[i].energy        = rn_v();
-		SD.nuclide_grid[i].total_xs      = rn_v();
-		SD.nuclide_grid[i].elastic_xs    = rn_v();
-		SD.nuclide_grid[i].absorbtion_xs = rn_v();
-		SD.nuclide_grid[i].fission_xs    = rn_v();
-		SD.nuclide_grid[i].nu_fission_xs = rn_v();
+		SD.nuclide_grid[i].energy        = LCG_random_double(&seed);
+		SD.nuclide_grid[i].total_xs      = LCG_random_double(&seed);
+		SD.nuclide_grid[i].elastic_xs    = LCG_random_double(&seed);
+		SD.nuclide_grid[i].absorbtion_xs = LCG_random_double(&seed);
+		SD.nuclide_grid[i].fission_xs    = LCG_random_double(&seed);
+		SD.nuclide_grid[i].nu_fission_xs = LCG_random_double(&seed);
 	}
 
 	// Sort so that each nuclide has data stored in ascending energy order.
@@ -239,7 +242,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// a list of nuclide concentrations for each of the 12 material types. The
 	// grid is allocated as a full square grid, even though not all
 	// materials have the same number of nuclides.
-	SD.concs = load_concs_v(SD.num_nucs, SD.max_num_nucs);
+	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
 	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data on CPU.\n", nbytes/1024.0/1024.0 );

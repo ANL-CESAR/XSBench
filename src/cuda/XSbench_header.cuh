@@ -6,6 +6,8 @@
 #include<math.h>
 #include<assert.h>
 #include<cuda.h>
+#include <thrust/reduce.h>
+#include<stdint.h>
 
 // Grid types
 #define UNIONIZED 0
@@ -20,6 +22,9 @@
 #define NONE 0
 #define READ 1
 #define WRITE 2
+
+// Starting Seed
+#define STARTING_SEED 1070
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -73,7 +78,7 @@ typedef struct{
 	int length_verification;
 } SimulationData;
 
-// io.c
+// io.cu
 void logo(int version);
 void center_print(const char *s, int width);
 void border_print(void);
@@ -81,11 +86,11 @@ void fancy_int(long a);
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 void print_inputs(Inputs in, int nprocs, int version);
-void print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+int print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
 void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
-// Simulation.c
+// Simulation.cu
 unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData SD, int mype);
 __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD );
 __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
@@ -102,22 +107,26 @@ __device__ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          double * __restrict__ macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 __device__ long grid_search( long n, double quarry, double * __restrict__ A);
 __host__ __device__ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
-__device__ double rn(unsigned long * seed);
-__device__ int pick_mat( unsigned long * seed );
+__device__ int pick_mat( uint64_t * seed );
+__host__ __device__ double LCG_random_double(uint64_t * seed);
+__device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 
-// GridInit.c
+unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData GSD, int mype);
+__global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD );
+
+// GridInit.cu
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
 SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationData SD );
 
-// XSutils.c
+// XSutils.cu
 int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
 double rn_v(void);
 size_t estimate_mem_usage( Inputs in );
 double get_time(void);
 
-// Materials.c
+// Materials.cu
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
-double * load_concs_v( int * num_nucs, int max_num_nucs );
+double * load_concs( int * num_nucs, int max_num_nucs );
 #endif

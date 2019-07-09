@@ -95,14 +95,15 @@ int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs )
 	return mats;
 }
 
-// Verification version of this function (tighter control over RNG)
-double * load_concs_v( int * num_nucs, int max_num_nucs )
+// Randomizes the concentrations of all nuclides in a variety of materials
+double * load_concs( int * num_nucs, int max_num_nucs )
 {
+	uint64_t seed = STARTING_SEED * STARTING_SEED;
 	double * concs = (double *) malloc( 12 * max_num_nucs * sizeof( double ) );
 	
 	for( int i = 0; i < 12; i++ )
 		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i * max_num_nucs + j] = rn_v();
+			concs[i * max_num_nucs + j] = LCG_random_double(&seed);
 
 	// test
 	/*
@@ -113,4 +114,3 @@ double * load_concs_v( int * num_nucs, int max_num_nucs )
 
 	return concs;
 }
-

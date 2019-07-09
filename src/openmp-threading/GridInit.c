@@ -167,7 +167,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// a list of nuclide concentrations for each of the 12 material types. The
 	// grid is allocated as a full square grid, even though not all
 	// materials have the same number of nuclides.
-	SD.concs = load_concs_v(SD.num_nucs, SD.max_num_nucs);
+	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
 	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data.\n", nbytes/1024.0/1024.0 );
