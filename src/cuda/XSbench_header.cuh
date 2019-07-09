@@ -123,6 +123,9 @@ __global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD );
 unsigned long long run_event_based_simulation_optimization_2(Inputs in, SimulationData GSD, int mype);
 __global__ void xs_lookup_kernel_optimization_2(Inputs in, SimulationData GSD, int m );
 
+unsigned long long run_event_based_simulation_optimization_3(Inputs in, SimulationData GSD, int mype);
+__global__ void xs_lookup_kernel_optimization_3(Inputs in, SimulationData GSD, int m );
+
 // GridInit.cu
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
 SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationData SD );
