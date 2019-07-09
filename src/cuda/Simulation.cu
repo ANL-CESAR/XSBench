@@ -833,14 +833,6 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 	}
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
-
-	// Launch all material kernels individually (asynchronous is allowed)
-	/*
-	xs_lookup_kernel_optimization_4<<<nblocks, nthreads>>>( in, GSD, 1 );
-	xs_lookup_kernel_optimization_4<<<nblocks, nthreads>>>( in, GSD, 0 );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
-	*/
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -918,28 +910,6 @@ __global__ void xs_lookup_kernel_optimization_4(Inputs in, SimulationData GSD, i
 // kernels for the fuel and other mateirals.
 ////////////////////////////////////////////////////////////////////////////////////
 
-/*
-__host__ __device__ bool is_fuel_comparator( const int a, const int b )
-{
-	if( a == 0 && b != 0)
-		return false;
-	else
-		return true;
-}
-*/
-
-/*
-template<typename T>
-struct is_fuel_comparator : public thrust::binary_function<T,T,bool>
-{
-	  __host__ __device__ bool operator()(const T &lhs, const T &rhs) const {
-		       if( lhs == 0 && rhs != 0)
-				   return false;
-			   else
-				   return true;
-			     }
-}; 
-*/
 struct fuel_comp {
 	__host__ __device__
 		bool operator()(const int & a, const int & b) {
@@ -947,22 +917,8 @@ struct fuel_comp {
 				return true;
 			else
 				return false;
-			//return a < b;
 		}
 };
-
-
-/*
-struct is_fuel_comparator : public thrust::binary_function<int,int,bool>
-{
-	  __host__ __device__ bool operator()(const int &lhs, const int &rhs) const {
-		       if( lhs == 0 && rhs != 0)
-				   return false;
-			   else
-				   return true;
-			     }
-}; 
-*/
 
 unsigned long long run_event_based_simulation_optimization_5(Inputs in, SimulationData GSD, int mype)
 {
@@ -1002,31 +958,10 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	gpuErrchk( cudaDeviceSynchronize() );
 
 	// Count the number of fuel material lookups that need to be performed (fuel id = 0)
-	/*
-	int n_lookups_per_material[12];
-	for( int m = 0; m < 12; m++ )
-		n_lookups_per_material[m] = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, m);
-		*/
-
 	int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
 	//printf("Going to perform %d fuel lookups...\n", n_fuel_lookups);
 	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
-	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator);
-	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator<int>());
-	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator());
 	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, fuel_comp());
-	
-	// Launch all material kernels individually
-	/*
-	for( int m = 0; m < 12; m++ )
-	{
-		nthreads = 32;
-		nblocks = ceil((double) n_lookups_per_material[m] / (double) nthreads);
-		xs_lookup_kernel_optimization_4<<<nblocks, nthreads>>>( in, GSD, m );
-	}
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
-	*/
 
 	// Launch all material kernels individually (asynchronous is allowed)
 	nblocks = ceil( (double) n_fuel_lookups / (double) nthreads);
@@ -1104,3 +1039,88 @@ __global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, i
 		GSD.verification[i] = max_idx+1;
 	}
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+// Optimization 6 -- Kernel Splitting + All Material Lookups + Full Sort
+//                   + Energy Sort
+////////////////////////////////////////////////////////////////////////////////////
+// This optimization builds on optimization 4, adding in a second sort by energy
+////////////////////////////////////////////////////////////////////////////////////
+unsigned long long run_event_based_simulation_optimization_6(Inputs in, SimulationData GSD, int mype)
+{
+	char * optimization_name = "Optimization 6 - All Material Lookup Kernels + Full Material Sort + Energy SOrt";
+	
+	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Allocate Additional Data Structures Needed by Optimized Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Allocating additional device data required by kernel...\n");
+	size_t sz;
+	size_t total_sz = 0;
+
+	sz = in.lookups * sizeof(double);
+	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	total_sz += sz;
+	GSD.length_p_energy_samples = in.lookups;
+
+	sz = in.lookups * sizeof(int);
+	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	total_sz += sz;
+	GSD.length_mat_samples = in.lookups;
+	
+	if( mype == 0)	printf("Allocated an additional %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0);
+
+	////////////////////////////////////////////////////////////////////////////////
+	// Configure & Launch Simulation Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Beginning optimized simulation...\n");
+
+	int nthreads = 32;
+	int nblocks = ceil( (double) in.lookups / 32.0);
+	
+	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+
+	// Count the number of fuel material lookups that need to be performed (fuel id = 0)
+	int n_lookups_per_material[12];
+	for( int m = 0; m < 12; m++ )
+		n_lookups_per_material[m] = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, m);
+
+	//int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
+	//printf("Going to perform %d fuel lookups...\n", n_fuel_lookups);
+	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
+
+	// Now, sort each nuclide by energy
+	int offset = 0;
+	for( int m = 0; m < 12; m++ )
+	{
+		thrust::sort_by_key(thrust::device, GSD.p_energy_samples + offset, GSD.p_energy_samples + offset + n_lookups_per_material[m], GSD.mat_samples + offset);
+		offset += n_lookups_per_material[m];
+	}
+	
+	// Launch all material kernels individually
+	offset = 0;
+	for( int m = 0; m < 12; m++ )
+	{
+		nthreads = 32;
+		nblocks = ceil((double) n_lookups_per_material[m] / (double) nthreads);
+		xs_lookup_kernel_optimization_4<<<nblocks, nthreads>>>( in, GSD, m, n_lookups_per_material[m], offset );
+		offset += n_lookups_per_material[m];
+	}
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Reduce Verification Results
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Reducing verification results...\n");
+
+	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+
+	return verification_scalar;
+}
+
