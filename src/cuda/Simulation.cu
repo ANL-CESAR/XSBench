@@ -918,17 +918,30 @@ __global__ void xs_lookup_kernel_optimization_4(Inputs in, SimulationData GSD, i
 // kernels for the fuel and other mateirals.
 ////////////////////////////////////////////////////////////////////////////////////
 
-bool is_fuel_comparator( int a, int b )
+/*
+__host__ __device__ bool is_fuel_comparator( const int a, const int b )
 {
 	if( a == 0 && b != 0)
 		return false;
 	else
 		return true;
 }
+*/
+
+template<typename T>
+struct is_fuel_comparator : public thrust::binary_function<T,T,bool>
+{
+	  __host__ __device__ bool operator()(const T &lhs, const T &rhs) const {
+		       if( lhs == 0 && rhs != 0)
+				   return false;
+			   else
+				   return true;
+			     }
+}; 
 
 unsigned long long run_event_based_simulation_optimization_5(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 4 - All Material Lookup Kernels + Full Sort";
+	char * optimization_name = "Optimization 5 - Fuel/No Fuel Lookup Kernels + Fuel/No Fuel Sort";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -973,7 +986,8 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
 	//printf("Going to perform %d fuel lookups...\n", n_fuel_lookups);
 	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
-	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator);
+	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator);
+	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator<int>());
 	
 	// Launch all material kernels individually
 	/*
@@ -989,9 +1003,9 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 
 	// Launch all material kernels individually (asynchronous is allowed)
 	nblocks = ceil( (double) n_fuel_lookups / (double) nthreads);
-	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, 1, n_fuel_lookups );
+	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, n_fuel_lookups, 0 );
 	nblocks = ceil( (double) (in.lookups - n_fuel_lookups) / (double) nthreads);
-	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, 0, in.lookups-n_fuel_lookups );
+	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, in.lookups-n_fuel_lookups, n_fuel_lookups );
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
 	
@@ -1007,25 +1021,22 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	return verification_scalar;
 }
 
-__global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, int m, int n_lookups )
+__global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, int n_lookups, int offset )
 {
 	// The lookup ID. Used to set the seed, and to store the verification value
-	const int i = blockIdx.x *blockDim.x + threadIdx.x;
+	int i = blockIdx.x *blockDim.x + threadIdx.x;
 
 	if( i > n_lookups )
 		return;
 	
-	// Check that our material type matches the kernel material
-	int mat = GSD.mat_samples[i];
-	if( mat != m )
-		return;
+	i += offset;
 
 	double macro_xs_vector[5] = {0};
 		
 	// Perform macroscopic Cross Section Lookup
 	calculate_macro_xs(
 			GSD.p_energy_samples[i],        // Sampled neutron energy (in lethargy)
-			mat,             // Sampled material type index neutron is in
+			GSD.mat_samples[i],             // Sampled material type index neutron is in
 			in.n_isotopes,   // Total number of isotopes in simulation
 			in.n_gridpoints, // Number of gridpoints per isotope in simulation
 			GSD.num_nucs,     // 1-D array with number of nuclides per material
