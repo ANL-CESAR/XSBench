@@ -928,6 +928,7 @@ __host__ __device__ bool is_fuel_comparator( const int a, const int b )
 }
 */
 
+/*
 template<typename T>
 struct is_fuel_comparator : public thrust::binary_function<T,T,bool>
 {
@@ -938,6 +939,18 @@ struct is_fuel_comparator : public thrust::binary_function<T,T,bool>
 				   return true;
 			     }
 }; 
+*/
+struct fuel_comp {
+	__host__ __device__
+		bool operator()(const int & a, const int & b) {
+			if( a == 0 && b != 0 )
+				return true;
+			else
+				return false;
+			//return a < b;
+		}
+};
+
 
 /*
 struct is_fuel_comparator : public thrust::binary_function<int,int,bool>
@@ -997,10 +1010,11 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 
 	int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
 	//printf("Going to perform %d fuel lookups...\n", n_fuel_lookups);
-	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
+	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
 	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator);
 	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator<int>());
 	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_fuel_comparator());
+	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, fuel_comp());
 	
 	// Launch all material kernels individually
 	/*
