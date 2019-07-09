@@ -532,3 +532,122 @@ __global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD )
 	}
 	GSD.verification[i] = max_idx+1;
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+// Optimization 2 -- Kernel Splitting + Single Material Lookup Kernels
+////////////////////////////////////////////////////////////////////////////////////
+// This optimization builds on Optimization 1, adding in multiple kernel calls -- 
+// one for each material. As the materials all have different numbers of nuclides,
+// we can (potentially) reduce thread divergence by running each material type
+// in its own kernel individually. For better SIMD efficiency, we would want to
+// do a sort of some kind first, which we will do in subsequent kernels.
+////////////////////////////////////////////////////////////////////////////////////
+unsigned long long run_event_based_simulation_optimization_2(Inputs in, SimulationData GSD, int mype)
+{
+	char * optimization_name = "Optimization 2 - Individual Material Lookup Kernels";
+	
+	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Allocate Additional Data Structures Needed by Optimized Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Allocating additional device data required by kernel...\n");
+	size_t sz;
+	size_t total_sz = 0;
+
+	sz = in.lookups * sizeof(double);
+	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	total_sz += sz;
+	GSD.length_p_energy_samples = in.lookups;
+
+	sz = in.lookups * sizeof(int);
+	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	total_sz += sz;
+	GSD.length_mat_samples = in.lookups;
+	
+	if( mype == 0)	printf("Allocated an additional %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0);
+
+	////////////////////////////////////////////////////////////////////////////////
+	// Configure & Launch Simulation Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Beginning optimized simulation...\n");
+
+	int nthreads = 32;
+	int nblocks = ceil( (double) in.lookups / 32.0);
+	
+	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+
+	// Launch all material kernels individually
+	for( int m = 0; m < 12; m++ )
+	{	
+		xs_lookup_kernel_optimization_2<<<nblocks, nthreads>>>( in, GSD, m );
+	}
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Reduce Verification Results
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Reducing verification results...\n");
+
+	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+
+	return verification_scalar;
+}
+
+__global__ void xs_lookup_kernel_optimization_2(Inputs in, SimulationData GSD, int m )
+{
+	// The lookup ID. Used to set the seed, and to store the verification value
+	const int i = blockIdx.x *blockDim.x + threadIdx.x;
+
+	if( i > in.lookups )
+		return;
+	
+	// If we're not doing the assigned material, quit
+	int mat = GSD.mat_samples[i];
+	if( mat != m )
+		return;
+		
+	double macro_xs_vector[5] = {0};
+		
+	// Perform macroscopic Cross Section Lookup
+	calculate_macro_xs(
+			GSD.p_energy_samples[i],        // Sampled neutron energy (in lethargy)
+			mat,             // Sampled material type index neutron is in
+			in.n_isotopes,   // Total number of isotopes in simulation
+			in.n_gridpoints, // Number of gridpoints per isotope in simulation
+			GSD.num_nucs,     // 1-D array with number of nuclides per material
+			GSD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
+			GSD.unionized_energy_array, // 1-D Unionized energy array
+			GSD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+			GSD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+			GSD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+			macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
+			in.grid_type,    // Lookup type (nuclide, hash, or unionized)
+			in.hash_bins,    // Number of hash bins used (if using hash lookup type)
+			GSD.max_num_nucs  // Maximum number of nuclides present in any material
+			);
+
+	// For verification, and to prevent the compiler from optimizing
+	// all work out, we interrogate the returned macro_xs_vector array
+	// to find its maximum value index, then increment the verification
+	// value by that index. In this implementation, we have each thread
+	// write to its thread_id index in an array, which we will reduce
+	// with a thrust reduction kernel after the main simulation kernel.
+	double max = -1.0;
+	int max_idx = 0;
+	for(int j = 0; j < 5; j++ )
+	{
+		if( macro_xs_vector[j] > max )
+		{
+			max = macro_xs_vector[j];
+			max_idx = j;
+		}
+	}
+	GSD.verification[i] = max_idx+1;
+}
+
