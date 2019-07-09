@@ -11,6 +11,7 @@
 #include<unistd.h>
 #include<sys/time.h>
 #include<assert.h>
+#include<stdint.h>
 
 // Papi Header
 #ifdef PAPI
@@ -30,6 +31,9 @@
 #define NONE 0
 #define READ 1
 #define WRITE 2
+
+// Starting Seed
+#define STARTING_SEED 1070
 
 // Structures
 typedef struct{
@@ -99,8 +103,9 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 long grid_search( long n, double quarry, double * restrict A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
-double rn(unsigned long * seed);
 int pick_mat(unsigned long * seed);
+double LCG_random_double(uint64_t * seed);
+uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
@@ -108,7 +113,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype );
 // XSutils.c
 int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
-double rn_v(void);
 size_t estimate_mem_usage( Inputs in );
 
 // Materials.c

@@ -32,12 +32,15 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	#pragma omp parallel for schedule(guided) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
-		// Particles are seeded by their particle ID
-		unsigned long seed = ((unsigned long) i+ (unsigned long)1)* (unsigned long) 13371337;
+		// Set the initial seed value
+		uint64_t seed = STARTING_SEED;	
+
+		// Forward seed to lookup index (we need 2 samples per lookup)
+		seed = fast_forward_LCG(seed, 2*i);
 
 		// Randomly pick an energy and material for the particle
-		double p_energy = rn(&seed);
-		int mat      = pick_mat(&seed); 
+		double p_energy = LCG_random_double(&seed);
+		int mat         = pick_mat(&seed); 
 
 		// debugging
 		//printf("E = %lf mat = %d\n", p_energy, mat);
@@ -72,12 +75,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		// array via CUDA thrust, etc).
 		double max = -1.0;
 		int max_idx = 0;
-		for(int i = 0; i < 5; i++ )
+		for(int j = 0; j < 5; j++ )
 		{
-			if( macro_xs_vector[i] > max )
+			if( macro_xs_vector[j] > max )
 			{
-				max = macro_xs_vector[i];
-				max_idx = i;
+				max = macro_xs_vector[j];
+				max_idx = j;
 			}
 		}
 		verification += max_idx;
@@ -117,12 +120,16 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 	#pragma omp parallel for schedule(guided) reduction(+:verification)
 	for( int p = 0; p < in.particles; p++ )
 	{
-		// Particles are seeded by their particle ID
-		unsigned long seed = ((unsigned long) p+ (unsigned long)1)* (unsigned long) 13371337;
+		// Set the initial seed value
+		uint64_t seed = STARTING_SEED;	
+
+		// Forward seed to lookup index (we need 2 samples per lookup, and
+		// we may fast forward up to 5 times after each lookup)
+		seed = fast_forward_LCG(seed, p*in.lookups*2*5);
 
 		// Randomly pick an energy and material for the particle
-		double p_energy = rn(&seed);
-		int mat      = pick_mat(&seed); 
+		double p_energy = LCG_random_double(&seed);
+		int mat         = pick_mat(&seed); 
 
 		// Inner XS Lookup Loop
 		// This loop is dependent!
@@ -177,12 +184,16 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 			// enforce loop dependency.
 			// In a real MC app, this dependency is expressed in terms
 			// of branching physics sampling, whereas here we are just
-			// artificially enforcing this dependence based on altering
-			// the seed
+			// artificially enforcing this dependence based on fast
+			// forwarding the LCG state
+			uint64_t n_forward = 0;
 			for( int j = 0; j < 5; j++ )
-				seed += macro_xs_vector[j] * (j+1)*1337*1337;
+				if( macro_xs_vector[j] > 1.0 )
+					n_forward++;
+			if( n_forward > 0 )
+				seed = fast_forward_LCG(seed, n_forward);
 
-			p_energy = rn(&seed);
+			p_energy = LCG_random_double(&seed);
 			mat      = pick_mat(&seed); 
 		}
 
@@ -394,20 +405,6 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 	return lowerLimit;
 }
 
-// Park & Miller Multiplicative Conguential Algorithm
-// From "Numerical Recipes" Second Edition
-double rn(unsigned long * seed)
-{
-	double ret;
-	unsigned long n1;
-	unsigned long a = 16807;
-	unsigned long m = 2147483647;
-	n1 = ( a * (*seed) ) % m;
-	*seed = n1;
-	ret = (double) n1 / m;
-	return ret;
-}
-
 // picks a material based on a probabilistic distribution
 int pick_mat( unsigned long * seed )
 {
@@ -433,7 +430,7 @@ int pick_mat( unsigned long * seed )
 	dist[10] = 0.025;	// top of fuel assemblies
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
-	double roll = rn(seed);
+	double roll = LCG_random_double(seed);
 
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )
@@ -446,4 +443,45 @@ int pick_mat( unsigned long * seed )
 	}
 
 	return 0;
+}
+
+double LCG_random_double(uint64_t * seed)
+{
+	// LCG parameters
+	const uint64_t m = 9223372036854775808ULL; // 2^63
+	const uint64_t a = 2806196910506780709ULL;
+	const uint64_t c = 1ULL;
+	*seed = (a * (*seed) + c) % m;
+	return (double) (*seed) / (double) m;
+	//return ldexp(*seed, -63);
+
+}	
+
+uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
+{
+	// LCG parameters
+	const uint64_t m = 9223372036854775808ULL; // 2^63
+	uint64_t a = 2806196910506780709ULL;
+	uint64_t c = 1ULL;
+
+	n = n % m;
+
+	uint64_t a_new = 1;
+	uint64_t c_new = 0;
+
+	while(n > 0) 
+	{
+		if(n & 1)
+		{
+			a_new *= a;
+			c_new = c_new * a + c;
+		}
+		c *= (a + 1);
+		a *= a;
+
+		n >>= 1;
+	}
+
+	return (a_new * seed + c_new) % m;
+
 }

@@ -83,13 +83,13 @@ void print_results( Inputs in, int mype, double runtime, int nprocs,
 		unsigned long long small = 0; 
 		if( in.simulation_method == EVENT_BASED )
 		{
-			small = 387203;
-			large = 666382;
+			small = 945140;
+			large = 951281;
 		}
 		else if( in.simulation_method == HISTORY_BASED )
 		{
-			large = 658515;
-			small = 385793; 
+			small = 940685;
+			large = 953468; 
 		}
 		if( strcmp(in.HM, "large") == 0 )
 		{

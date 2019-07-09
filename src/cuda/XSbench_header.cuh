@@ -52,6 +52,7 @@ typedef struct{
 	int particles;
 	int simulation_method;
 	int binary_mode;
+	int kernel_id;
 } Inputs;
 
 typedef struct{

@@ -22,10 +22,6 @@ int main( int argc, char* argv[] )
 	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 	#endif
 
-	// rand() is only used in the serial initialization stages.
-	// A custom RNG is used in parallel portions.
-	srand(26);
-
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
 

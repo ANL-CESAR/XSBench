@@ -64,7 +64,17 @@ int main( int argc, char* argv[] )
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
-		verification = run_event_based_simulation_baseline(in, GSD, mype);
+	{
+		if( in.kernel_id == 0 )
+			verification = run_event_based_simulation_baseline(in, GSD, mype);
+		else if( in.kernel_id == 1 )
+			verification = run_event_based_simulation_optimization_0(in, GSD, mype);
+		else
+		{
+			printf("Error: No kernel ID %d found!\n");
+			exit(1);
+		}
+	}
 	else
 	{
 		printf("History-based simulation not implemented in CUDA code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
