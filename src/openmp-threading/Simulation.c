@@ -639,9 +639,9 @@ void quickSort_parallel_internal_i_d(int* key,double * value, int left, int righ
 		if (i < right){ quickSort_parallel_internal_i_d(key, value, i, right, cutoff); }
 
 	}else{
-		//#pragma omp task 	
+		#pragma omp task 	
 		{ quickSort_parallel_internal_i_d(key, value, left, j, cutoff); }
-		//#pragma omp task 	
+		#pragma omp task 	
 		{ quickSort_parallel_internal_i_d(key, value, i, right, cutoff); }		
 	}
 
@@ -649,11 +649,13 @@ void quickSort_parallel_internal_i_d(int* key,double * value, int left, int righ
 
 void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads){
 
-	int cutoff = 1000;
+	// int cutoff = 1000000;// Best
+	//int cutoff = 100000;
+	int cutoff = 10000;
 
-	//#pragma omp parallel num_threads(numThreads)
+	#pragma omp parallel num_threads(numThreads)
 	{	
-		//#pragma omp single nowait
+		#pragma omp single nowait
 		{
 			quickSort_parallel_internal_i_d(key,value, 0, lenArray-1, cutoff);	
 		}
@@ -693,9 +695,9 @@ void quickSort_parallel_internal_d_i(double* key,int * value, int left, int righ
 		if (i < right){ quickSort_parallel_internal_d_i(key, value, i, right, cutoff); }
 
 	}else{
-		//#pragma omp task 	
+		#pragma omp task 	
 		{ quickSort_parallel_internal_d_i(key, value, left, j, cutoff); }
-		//#pragma omp task 	
+		#pragma omp task 	
 		{ quickSort_parallel_internal_d_i(key, value, i, right, cutoff); }		
 	}
 
@@ -703,11 +705,11 @@ void quickSort_parallel_internal_d_i(double* key,int * value, int left, int righ
 
 void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads){
 
-	int cutoff = 1000;
+	int cutoff = 10000;
 
-	//#pragma omp parallel num_threads(numThreads)
+	#pragma omp parallel num_threads(numThreads)
 	{	
-		//#pragma omp single nowait
+		#pragma omp single nowait
 		{
 			quickSort_parallel_internal_d_i(key,value, 0, lenArray-1, cutoff);	
 		}
@@ -780,7 +782,8 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	//quickSort_key_value_caller((void *) SD.mat_samples, (void *) SD.p_energy_samples, sizeof(int), sizeof(double), cmp_int, 0, in.lookups-1);
 	//qsort(SD.mat_samples, in.lookups, sizeof(int), cmp_int);
 	//quickSort_parallel(SD.mat_samples, in.lookups, 112);
-	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 112);
+	//quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 112);
+	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 16);
 	stop = omp_get_wtime();
 	printf("Material sort took %.3lf seconds\n", stop-start);
 	/*
@@ -803,12 +806,20 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	for( int l = 0; l < in.lookups; l++ )
 		num_samples_per_mat[ SD.mat_samples[l] ]++;
 
+	int offsets[12] = {0};
+	for( int m = 1; m < 12; m++ )
+	{
+		offsets[m] = offsets[m-1] + num_samples_per_mat[m-1];
+	}
+
 	// Sort each material type by energy level
 	int offset = 0;
+	//#pragma omp parallel for num_threads(12)
 	for( int m = 0; m < 12; m++ )
 	{
-		quickSort_parallel_d_i(SD.p_energy_samples + offset,SD.mat_samples + offset, num_samples_per_mat[m], 112);
-		offset += num_samples_per_mat[m];
+		//quickSort_parallel_d_i(SD.p_energy_samples + offset,SD.mat_samples + offset, num_samples_per_mat[m], 112);
+		//offset += num_samples_per_mat[m];
+		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], 16);
 	}
 	stop = omp_get_wtime();
 	printf("Energy Sorts took %.3lf seconds\n", stop-start);
@@ -820,61 +831,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 
 	unsigned long long verification = 0;
 
-
-	// Monolithic
-	//#pragma omp parallel for schedule(guided) reduction(+:verification)
-	#pragma omp parallel for schedule(dynamic,1000) reduction(+:verification)
-	for( int i = 0; i < in.lookups; i++ )
-	{
-		// Randomly pick an energy and material for the particle
-		double p_energy = SD.p_energy_samples[i];
-		int mat         = SD.mat_samples[i]; 
-
-		// debugging
-		//printf("E = %lf mat = %d\n", p_energy, mat);
-
-		double macro_xs_vector[5] = {0};
-
-		// Perform macroscopic Cross Section Lookup
-		calculate_macro_xs(
-				p_energy,        // Sampled neutron energy (in lethargy)
-				mat,             // Sampled material type index neutron is in
-				in.n_isotopes,   // Total number of isotopes in simulation
-				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-				SD.num_nucs,     // 1-D array with number of nuclides per material
-				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				SD.unionized_energy_array, // 1-D Unionized energy array
-				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
-				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
-				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
-				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-				SD.max_num_nucs  // Maximum number of nuclides present in any material
-				);
-
-		// For verification, and to prevent the compiler from optimizing
-		// all work out, we interrogate the returned macro_xs_vector array
-		// to find its maximum value index, then increment the verification
-		// value by that index. In this implementation, we prevent thread
-		// contention by using an OMP reduction on the verification value.
-		// For accelerators, a different approach might be required
-		// (e.g., atomics, reduction of thread-specific values in large
-		// array via CUDA thrust, etc).
-		double max = -1.0;
-		int max_idx = 0;
-		for(int j = 0; j < 5; j++ )
-		{
-			if( macro_xs_vector[j] > max )
-			{
-				max = macro_xs_vector[j];
-				max_idx = j;
-			}
-		}
-		verification += max_idx+1;
-	}
 	// Individual Materials
-	/*
 	offset = 0;
 	for( int m = 0; m < 12; m++ )
 	{
@@ -930,7 +887,6 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		}
 		offset += num_samples_per_mat[m];
 	}
-	*/
 	
 	stop = omp_get_wtime();
 	printf("XS Lookups took %.3lf seconds\n", stop-start);
