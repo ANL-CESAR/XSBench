@@ -73,7 +73,17 @@ int main( int argc, char* argv[] )
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
-		verification = run_event_based_simulation(in, SD, mype);
+	{
+		if( in.kernel_id == 0 )
+			verification = run_event_based_simulation(in, SD, mype);
+		else if( in.kernel_id == 1 )
+			verification = run_event_based_simulation_optimization_1(in, SD, mype);
+		else
+		{
+			printf("Error: No kernel ID %d found!\n", in.kernel_id);
+			exit(1);
+		}
+	}
 	else
 		verification = run_history_based_simulation(in, SD, mype);
 

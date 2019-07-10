@@ -56,6 +56,7 @@ typedef struct{
 	int particles;
 	int simulation_method;
 	int binary_mode;
+	int kernel_id;
 } Inputs;
 
 typedef struct{
@@ -72,6 +73,10 @@ typedef struct{
 	int length_index_grid;
 	int length_nuclide_grid;
 	int max_num_nucs;
+	double * p_energy_samples;
+	int length_p_energy_samples;
+	int * mat_samples;
+	int length_mat_samples;
 } SimulationData;
 
 // io.c
@@ -106,6 +111,7 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 int pick_mat(unsigned long * seed);
 double LCG_random_double(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
+unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype);
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );

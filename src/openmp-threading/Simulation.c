@@ -1,5 +1,17 @@
 #include "XSbench_header.h"
 
+////////////////////////////////////////////////////////////////////////////////////
+// BASELINE FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////////
+// All "baseline" code is at the top of this file. The baseline code is a simple
+// implementation of the algorithm, with only minor CPU optimizations in place.
+// Following these functions are a number of optimized variants,
+// which each deploy a different combination of optimizations strategies. By
+// default, XSBench will only run the baseline implementation. Optimized variants
+// must be specifically selected using the "-k <optimized variant ID>" command
+// line argument.
+////////////////////////////////////////////////////////////////////////////////////
+
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
 {
 	if( mype == 0)	
@@ -485,3 +497,443 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 	return (a_new * seed + c_new) % m;
 
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+// OPTIMIZED VARIANT FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////////
+// This section contains a number of optimized variants of some of the above
+// functions, which each deploy a different combination of optimizations strategies.
+// By default, XSBench will not run any of these variants. They
+// must be specifically selected using the "-k <optimized variant ID>" command
+// line argument.
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////
+// Optimization 1 -- Event-based Sample/XS Lookup kernel splitting + Sorting
+//                   lookups by material and energy
+////////////////////////////////////////////////////////////////////////////////////
+// This kernel separates out the sampling and lookup regions of the event-based
+// model, and then sorts the lookups by material type and energy. The goal of this
+// optimization is to allow for greatly improved cache locality, and XS indices
+// loaded from memory may be re-used for multiple lookups.
+////////////////////////////////////////////////////////////////////////////////////
+
+void swap(void * key_a, void * key_b, void * value_a, void * value_b, int size_key, int size_value) 
+{ 
+	char key_tmp[8];
+	char value_tmp[8];
+
+    //int t = *a; 
+	memcpy(key_tmp, key_a, size_key);
+	memcpy(value_tmp, value_a, size_value);
+	
+    //*a = *b; 
+	memcpy(key_a, key_b, size_key);
+	memcpy(value_a, value_b, size_value);
+
+    //*b = t; 
+	memcpy(key_b, key_tmp, size_key);
+	memcpy(value_b, value_tmp, size_value);
+} 
+
+int partition(void * key, void * value, int size_key, int size_value, int (*key_cmp)(const void *, const void *), int low, int high) 
+{ 
+	void * pivot = key + high * size_key;
+    //int pivot = arr[high];    // pivot 
+    int i = (low - 1);  // Index of smaller element 
+  
+    for (int j = low; j <= high- 1; j++) 
+    { 
+		int cmp_result = key_cmp(key + j * size_key, pivot);
+        if (cmp_result <= 0) 
+        { 
+            i++;    // increment index of smaller element 
+			swap(key + i * size_key, key + j * size_key, value + i * size_value, value + j * size_value, size_key, size_value);
+            //swap_i(&arr[i], &arr[j]); 
+        } 
+    } 
+    //swap_i(&arr[i + 1], &arr[high]); 
+	swap(key + (i+1) * size_key, key + high * size_key, value + (i+1) * size_value, value + high * size_value, size_key, size_value);
+    return (i + 1); 
+} 
+  
+void quickSort_key_value(void * key, void * value, int size_key, int size_value, int (*key_cmp)(const void *, const void *), int low, int high) 
+{ 
+    if (low < high) 
+    { 
+        int partition_index = partition(key, value, size_key, size_value, key_cmp, low, high); 
+		if( high-low < 1000 )
+		{
+			quickSort_key_value(key, value, size_key, size_value, key_cmp, low, partition_index - 1); 
+			quickSort_key_value(key, value, size_key, size_value, key_cmp, partition_index + 1, high); 
+		}
+		else
+		{
+			#pragma omp task
+			quickSort_key_value(key, value, size_key, size_value, key_cmp, low, partition_index - 1); 
+			#pragma omp task
+			quickSort_key_value(key, value, size_key, size_value, key_cmp, partition_index + 1, high); 
+		}
+    } 
+} 
+
+void quickSort_key_value_caller(void * key, void * value, int size_key, int size_value, int (*key_cmp)(const void *, const void *), int low, int high) 
+{
+	#pragma omp parallel
+	{
+		#pragma omp single nowait
+		{
+    		quickSort_key_value(key, value, size_key, size_value, key_cmp, low, high); 
+		}
+	}
+}
+
+int cmp_int(const void * a, const void * b)
+{
+	int * A = (int *) a;
+	int * B = (int *) b;
+
+	if( *A < *B )
+		return -1;
+	else if( *A > *B )
+		return 1;
+	else
+		return 0;
+}
+
+void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
+{
+	int i = left, j = right;
+	int tmp;
+	int pivot = key[(left + right) / 2];
+	
+	{
+	  	/* PARTITION PART */
+		while (i <= j) {
+			while (key[i] < pivot)
+				i++;
+			while (key[j] > pivot)
+				j--;
+			if (i <= j) {
+				tmp = key[i];
+				key[i] = key[j];
+				key[j] = tmp;
+				double tmp_v = value[i];
+				value[i] = value[j];
+				value[j] = tmp_v;
+				i++;
+				j--;
+			}
+		}
+
+	}
+
+	if ( ((right-left)<cutoff) ){
+		if (left < j){ quickSort_parallel_internal_i_d(key, value, left, j, cutoff); }			
+		if (i < right){ quickSort_parallel_internal_i_d(key, value, i, right, cutoff); }
+
+	}else{
+		//#pragma omp task 	
+		{ quickSort_parallel_internal_i_d(key, value, left, j, cutoff); }
+		//#pragma omp task 	
+		{ quickSort_parallel_internal_i_d(key, value, i, right, cutoff); }		
+	}
+
+}
+
+void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads){
+
+	int cutoff = 1000;
+
+	//#pragma omp parallel num_threads(numThreads)
+	{	
+		//#pragma omp single nowait
+		{
+			quickSort_parallel_internal_i_d(key,value, 0, lenArray-1, cutoff);	
+		}
+	}	
+
+}
+
+void quickSort_parallel_internal_d_i(double* key,int * value, int left, int right, int cutoff) 
+{
+	int i = left, j = right;
+	double tmp;
+	double pivot = key[(left + right) / 2];
+	
+	{
+	  	/* PARTITION PART */
+		while (i <= j) {
+			while (key[i] < pivot)
+				i++;
+			while (key[j] > pivot)
+				j--;
+			if (i <= j) {
+				tmp = key[i];
+				key[i] = key[j];
+				key[j] = tmp;
+				int tmp_v = value[i];
+				value[i] = value[j];
+				value[j] = tmp_v;
+				i++;
+				j--;
+			}
+		}
+
+	}
+
+	if ( ((right-left)<cutoff) ){
+		if (left < j){ quickSort_parallel_internal_d_i(key, value, left, j, cutoff); }			
+		if (i < right){ quickSort_parallel_internal_d_i(key, value, i, right, cutoff); }
+
+	}else{
+		//#pragma omp task 	
+		{ quickSort_parallel_internal_d_i(key, value, left, j, cutoff); }
+		//#pragma omp task 	
+		{ quickSort_parallel_internal_d_i(key, value, i, right, cutoff); }		
+	}
+
+}
+
+void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads){
+
+	int cutoff = 1000;
+
+	//#pragma omp parallel num_threads(numThreads)
+	{	
+		//#pragma omp single nowait
+		{
+			quickSort_parallel_internal_d_i(key,value, 0, lenArray-1, cutoff);	
+		}
+	}	
+
+}
+
+
+unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype)
+{
+	char * optimization_name = "Optimization 1 - Kernel splitting + full material & energy sort";
+	
+	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Allocate Additional Data Structures Needed by Optimized Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	if( mype == 0)	printf("Allocating additional data required by optimized kernel...\n");
+	size_t sz;
+	size_t total_sz = 0;
+	double start, stop;
+
+	sz = in.lookups * sizeof(double);
+	SD.p_energy_samples = (double *) malloc(sz);
+	total_sz += sz;
+	SD.length_p_energy_samples = in.lookups;
+
+	sz = in.lookups * sizeof(int);
+	SD.mat_samples = (int *) malloc(sz);
+	total_sz += sz;
+	SD.length_mat_samples = in.lookups;
+	
+	if( mype == 0)	printf("Allocated an additional %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Begin Actual Simulation 
+	////////////////////////////////////////////////////////////////////////////////
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Sample Materials and Energies
+	////////////////////////////////////////////////////////////////////////////////
+	#pragma omp parallel for schedule(guided)
+	for( int i = 0; i < in.lookups; i++ )
+	{
+		// Set the initial seed value
+		uint64_t seed = STARTING_SEED;	
+
+		// Forward seed to lookup index (we need 2 samples per lookup)
+		seed = fast_forward_LCG(seed, 2*i);
+
+		// Randomly pick an energy and material for the particle
+		double p_energy = LCG_random_double(&seed);
+		int mat         = pick_mat(&seed); 
+
+		SD.p_energy_samples[i] = p_energy;
+		SD.mat_samples[i] = mat;
+	}
+	printf("finished sampling...\n");
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Sort by Material
+	////////////////////////////////////////////////////////////////////////////////
+	//quickSort_key_value(void * key, void * value, int size_key, int size_value, int (*key_cmp)(void *, void *), int low, int high) 
+	/*
+	printf("before sort:\n");
+	for( int i = 0; i < in.lookups; i++ )
+		printf("%d : %.3le\n", SD.mat_samples[i], SD.p_energy_samples[i]);
+		*/
+	start = omp_get_wtime();
+	//quickSort_key_value_caller((void *) SD.mat_samples, (void *) SD.p_energy_samples, sizeof(int), sizeof(double), cmp_int, 0, in.lookups-1);
+	//qsort(SD.mat_samples, in.lookups, sizeof(int), cmp_int);
+	//quickSort_parallel(SD.mat_samples, in.lookups, 112);
+	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 112);
+	stop = omp_get_wtime();
+	printf("Material sort took %.3lf seconds\n", stop-start);
+	/*
+	printf("after sort:\n");
+	for( int i = 0; i < in.lookups; i++ )
+		printf("%d : %.3le\n", SD.mat_samples[i], SD.p_energy_samples[i]);
+	exit(0);
+	*/
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Sort by Energy
+	////////////////////////////////////////////////////////////////////////////////
+	start = omp_get_wtime();
+	//quickSort_key_value_caller((void *) SD.mat_samples, (void *) SD.p_energy_samples, sizeof(int), sizeof(double), cmp_int, 0, in.lookups-1);
+	//qsort(SD.mat_samples, in.lookups, sizeof(int), cmp_int);
+	//quickSort_parallel(SD.mat_samples, in.lookups, 112);
+	
+	// Count up number of each type of sample
+	int num_samples_per_mat[12] = {0};
+	for( int l = 0; l < in.lookups; l++ )
+		num_samples_per_mat[ SD.mat_samples[l] ]++;
+
+	// Sort each material type by energy level
+	int offset = 0;
+	for( int m = 0; m < 12; m++ )
+	{
+		quickSort_parallel_d_i(SD.p_energy_samples + offset,SD.mat_samples + offset, num_samples_per_mat[m], 112);
+		offset += num_samples_per_mat[m];
+	}
+	stop = omp_get_wtime();
+	printf("Energy Sorts took %.3lf seconds\n", stop-start);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Perform lookups for each material separately
+	////////////////////////////////////////////////////////////////////////////////
+	start = omp_get_wtime();
+
+	unsigned long long verification = 0;
+
+
+	// Monolithic
+	//#pragma omp parallel for schedule(guided) reduction(+:verification)
+	#pragma omp parallel for schedule(dynamic,1000) reduction(+:verification)
+	for( int i = 0; i < in.lookups; i++ )
+	{
+		// Randomly pick an energy and material for the particle
+		double p_energy = SD.p_energy_samples[i];
+		int mat         = SD.mat_samples[i]; 
+
+		// debugging
+		//printf("E = %lf mat = %d\n", p_energy, mat);
+
+		double macro_xs_vector[5] = {0};
+
+		// Perform macroscopic Cross Section Lookup
+		calculate_macro_xs(
+				p_energy,        // Sampled neutron energy (in lethargy)
+				mat,             // Sampled material type index neutron is in
+				in.n_isotopes,   // Total number of isotopes in simulation
+				in.n_gridpoints, // Number of gridpoints per isotope in simulation
+				SD.num_nucs,     // 1-D array with number of nuclides per material
+				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				SD.unionized_energy_array, // 1-D Unionized energy array
+				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
+				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
+				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
+				SD.max_num_nucs  // Maximum number of nuclides present in any material
+				);
+
+		// For verification, and to prevent the compiler from optimizing
+		// all work out, we interrogate the returned macro_xs_vector array
+		// to find its maximum value index, then increment the verification
+		// value by that index. In this implementation, we prevent thread
+		// contention by using an OMP reduction on the verification value.
+		// For accelerators, a different approach might be required
+		// (e.g., atomics, reduction of thread-specific values in large
+		// array via CUDA thrust, etc).
+		double max = -1.0;
+		int max_idx = 0;
+		for(int j = 0; j < 5; j++ )
+		{
+			if( macro_xs_vector[j] > max )
+			{
+				max = macro_xs_vector[j];
+				max_idx = j;
+			}
+		}
+		verification += max_idx+1;
+	}
+	// Individual Materials
+	/*
+	offset = 0;
+	for( int m = 0; m < 12; m++ )
+	{
+		#pragma omp parallel for simd schedule(dynamic,1000) reduction(+:verification)
+		for( int i = offset; i < offset + num_samples_per_mat[m]; i++)
+		{
+			// load pre-sampled energy and material for the particle
+			double p_energy = SD.p_energy_samples[i];
+			int mat         = SD.mat_samples[i]; 
+
+			// debugging
+			//printf("E = %lf mat = %d\n", p_energy, mat);
+
+			double macro_xs_vector[5] = {0};
+
+			// Perform macroscopic Cross Section Lookup
+			calculate_macro_xs(
+					p_energy,        // Sampled neutron energy (in lethargy)
+					mat,             // Sampled material type index neutron is in
+					in.n_isotopes,   // Total number of isotopes in simulation
+					in.n_gridpoints, // Number of gridpoints per isotope in simulation
+					SD.num_nucs,     // 1-D array with number of nuclides per material
+					SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
+					SD.unionized_energy_array, // 1-D Unionized energy array
+					SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+					SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+					SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+					macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
+					in.grid_type,    // Lookup type (nuclide, hash, or unionized)
+					in.hash_bins,    // Number of hash bins used (if using hash lookup type)
+					SD.max_num_nucs  // Maximum number of nuclides present in any material
+					);
+
+			// For verification, and to prevent the compiler from optimizing
+			// all work out, we interrogate the returned macro_xs_vector array
+			// to find its maximum value index, then increment the verification
+			// value by that index. In this implementation, we prevent thread
+			// contention by using an OMP reduction on the verification value.
+			// For accelerators, a different approach might be required
+			// (e.g., atomics, reduction of thread-specific values in large
+			// array via CUDA thrust, etc).
+			double max = -1.0;
+			int max_idx = 0;
+			for(int j = 0; j < 5; j++ )
+			{
+				if( macro_xs_vector[j] > max )
+				{
+					max = macro_xs_vector[j];
+					max_idx = j;
+				}
+			}
+			verification += max_idx+1;
+		}
+		offset += num_samples_per_mat[m];
+	}
+	*/
+	
+	stop = omp_get_wtime();
+	printf("XS Lookups took %.3lf seconds\n", stop-start);
+	return verification;
+}
+

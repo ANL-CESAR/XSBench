@@ -220,6 +220,7 @@ void print_CLI_error(void)
 	printf("  -l <lookups>             History Based: Number of Cross-section (XS) lookups per particle. Event Based: Total number of XS lookups.\n");
 	printf("  -h <hash bins>           Number of hash bins (only relevant when used with \"-G hash\")\n");
 	printf("  -b <binary mode>         Read or write all data structures to file. If reading, this will skip initialization phase. (read, write)\n");
+	printf("  -k <kernel ID>           Specifies which kernel to run. 0 is baseline, 1, 2, etc are optimized variants. (0 is default.)\n");
 	printf("Default is equivalent to: -m history -s large -l 34 -p 500000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
@@ -255,6 +256,9 @@ Inputs read_CLI( int argc, char * argv[] )
 
 	// default to no binary read/write
 	input.binary_mode = NONE;
+	
+	// defaults to baseline kernel
+	input.kernel_id = 0;
 	
 	// defaults to H-M Large benchmark
 	input.HM = (char *) malloc( 6 * sizeof(char) );
@@ -388,6 +392,16 @@ Inputs read_CLI( int argc, char * argv[] )
 				input.binary_mode = READ;
 			else if( strcmp(binary_mode, "write") == 0 )
 				input.binary_mode = WRITE;
+			else
+				print_CLI_error();
+		}
+		// kernel optimization selection (-k)
+		else if( strcmp(arg, "-k") == 0 )
+		{
+			if( ++i < argc )
+			{
+				input.kernel_id = atoi(argv[i]);
+			}
 			else
 				print_CLI_error();
 		}

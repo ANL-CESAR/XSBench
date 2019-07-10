@@ -377,7 +377,7 @@ Inputs read_CLI( int argc, char * argv[] )
 			else
 				print_CLI_error();
 		}
-		// particles (-p)
+		// kernel optimization selection (-k)
 		else if( strcmp(arg, "-k") == 0 )
 		{
 			if( ++i < argc )

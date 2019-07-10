@@ -5,7 +5,7 @@
 COMPILER    = gnu
 OPTIMIZE    = yes
 DEBUG       = no
-PROFILE     = no
+PROFILE     = yes
 MPI         = no
 
 #===============================================================================
@@ -36,7 +36,7 @@ LDFLAGS = -lm
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
-  CC = gcc
+  CC = /home/jtramm/gcc-install-8.2.0/bin/gcc
   CFLAGS += -fopenmp -flto
 endif
 
