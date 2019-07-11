@@ -717,6 +717,8 @@ void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThread
 
 }
 
+//void parallel_sort_by_material( int * mat_samples, double * p_energy_samples, int size );
+//void parallel_sort_by_energy( int * mat_samples, double * p_energy_samples, int size );
 
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype)
 {
@@ -784,6 +786,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	//quickSort_parallel(SD.mat_samples, in.lookups, 112);
 	//quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 112);
 	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 16);
+	//parallel_sort_by_material( SD.mat_samples, SD.p_energy_samples, in.lookups );
 	stop = omp_get_wtime();
 	printf("Material sort took %.3lf seconds\n", stop-start);
 	/*
@@ -820,6 +823,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		//quickSort_parallel_d_i(SD.p_energy_samples + offset,SD.mat_samples + offset, num_samples_per_mat[m], 112);
 		//offset += num_samples_per_mat[m];
 		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], 16);
+		//parallel_sort_by_energy( SD.mat_samples + offsets[m], SD.p_energy_samples + offsets[m], num_samples_per_mat[m] );
 	}
 	stop = omp_get_wtime();
 	printf("Energy Sorts took %.3lf seconds\n", stop-start);
