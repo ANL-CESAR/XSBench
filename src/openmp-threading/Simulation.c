@@ -524,102 +524,6 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 // loaded from memory may be re-used for multiple lookups.
 ////////////////////////////////////////////////////////////////////////////////////
 
-void swap(void * key_a, void * key_b, void * value_a, void * value_b, int size_key, int size_value) 
-{ 
-	char key_tmp[8];
-	char value_tmp[8];
-
-    //int t = *a; 
-	memcpy(key_tmp, key_a, size_key);
-	memcpy(value_tmp, value_a, size_value);
-	
-    //*a = *b; 
-	memcpy(key_a, key_b, size_key);
-	memcpy(value_a, value_b, size_value);
-
-    //*b = t; 
-	memcpy(key_b, key_tmp, size_key);
-	memcpy(value_b, value_tmp, size_value);
-} 
-
-int partition(void * key, void * value, int size_key, int size_value, int (*key_cmp)(const void *, const void *), int low, int high) 
-{ 
-	void * pivot = key + high * size_key;
-    //int pivot = arr[high];    // pivot 
-    int i = (low - 1);  // Index of smaller element 
-  
-    for (int j = low; j <= high- 1; j++) 
-    { 
-		int cmp_result = key_cmp(key + j * size_key, pivot);
-        if (cmp_result <= 0) 
-        { 
-            i++;    // increment index of smaller element 
-			swap(key + i * size_key, key + j * size_key, value + i * size_value, value + j * size_value, size_key, size_value);
-            //swap_i(&arr[i], &arr[j]); 
-        } 
-    } 
-    //swap_i(&arr[i + 1], &arr[high]); 
-	swap(key + (i+1) * size_key, key + high * size_key, value + (i+1) * size_value, value + high * size_value, size_key, size_value);
-    return (i + 1); 
-} 
-  
-void quickSort_key_value(void * key, void * value, int size_key, int size_value, int (*key_cmp)(const void *, const void *), int low, int high) 
-{ 
-    if (low < high) 
-    { 
-        int partition_index = partition(key, value, size_key, size_value, key_cmp, low, high); 
-		if( high-low < 1000 )
-		{
-			quickSort_key_value(key, value, size_key, size_value, key_cmp, low, partition_index - 1); 
-			quickSort_key_value(key, value, size_key, size_value, key_cmp, partition_index + 1, high); 
-		}
-		else
-		{
-			#pragma omp task
-			quickSort_key_value(key, value, size_key, size_value, key_cmp, low, partition_index - 1); 
-			#pragma omp task
-			quickSort_key_value(key, value, size_key, size_value, key_cmp, partition_index + 1, high); 
-		}
-    } 
-} 
-
-void quickSort_key_value_caller(void * key, void * value, int size_key, int size_value, int (*key_cmp)(const void *, const void *), int low, int high) 
-{
-	#pragma omp parallel
-	{
-		#pragma omp single nowait
-		{
-    		quickSort_key_value(key, value, size_key, size_value, key_cmp, low, high); 
-		}
-	}
-}
-
-int cmp_int(const void * a, const void * b)
-{
-	int * A = (int *) a;
-	int * B = (int *) b;
-
-	if( *A < *B )
-		return -1;
-	else if( *A > *B )
-		return 1;
-	else
-		return 0;
-}
-
-int cmp_double(const void * a, const void * b)
-{
-	double * A = (double *) a;
-	double * B = (double *) b;
-
-	if( *A < *B )
-		return -1;
-	else if( *A > *B )
-		return 1;
-	else
-		return 0;
-}
-
 void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
 {
 	int i = left, j = right;
@@ -662,9 +566,14 @@ void quickSort_parallel_internal_i_d(int* key,double * value, int left, int righ
 
 void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads){
 
-	int cutoff = 100000;
+	// Set minumum problem size to still spawn threads for
+	int cutoff = 10000;
 
-	#pragma omp parallel
+	// For this problem size, more than 16 threads on CPU is not helpful
+	if( numThreads > 16 )
+		numThreads = 16;
+
+	#pragma omp parallel num_threads(numThreads)
 	{	
 		#pragma omp single nowait
 		{
@@ -681,7 +590,6 @@ void quickSort_parallel_internal_d_i(double* key,int * value, int left, int righ
 	double pivot = key[(left + right) / 2];
 	
 	{
-	  	/* PARTITION PART */
 		while (i <= j) {
 			while (key[i] < pivot)
 				i++;
@@ -716,11 +624,14 @@ void quickSort_parallel_internal_d_i(double* key,int * value, int left, int righ
 
 void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads){
 
-	int cutoff = 100000;
+	// Set minumum problem size to still spawn threads for
+	int cutoff = 10000;
 
+	// For this problem size, more than 16 threads on CPU is not helpful
+	if( numThreads > 16 )
+		numThreads = 16;
 
-	//#pragma omp parallel num_threads(numThreads)
-	#pragma omp parallel
+	#pragma omp parallel num_threads(numThreads)
 	{	
 		#pragma omp single nowait
 		{
@@ -782,62 +693,43 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	}
 	printf("finished sampling...\n");
 	
-	int n_sort_threads = in.nthreads;
 	////////////////////////////////////////////////////////////////////////////////
 	// Sort by Material
 	////////////////////////////////////////////////////////////////////////////////
-	//quickSort_key_value(void * key, void * value, int size_key, int size_value, int (*key_cmp)(void *, void *), int low, int high) 
-	/*
-	printf("before sort:\n");
-	for( int i = 0; i < in.lookups; i++ )
-		printf("%d : %.3le\n", SD.mat_samples[i], SD.p_energy_samples[i]);
-		*/
+	
 	start = omp_get_wtime();
-	//quickSort_key_value_caller((void *) SD.mat_samples, (void *) SD.p_energy_samples, sizeof(int), sizeof(double), cmp_int, 0, in.lookups-1);
-	//qsort(SD.mat_samples, in.lookups, sizeof(int), cmp_int);
-	//quickSort_parallel(SD.mat_samples, in.lookups, 112);
-	//quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, 112);
-	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, n_sort_threads);
-	//parallel_sort_by_material( SD.mat_samples, SD.p_energy_samples, in.lookups );
+
+	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, in.nthreads);
+
 	stop = omp_get_wtime();
+
 	printf("Material sort took %.3lf seconds\n", stop-start);
-	/*
-	printf("after sort:\n");
-	for( int i = 0; i < in.lookups; i++ )
-		printf("%d : %.3le\n", SD.mat_samples[i], SD.p_energy_samples[i]);
-	exit(0);
-	*/
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Sort by Energy
 	////////////////////////////////////////////////////////////////////////////////
-	start = omp_get_wtime();
-	//quickSort_key_value_caller((void *) SD.mat_samples, (void *) SD.p_energy_samples, sizeof(int), sizeof(double), cmp_int, 0, in.lookups-1);
-	//qsort(SD.mat_samples, in.lookups, sizeof(int), cmp_int);
-	//quickSort_parallel(SD.mat_samples, in.lookups, 112);
 	
-	// Count up number of each type of sample
+	start = omp_get_wtime();
+	
+	// Count up number of each type of sample. 
 	int num_samples_per_mat[12] = {0};
 	for( int l = 0; l < in.lookups; l++ )
 		num_samples_per_mat[ SD.mat_samples[l] ]++;
 
+	// Determine offsets
 	int offsets[12] = {0};
 	for( int m = 1; m < 12; m++ )
-	{
 		offsets[m] = offsets[m-1] + num_samples_per_mat[m-1];
-	}
+	
+	stop = omp_get_wtime();
+	printf("Counting num samples and offsets took %.3lf seconds\n", stop-start);
+	start = stop;
 
 	// Sort each material type by energy level
 	int offset = 0;
-	//#pragma omp parallel for num_threads(12)
 	for( int m = 0; m < 12; m++ )
-	{
-		//quickSort_parallel_d_i(SD.p_energy_samples + offset,SD.mat_samples + offset, num_samples_per_mat[m], 112);
-		//offset += num_samples_per_mat[m];
-		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], n_sort_threads);
-		//qsort(SD.p_energy_samples + offsets[m], num_samples_per_mat[m], sizeof(double), cmp_double);
-		//parallel_sort_by_energy( SD.mat_samples + offsets[m], SD.p_energy_samples + offsets[m], num_samples_per_mat[m] );
-	}
+		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], in.nthreads);
+
 	stop = omp_get_wtime();
 	printf("Energy Sorts took %.3lf seconds\n", stop-start);
 	
