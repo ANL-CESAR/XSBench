@@ -722,7 +722,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		offsets[m] = offsets[m-1] + num_samples_per_mat[m-1];
 	
 	stop = omp_get_wtime();
-	printf("Counting num samples and offsets took %.3lf seconds\n", stop-start);
+	printf("Counting samples and offsets took %.3lf seconds\n", stop-start);
 	start = stop;
 
 	// Sort each material type by energy level
