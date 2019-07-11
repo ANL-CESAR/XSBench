@@ -509,21 +509,59 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 // By default, XSBench will not run any of these variants. They
 // must be specifically selected using the "-k <optimized variant ID>" command
 // line argument.
+//
+// As fast parallel sorting will be required for these optimizations, we will
+// first define a set of key-value parallel quicksort routines.
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////////
-// Optimization 1 -- Event-based Sample/XS Lookup kernel splitting + Sorting
-//                   lookups by material and energy
-////////////////////////////////////////////////////////////////////////////////////
-// This kernel separates out the sampling and lookup regions of the event-based
-// model, and then sorts the lookups by material type and energy. The goal of this
-// optimization is to allow for greatly improved cache locality, and XS indices
-// loaded from memory may be re-used for multiple lookups.
-////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////
+// Parallel Quicksort Key-Value Sorting Algorithms
+////////////////////////////////////////////////////////////////////////////////////
+//
+// These algorithms are based on the parallel quicksort implementation by
+// Eduard Lopez published at https://github.com/eduardlopez/quicksort-parallel
+//
+// Eduard's original version was for an integer type quicksort, but I have modified
+// it to form two different versions that can sort key-value pairs together without
+// having to bundle them into a separate object. Additionally, I have modified the
+// optimal chunk sizes and restricted the number of threads for the array sizing
+// that XSBench will be using by default.
+//
+// Eduard's original implementation carries the following license, which applies to
+// the following functions only:
+//
+//	void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
+//  void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads)
+//  void quickSort_parallel_internal_d_i(double* key,int * value, int left, int right, int cutoff)
+//  void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads)
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2016 Eduard López
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+////////////////////////////////////////////////////////////////////////////////////
 void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
 {
 	int i = left, j = right;
@@ -531,7 +569,6 @@ void quickSort_parallel_internal_i_d(int* key,double * value, int left, int righ
 	int pivot = key[(left + right) / 2];
 	
 	{
-	  	/* PARTITION PART */
 		while (i <= j) {
 			while (key[i] < pivot)
 				i++;
@@ -640,6 +677,22 @@ void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThread
 	}	
 
 }
+
+////////////////////////////////////////////////////////////////////////////////////
+// Optimization 1 -- Event-based Sample/XS Lookup kernel splitting + Sorting
+//                   lookups by material and energy
+////////////////////////////////////////////////////////////////////////////////////
+// This kernel separates out the sampling and lookup regions of the event-based
+// model, and then sorts the lookups by material type and energy. The goal of this
+// optimization is to allow for greatly improved cache locality, and XS indices
+// loaded from memory may be re-used for multiple lookups.
+//
+// As efficienct sorting is key for performance, we also must implement an
+// efficient key-value parallel sorting algorithm. We also experimented with using
+// the C++ version of thrust for these purposes, but found that our own implemtation
+// was slightly faster than the thrust library version, so for speed and
+// simplicity we will do not add the thrust dependency.
+////////////////////////////////////////////////////////////////////////////////////
 
 
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype)
