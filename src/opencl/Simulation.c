@@ -83,7 +83,8 @@ switch(error){
 
 void check(cl_int error)
 {
-	printf("%s\n", getErrorString(error));
+	if( error != 0 )
+		printf("%s\n", getErrorString(error));
 }
 
 void printCompilerError( cl_program program, cl_device_id device )
@@ -242,7 +243,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	cl_uint ret_num_devices;
 	cl_uint ret_num_platforms;
 	cl_int ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+	check(ret);
 	ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+	check(ret);
 	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_CPU, 1, &device_id, &ret_num_devices);
 	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices);
 
@@ -251,9 +254,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Create an OpenCL context
 	cl_context context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &ret);
+	check(ret);
 
 	// Create a command queue
-	cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+	//cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+	cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+	check(ret);
 
 	////////////////////////////////////////////////////////////////////////////////
 	// OpenCL Move Memory To Device Buffers
@@ -281,30 +287,51 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Create memory buffers on the device for each vector and move data over
 	size_t sz = SD.length_num_nucs * sizeof(int);
 	cl_mem num_nucs_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	check(ret);
 	ret = clEnqueueWriteBuffer(command_queue, num_nucs_d, CL_TRUE, 0, sz, SD.num_nucs, 0, NULL, NULL);
+	check(ret);
 
 	sz = SD.length_concs * sizeof(double);
 	cl_mem concs_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	check(ret);
 	ret = clEnqueueWriteBuffer(command_queue, concs_d, CL_TRUE, 0, sz, SD.concs, 0, NULL, NULL);
+	check(ret);
 	
 	sz = SD.length_mats * sizeof(int);
 	cl_mem mats_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	check(ret);
 	ret = clEnqueueWriteBuffer(command_queue, mats_d, CL_TRUE, 0, sz, SD.mats, 0, NULL, NULL);
+	check(ret);
 	
 	sz = SD.length_unionized_energy_array * sizeof(double);
-	cl_mem unionized_energy_array_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
-	ret = clEnqueueWriteBuffer(command_queue, unionized_energy_array_d, CL_TRUE, 0, sz, SD.unionized_energy_array, 0, NULL, NULL);
+	cl_mem unionized_energy_array_d;
+	if( sz > 0 )
+	{
+		unionized_energy_array_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+		check(ret);
+		ret = clEnqueueWriteBuffer(command_queue, unionized_energy_array_d, CL_TRUE, 0, sz, SD.unionized_energy_array, 0, NULL, NULL);
+		check(ret);
+	}
 	
 	sz = SD.length_index_grid * sizeof(int);
-	cl_mem index_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
-	ret = clEnqueueWriteBuffer(command_queue, index_grid_d, CL_TRUE, 0, sz, SD.index_grid, 0, NULL, NULL);
+	cl_mem index_grid_d;
+	if( sz > 0 )
+	{
+		index_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+		check(ret);
+		ret = clEnqueueWriteBuffer(command_queue, index_grid_d, CL_TRUE, 0, sz, SD.index_grid, 0, NULL, NULL);
+		check(ret);
+	}
 	
 	sz = SD.length_nuclide_grid * sizeof(NuclideGridPoint);
 	cl_mem nuclide_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	check(ret);
 	ret = clEnqueueWriteBuffer(command_queue, nuclide_grid_d, CL_TRUE, 0, sz, SD.nuclide_grid, 0, NULL, NULL);
+	check(ret);
 	
 	sz = in.lookups * sizeof(int);
 	cl_mem verification_array = clCreateBuffer(context, CL_MEM_READ_WRITE,  sz, NULL, &ret);
+	check(ret);
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// OpenCL Prepare and Launch Kernel
@@ -316,6 +343,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Build the program
 	ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+	check(ret);
 	
 	printCompilerError( program, device_id );
 
@@ -326,18 +354,44 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Set the arguments of the kernel
 	ret = clSetKernelArg(kernel, 0, sizeof(Inputs), (void *)&in);
+	check(ret);
 	ret = clSetKernelArg(kernel, 1, sizeof(int), (void *)&SD.max_num_nucs);
+	check(ret);
 	ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&num_nucs_d);
+	check(ret);
 	ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&concs_d);
-	ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&unionized_energy_array_d);
-	ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&index_grid_d);
+	check(ret);
+	if( SD.length_unionized_energy_array > 0 )
+	{
+		ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&unionized_energy_array_d);
+		check(ret);
+	}
+	else
+	{
+		ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), NULL);
+		check(ret);
+	}
+	if( SD.length_index_grid > 0 )
+	{
+		ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&index_grid_d);
+		check(ret);
+	}
+	else
+	{
+		ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), NULL);
+		check(ret);
+	}
 	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&nuclide_grid_d);
+	check(ret);
 	ret = clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&mats_d);
+	check(ret);
 	ret = clSetKernelArg(kernel, 8, sizeof(cl_mem), (void *)&verification_array);
+	check(ret);
 
 	// Execute the OpenCL kernel on the list
 	size_t global_item_size = in.lookups; // Process the entire lists
 	size_t local_item_size = 64; // Divide work items into groups of 64
+	//size_t local_item_size = 1; // Divide work items into groups of 64
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
 	
@@ -351,17 +405,35 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Clean up
 	ret = clFlush(command_queue);
+	check(ret);
 	ret = clFinish(command_queue);
+	check(ret);
 	ret = clReleaseKernel(kernel);
+	check(ret);
 	ret = clReleaseProgram(program);
+	check(ret);
 	ret = clReleaseMemObject(num_nucs_d);
-	ret = clReleaseMemObject(unionized_energy_array_d);
-	ret = clReleaseMemObject(index_grid_d);
+	check(ret);
+	if( SD.length_unionized_energy_array > 0)
+	{
+		ret = clReleaseMemObject(unionized_energy_array_d);
+		check(ret);
+	}
+	if( SD.length_index_grid > 0)
+	{
+		ret = clReleaseMemObject(index_grid_d);
+		check(ret);
+	}
 	ret = clReleaseMemObject(nuclide_grid_d);
+	check(ret);
 	ret = clReleaseMemObject(mats_d);
+	check(ret);
 	ret = clReleaseMemObject(verification_array);
+	check(ret);
 	ret = clReleaseCommandQueue(command_queue);
+	check(ret);
 	ret = clReleaseContext(context);
+	check(ret);
 
 	////////////////////////////////////////////////////////////////////////////////
 	// Redice Verification Value
