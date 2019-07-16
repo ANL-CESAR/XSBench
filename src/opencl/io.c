@@ -93,7 +93,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 			small = 941535;
 			large = 954318; 
 		}
-		if( strcmp(in.HM, "large") == 0 )
+		if( in.HM == LARGE )
 		{
 			if( vhash == large )
 			{
@@ -103,7 +103,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 			else
 				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
 		}
-		else if( strcmp(in.HM, "small") == 0 )
+		else if( in.HM  == SMALL )
 		{
 			if( vhash == small )
 			{
@@ -138,7 +138,14 @@ void print_inputs(Inputs in, int nprocs, int version )
 		printf("Grid Type:                    Hash\n");
 
 	printf("Materials:                    %d\n", 12);
-	printf("H-M Benchmark Size:           %s\n", in.HM);
+	char * problem_size = "Large";
+	if( in.HM == SMALL )
+		problem_size = "Small";
+	else if( in.HM == XL )
+		problem_size = "XL";
+	else if( in.HM == XXL )
+		problem_size = "XXL";
+	printf("H-M Benchmark Size:           %s\n", problem_size);
 	printf("Total Nuclides:               %ld\n", in.n_isotopes);
 	printf("Gridpoints (per Nuclide):     ");
 	fancy_int(in.n_gridpoints);
@@ -261,13 +268,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.kernel_id = 0;
 	
 	// defaults to H-M Large benchmark
-	input.HM = (char *) malloc( 6 * sizeof(char) );
-	input.HM[0] = 'l' ; 
-	input.HM[1] = 'a' ; 
-	input.HM[2] = 'r' ; 
-	input.HM[3] = 'g' ; 
-	input.HM[4] = 'e' ; 
-	input.HM[5] = '\0';
+	input.HM = LARGE;
 	
 	// Check if user sets these
 	int user_g = 0;
@@ -356,8 +357,18 @@ Inputs read_CLI( int argc, char * argv[] )
 		// HM (-s)
 		else if( strcmp(arg, "-s") == 0 )
 		{	
+			char * problem_size;
 			if( ++i < argc )
-				input.HM = argv[i];
+				problem_size = argv[i];
+			else
+				print_CLI_error();
+			
+			if( strcmp(problem_size, "small") == 0 )
+				input.HM = SMALL;
+			else if( strcmp(problem_size, "large") == 0 )
+				input.HM = LARGE;
+			else if( strcmp(problem_size, "XL") == 0 )
+				input.HM = XL;
 			else
 				print_CLI_error();
 		}
@@ -431,20 +442,13 @@ Inputs read_CLI( int argc, char * argv[] )
 	if( input.hash_bins < 1 )
 		print_CLI_error();
 	
-	// Validate HM size
-	if( strcasecmp(input.HM, "small") != 0 &&
-		strcasecmp(input.HM, "large") != 0 &&
-		strcasecmp(input.HM, "XL") != 0 &&
-		strcasecmp(input.HM, "XXL") != 0 )
-		print_CLI_error();
-	
 	// Set HM size specific parameters
 	// (defaults to large)
-	if( strcasecmp(input.HM, "small") == 0 )
+	if( input.HM == SMALL )
 		input.n_isotopes = 68;
-	else if( strcasecmp(input.HM, "XL") == 0 && user_g == 0 )
+	else if( input.HM == XL && user_g == 0 )
 		input.n_gridpoints = 238847; // sized to make 120 GB XS data
-	else if( strcasecmp(input.HM, "XXL") == 0 && user_g == 0 )
+	else if( input.HM == XXL && user_g == 0 )
 		input.n_gridpoints = 238847 * 2.1; // 252 GB XS data
 
 	// Return input struct

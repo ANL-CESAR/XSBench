@@ -32,6 +32,11 @@
 #define READ 1
 #define WRITE 2
 
+#define SMALL 0
+#define LARGE 1
+#define XL 2
+#define XXL 3
+
 // Starting Seed
 #define STARTING_SEED 1070
 
@@ -50,7 +55,7 @@ typedef struct{
 	long n_isotopes;
 	long n_gridpoints;
 	int lookups;
-	char * HM;
+	int HM;
 	int grid_type; // 0: Unionized Grid (default)    1: Nuclide Grid
 	int hash_bins;
 	int particles;

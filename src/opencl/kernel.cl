@@ -13,7 +13,7 @@ typedef struct{
 	long n_isotopes;
 	long n_gridpoints;
 	int lookups;
-	char * HM;
+	int HM;
 	int grid_type; // 0: Unionized Grid (default)    1: Nuclide Grid
 	int hash_bins;
 	int particles;
@@ -22,17 +22,29 @@ typedef struct{
 	int kernel_id;
 } Inputs;
 
-uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
+// Grid types
+#define UNIONIZED 0
+#define NUCLIDE 1
+#define HASH 2
+
+// Simulation types
+#define HISTORY_BASED 1
+#define EVENT_BASED 2
+
+// Starting Seed
+#define STARTING_SEED 1070
+
+unsigned long fast_forward_LCG(unsigned long seed, unsigned long n)
 {
 	// LCG parameters
-	const uint64_t m = 9223372036854775808ULL; // 2^63
-	uint64_t a = 2806196910506780709ULL;
-	uint64_t c = 1ULL;
+	const unsigned long m = 9223372036854775808ULL; // 2^63
+	unsigned long a = 2806196910506780709ULL;
+	unsigned long c = 1ULL;
 
 	n = n % m;
 
-	uint64_t a_new = 1;
-	uint64_t c_new = 0;
+	unsigned long a_new = 1;
+	unsigned long c_new = 0;
 
 	while(n > 0) 
 	{
@@ -51,12 +63,12 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 
 }
 
-double LCG_random_double(uint64_t * seed)
+double LCG_random_double(unsigned long * seed)
 {
 	// LCG parameters
-	const uint64_t m = 9223372036854775808ULL; // 2^63
-	const uint64_t a = 2806196910506780709ULL;
-	const uint64_t c = 1ULL;
+	const unsigned long m = 9223372036854775808ULL; // 2^63
+	const unsigned long a = 2806196910506780709ULL;
+	const unsigned long c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
 	return (double) (*seed) / (double) m;
 }	
@@ -152,11 +164,11 @@ long grid_search_nuclide( long n, double quarry, __global const NuclideGridPoint
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            __global const double * egrid, __global const int * index_data,
-                           __glonbal const NuclideGridPoint * nuclide_grids,
+                           __global const NuclideGridPoint * nuclide_grids,
                            long idx, double * xs_vector, int grid_type, int hash_bins ){
 	// Variables
 	double f;
-	NuclideGridPoint * low, * high;
+	__global const NuclideGridPoint * low, * high;
 
 	// If using only the nuclide grid, we must perform a binary search
 	// to find the energy location in this particular nuclide's grid.
@@ -289,7 +301,7 @@ __kernel void macro_xs_lookup_kernel(		Inputs in,
 											int max_num_nucs,
 											__global const int *num_nucs,
 											__global const double *concs,
-											__global const int * unionized_energy_array,
+											__global const double * unionized_energy_array,
 											__global const int * index_grid,
 											__global const NuclideGridPoint * nuclide_grid,
 											__global const int * mats,
@@ -299,7 +311,7 @@ __kernel void macro_xs_lookup_kernel(		Inputs in,
 	int i = get_global_id(0);
 		
 	// Set the initial seed value
-	uint64_t seed = 1070;	
+	unsigned long seed = STARTING_SEED;	
 
 	// Forward seed to lookup index (we need 2 samples per lookup)
 	seed = fast_forward_LCG(seed, 2*i);
