@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = gnu
+COMPILER    = clang
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -42,8 +42,20 @@ endif
 
 # Intel Compiler
 ifeq ($(COMPILER),intel)
-  CC = icc
-  CFLAGS += -qopenmp -ipo
+  CC = 
+  CFLAGS += 
+endif
+
+# Clang-ykt compiler Targeting P100
+ifeq ($(COMPILER),clang)
+  CC = clang
+  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60
+endif
+
+# IBM XL Compiler Targeting K80
+ifeq ($(COMPILER),ibm)
+  CC = xlc_r
+  CFLAGS += -qsmp=omp -qoffload
 endif
 
 # Debug Flags

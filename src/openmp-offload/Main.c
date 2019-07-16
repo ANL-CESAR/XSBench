@@ -85,7 +85,10 @@ int main( int argc, char* argv[] )
 		}
 	}
 	else
-		verification = run_history_based_simulation(in, SD, mype);
+	{
+		printf("History-based simulation not implemented in OpenMP offload code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
+		exit(1);
+	}
 
 	if( mype == 0)	
 	{	
