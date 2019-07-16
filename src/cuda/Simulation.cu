@@ -412,7 +412,7 @@ __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 1 - basic sample/lookup kernel splitting";
+	const char * optimization_name = "Optimization 1 - basic sample/lookup kernel splitting";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -545,7 +545,7 @@ __global__ void xs_lookup_kernel_optimization_1(Inputs in, SimulationData GSD )
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_2(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 2 - Material Lookup Kernels";
+	const char * optimization_name = "Optimization 2 - Material Lookup Kernels";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -661,7 +661,7 @@ __global__ void xs_lookup_kernel_optimization_2(Inputs in, SimulationData GSD, i
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_3(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 3 - Fuel or Other Lookup Kernels";
+	const char * optimization_name = "Optimization 3 - Fuel or Other Lookup Kernels";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -778,7 +778,7 @@ __global__ void xs_lookup_kernel_optimization_3(Inputs in, SimulationData GSD, i
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_4(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 4 - All Material Lookup Kernels + Full Sort";
+	const char * optimization_name = "Optimization 4 - All Material Lookup Kernels + Full Sort";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -929,7 +929,7 @@ struct is_mat_fuel{
 
 unsigned long long run_event_based_simulation_optimization_5(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 5 - Fuel/No Fuel Lookup Kernels + Fuel/No Fuel Sort";
+	const char * optimization_name = "Optimization 5 - Fuel/No Fuel Lookup Kernels + Fuel/No Fuel Sort";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -1058,7 +1058,7 @@ __global__ void xs_lookup_kernel_optimization_5(Inputs in, SimulationData GSD, i
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_6(Inputs in, SimulationData GSD, int mype)
 {
-	char * optimization_name = "Optimization 6 - Material & Energy Sorts + Material-specific Kernels";
+	const char * optimization_name = "Optimization 6 - Material & Energy Sorts + Material-specific Kernels";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	

@@ -435,7 +435,7 @@ Inputs read_CLI( int argc, char * argv[] )
 
 void binary_write( Inputs in, SimulationData SD )
 {
-	char * fname = "XS_data.dat";
+	const char * fname = "XS_data.dat";
 	printf("Writing all data structures to binary file %s...\n", fname);
 	FILE * fp = fopen(fname, "w");
 
@@ -457,7 +457,7 @@ SimulationData binary_read( Inputs in )
 {
 	SimulationData SD;
 	
-	char * fname = "XS_data.dat";
+	const char * fname = "XS_data.dat";
 	printf("Reading all data structures from binary file %s...\n", fname);
 
 	FILE * fp = fopen(fname, "r");
