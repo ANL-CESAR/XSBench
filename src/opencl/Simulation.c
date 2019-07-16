@@ -299,7 +299,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	cl_mem index_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
 	ret = clEnqueueWriteBuffer(command_queue, index_grid_d, CL_TRUE, 0, sz, SD.index_grid, 0, NULL, NULL);
 	
-	sz = SD.length_nuclide_grid * sizeof(double);
+	sz = SD.length_nuclide_grid * sizeof(NuclideGridPoint);
 	cl_mem nuclide_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
 	ret = clEnqueueWriteBuffer(command_queue, nuclide_grid_d, CL_TRUE, 0, sz, SD.nuclide_grid, 0, NULL, NULL);
 	
@@ -312,6 +312,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	
 	// Create a program from the kernel source
 	cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source_str, (const size_t *)&source_size, &ret);
+	check(ret);
 
 	// Build the program
 	ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
@@ -321,20 +322,24 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Create the OpenCL kernel
 	cl_kernel kernel = clCreateKernel(program, "macro_xs_lookup_kernel", &ret);
 
+	check(ret);
+
 	// Set the arguments of the kernel
 	ret = clSetKernelArg(kernel, 0, sizeof(Inputs), (void *)&in);
 	ret = clSetKernelArg(kernel, 1, sizeof(int), (void *)&SD.max_num_nucs);
 	ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&num_nucs_d);
-	ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&unionized_energy_array_d);
-	ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&index_grid_d);
-	ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&nuclide_grid_d);
-	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&mats_d);
-	ret = clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&verification_array);
+	ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&concs_d);
+	ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&unionized_energy_array_d);
+	ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&index_grid_d);
+	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&nuclide_grid_d);
+	ret = clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&mats_d);
+	ret = clSetKernelArg(kernel, 8, sizeof(cl_mem), (void *)&verification_array);
 
 	// Execute the OpenCL kernel on the list
 	size_t global_item_size = in.lookups; // Process the entire lists
 	size_t local_item_size = 64; // Divide work items into groups of 64
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
+	check(ret);
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Retrieve verification data from device & cleanup OpenCL objects
@@ -342,6 +347,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	
 	// Read the memory buffer C on the device to the local variable C
 	ret = clEnqueueReadBuffer(command_queue, verification_array, CL_TRUE, 0, in.lookups * sizeof(int), verification_array_host, 0, NULL, NULL);
+	check(ret);
 
 	// Clean up
 	ret = clFlush(command_queue);
