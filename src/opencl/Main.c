@@ -25,9 +25,6 @@ int main( int argc, char* argv[] )
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
 
-	// Set number of OpenMP Threads
-	omp_set_num_threads(in.nthreads); 
-
 	// Print-out of Input Summary
 	if( mype == 0 )
 		print_inputs( in, nprocs, version );
@@ -69,15 +66,13 @@ int main( int argc, char* argv[] )
 	}
 
 	// Start Simulation Timer
-	omp_start = omp_get_wtime();
+	omp_start = get_time();
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
 			verification = run_event_based_simulation(in, SD, mype);
-		else if( in.kernel_id == 1 )
-			verification = run_event_based_simulation_optimization_1(in, SD, mype);
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);
@@ -97,7 +92,7 @@ int main( int argc, char* argv[] )
 	}
 
 	// End Simulation Timer
-	omp_end = omp_get_wtime();
+	omp_end = get_time();
 
 	// =====================================================================
 	// Output Results & Finalize

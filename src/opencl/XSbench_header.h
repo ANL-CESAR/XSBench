@@ -111,7 +111,6 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 int pick_mat(unsigned long * seed);
 double LCG_random_double(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
-unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype);
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
@@ -120,6 +119,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype );
 int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
 size_t estimate_mem_usage( Inputs in );
+double get_time(void);
 
 // Materials.c
 int * load_num_nucs(long n_isotopes);

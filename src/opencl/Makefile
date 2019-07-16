@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = clang
+COMPILER    = gnu
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -37,25 +37,13 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
-  CFLAGS += -fopenmp -flto
+  CFLAGS += -lOpenCL
 endif
 
 # Intel Compiler
 ifeq ($(COMPILER),intel)
   CC = 
   CFLAGS += 
-endif
-
-# Clang-ykt compiler Targeting P100
-ifeq ($(COMPILER),clang)
-  CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60
-endif
-
-# IBM XL Compiler Targeting K80
-ifeq ($(COMPILER),ibm)
-  CC = xlc_r
-  CFLAGS += -qsmp=omp -qoffload
 endif
 
 # Debug Flags
@@ -95,7 +83,7 @@ clean:
 	rm -rf $(program) $(obj)
 
 edit:
-	vim -p $(source) XSbench_header.h
+	vim -p $(source) kernel.cl XSbench_header.h
 
 run:
 	./$(program)

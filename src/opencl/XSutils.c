@@ -46,3 +46,10 @@ size_t estimate_mem_usage( Inputs in )
 	return memtotal;
 }
 
+double get_time(void)
+{
+	time_t time;
+	time = clock();
+
+	return (double) time / (double) CLOCKS_PER_SEC;
+}

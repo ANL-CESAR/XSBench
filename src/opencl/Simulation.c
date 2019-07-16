@@ -1,5 +1,99 @@
 #include "XSbench_header.h"
 
+#define CL_TARGET_OPENCL_VERSION 200
+#include <CL/cl.h>
+#define MAX_SOURCE_SIZE (0x100000)
+
+void print_single_info( cl_platform_id platform, cl_device_id device)
+{
+	char* value;
+	size_t valueSize;
+	cl_uint maxComputeUnits;
+	// print device name
+	clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &valueSize);
+	value = (char*) malloc(valueSize);
+	clGetDeviceInfo(device, CL_DEVICE_NAME, valueSize, value, NULL);
+	printf("Device: %s\n", value);
+	free(value);
+	// print hardware device version
+	clGetDeviceInfo(device, CL_DEVICE_VERSION, 0, NULL, &valueSize);
+	value = (char*) malloc(valueSize);
+	clGetDeviceInfo(device, CL_DEVICE_VERSION, valueSize, value, NULL);
+	printf(" %d Hardware version: %s\n", 1, value);
+	free(value);
+	// print software driver version
+	clGetDeviceInfo(device, CL_DRIVER_VERSION, 0, NULL, &valueSize);
+	value = (char*) malloc(valueSize);
+	clGetDeviceInfo(device, CL_DRIVER_VERSION, valueSize, value, NULL);
+	printf(" %d Software version: %s\n", 2, value);
+	free(value);
+	// print c version supported by compiler for device
+	clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_VERSION, 0, NULL, &valueSize);
+	value = (char*) malloc(valueSize);
+	clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_VERSION, valueSize, value, NULL);
+	printf(" %d OpenCL C version: %s\n", 3, value);
+	free(value);
+	// print parallel compute units
+	clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS,
+			sizeof(maxComputeUnits), &maxComputeUnits, NULL);
+	printf(" %d Parallel compute units: %d\n", 4, maxComputeUnits);
+}
+
+void print_opencl_info(void)
+{
+	int i, j;
+	char* value;
+	size_t valueSize;
+	cl_uint platformCount;
+	cl_platform_id* platforms;
+	cl_uint deviceCount;
+	cl_device_id* devices;
+	cl_uint maxComputeUnits;
+	// get all platforms
+	clGetPlatformIDs(0, NULL, &platformCount);
+	platforms = (cl_platform_id*) malloc(sizeof(cl_platform_id) * platformCount);
+	clGetPlatformIDs(platformCount, platforms, NULL);
+	for (i = 0; i < platformCount; i++) {
+		// get all devices
+		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, NULL, &deviceCount);
+		devices = (cl_device_id*) malloc(sizeof(cl_device_id) * deviceCount);
+		clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, deviceCount, devices, NULL);
+		// for each device print critical attributes
+		for (j = 0; j < deviceCount; j++) {
+			// print device name
+			clGetDeviceInfo(devices[j], CL_DEVICE_NAME, 0, NULL, &valueSize);
+			value = (char*) malloc(valueSize);
+			clGetDeviceInfo(devices[j], CL_DEVICE_NAME, valueSize, value, NULL);
+			printf("%d. Device: %s\n", j+1, value);
+			free(value);
+			// print hardware device version
+			clGetDeviceInfo(devices[j], CL_DEVICE_VERSION, 0, NULL, &valueSize);
+			value = (char*) malloc(valueSize);
+			clGetDeviceInfo(devices[j], CL_DEVICE_VERSION, valueSize, value, NULL);
+			printf(" %d.%d Hardware version: %s\n", j+1, 1, value);
+			free(value);
+			// print software driver version
+			clGetDeviceInfo(devices[j], CL_DRIVER_VERSION, 0, NULL, &valueSize);
+			value = (char*) malloc(valueSize);
+			clGetDeviceInfo(devices[j], CL_DRIVER_VERSION, valueSize, value, NULL);
+			printf(" %d.%d Software version: %s\n", j+1, 2, value);
+			free(value);
+			// print c version supported by compiler for device
+			clGetDeviceInfo(devices[j], CL_DEVICE_OPENCL_C_VERSION, 0, NULL, &valueSize);
+			value = (char*) malloc(valueSize);
+			clGetDeviceInfo(devices[j], CL_DEVICE_OPENCL_C_VERSION, valueSize, value, NULL);
+			printf(" %d.%d OpenCL C version: %s\n", j+1, 3, value);
+			free(value);
+			// print parallel compute units
+			clGetDeviceInfo(devices[j], CL_DEVICE_MAX_COMPUTE_UNITS,
+					sizeof(maxComputeUnits), &maxComputeUnits, NULL);
+			printf(" %d.%d Parallel compute units: %d\n", j+1, 4, maxComputeUnits);
+		}
+		free(devices);
+	}
+	free(platforms);	
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 // BASELINE FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////////
@@ -16,6 +110,50 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 {
 	if( mype == 0)	
 		printf("Beginning event based simulation...\n");
+
+	int * verification_array_host = (int *) malloc( in.lookups * sizeof(int));
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// OpenCL Boilerplate Setup
+	////////////////////////////////////////////////////////////////////////////////
+
+	// Let's start setting up our openCL boilerplate
+	// Load the kernel source code into the array source_str
+	FILE *fp;
+	char *source_str;
+	size_t source_size;
+
+	fp = fopen("kernel.cl", "r");
+	if (!fp) {
+		fprintf(stderr, "Failed to load kernel.\n");
+		exit(1);
+	}
+	source_str = (char*) malloc(MAX_SOURCE_SIZE);
+	source_size = fread( source_str, 1, MAX_SOURCE_SIZE, fp);
+	fclose( fp );
+
+	// Get platform and device information
+	cl_platform_id platform_id = NULL;
+	cl_device_id device_id = NULL;   
+	cl_uint ret_num_devices;
+	cl_uint ret_num_platforms;
+	cl_int ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+	ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_CPU, 1, &device_id, &ret_num_devices);
+	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices);
+
+	// Print info about where we are running
+	print_single_info(platform_id, device_id);
+
+	// Create an OpenCL context
+	cl_context context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &ret);
+
+	// Create a command queue
+	cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+
+	////////////////////////////////////////////////////////////////////////////////
+	// OpenCL Move Memory To Device Buffers
+	////////////////////////////////////////////////////////////////////////////////
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
@@ -35,81 +173,91 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Note: "Lengths" are given as the number of objects in the array, not the
 	//       number of bytes.
 	////////////////////////////////////////////////////////////////////////////////
+	
+	// Create memory buffers on the device for each vector and move data over
+	size_t sz = SD.length_num_nucs * sizeof(int);
+	cl_mem num_nucs_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	ret = clEnqueueWriteBuffer(command_queue, num_nucs_d, CL_TRUE, 0, sz, SD.num_nucs, 0, NULL, NULL);
 
+	sz = SD.length_concs * sizeof(double);
+	cl_mem concs_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	ret = clEnqueueWriteBuffer(command_queue, concs_d, CL_TRUE, 0, sz, SD.concs, 0, NULL, NULL);
+	
+	sz = SD.length_mats * sizeof(int);
+	cl_mem mats_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	ret = clEnqueueWriteBuffer(command_queue, mats_d, CL_TRUE, 0, sz, SD.mats, 0, NULL, NULL);
+	
+	sz = SD.length_unionized_energy_array * sizeof(double);
+	cl_mem unionized_energy_array_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	ret = clEnqueueWriteBuffer(command_queue, unionized_energy_array_d, CL_TRUE, 0, sz, SD.unionized_energy_array, 0, NULL, NULL);
+	
+	sz = SD.length_index_grid * sizeof(int);
+	cl_mem index_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	ret = clEnqueueWriteBuffer(command_queue, index_grid_d, CL_TRUE, 0, sz, SD.index_grid, 0, NULL, NULL);
+	
+	sz = SD.length_nuclide_grid * sizeof(double);
+	cl_mem nuclide_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
+	ret = clEnqueueWriteBuffer(command_queue, nuclide_grid_d, CL_TRUE, 0, sz, SD.nuclide_grid, 0, NULL, NULL);
+	
+	sz = in.lookups * sizeof(int);
+	cl_mem verification_array = clCreateBuffer(context, CL_MEM_READ_WRITE,  sz, NULL, &ret);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// OpenCL Prepare and Launch Kernel
+	////////////////////////////////////////////////////////////////////////////////
+	
+	// Create a program from the kernel source
+	cl_program program = clCreateProgramWithSource(context, 1, (const char **)&source_str, (const size_t *)&source_size, &ret);
+
+	// Build the program
+	ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+
+	// Create the OpenCL kernel
+	cl_kernel kernel = clCreateKernel(program, "macro_xs_lookup_kernel", &ret);
+
+	// Set the arguments of the kernel
+	ret = clSetKernelArg(kernel, 0, sizeof(Inputs), (void *)&in);
+	ret = clSetKernelArg(kernel, 1, sizeof(int), (void *)&SD.max_num_nucs);
+	ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&num_nucs_d);
+	ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&unionized_energy_array_d);
+	ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&index_grid_d);
+	ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&nuclide_grid_d);
+	ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&mats_d);
+	ret = clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&verification_array);
+
+	// Execute the OpenCL kernel on the list
+	size_t global_item_size = in.lookups; // Process the entire lists
+	size_t local_item_size = 64; // Divide work items into groups of 64
+	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// Retrieve verification data from device & cleanup OpenCL objects
+	////////////////////////////////////////////////////////////////////////////////
+	
+	// Read the memory buffer C on the device to the local variable C
+	ret = clEnqueueReadBuffer(command_queue, verification_array, CL_TRUE, 0, in.lookups * sizeof(int), verification_array_host, 0, NULL, NULL);
+
+	// Clean up
+	ret = clFlush(command_queue);
+	ret = clFinish(command_queue);
+	ret = clReleaseKernel(kernel);
+	ret = clReleaseProgram(program);
+	ret = clReleaseMemObject(num_nucs_d);
+	ret = clReleaseMemObject(unionized_energy_array_d);
+	ret = clReleaseMemObject(index_grid_d);
+	ret = clReleaseMemObject(nuclide_grid_d);
+	ret = clReleaseMemObject(mats_d);
+	ret = clReleaseMemObject(verification_array);
+	ret = clReleaseCommandQueue(command_queue);
+	ret = clReleaseContext(context);
 
 	////////////////////////////////////////////////////////////////////////////////
-	// Begin Actual Simulation Loop 
+	// Redice Verification Value
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
 
-	// Traditional CPU Threading
-	//#pragma omp parallel for reduction(+:verification)
-	
-	// OpenMP 4.5+ Target offload parallelism
-	#pragma omp target parallel for\
-	map(\
-			SD.num_nucs[:SD.length_num_nucs],\
-			SD.concs[:SD.length_concs],\
-			SD.mats[:SD.length_mats],\
-			SD.unionized_energy_array[:SD.length_unionized_energy_array],\
-			SD.index_grid[:SD.length_index_grid],\
-			SD.nuclide_grid[:SD.length_nuclide_grid])\
-	reduction(+:verification)
-	for( int i = 0; i < in.lookups; i++ )
-	{
-		// Set the initial seed value
-		uint64_t seed = STARTING_SEED;	
-
-		// Forward seed to lookup index (we need 2 samples per lookup)
-		seed = fast_forward_LCG(seed, 2*i);
-
-		// Randomly pick an energy and material for the particle
-		double p_energy = LCG_random_double(&seed);
-		int mat         = pick_mat(&seed); 
-
-		// debugging
-		//printf("E = %lf mat = %d\n", p_energy, mat);
-
-		double macro_xs_vector[5] = {0};
-
-		// Perform macroscopic Cross Section Lookup
-		calculate_macro_xs(
-				p_energy,        // Sampled neutron energy (in lethargy)
-				mat,             // Sampled material type index neutron is in
-				in.n_isotopes,   // Total number of isotopes in simulation
-				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-				SD.num_nucs,     // 1-D array with number of nuclides per material
-				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				SD.unionized_energy_array, // 1-D Unionized energy array
-				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
-				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
-				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
-				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-				SD.max_num_nucs  // Maximum number of nuclides present in any material
-				);
-
-		// For verification, and to prevent the compiler from optimizing
-		// all work out, we interrogate the returned macro_xs_vector array
-		// to find its maximum value index, then increment the verification
-		// value by that index. In this implementation, we prevent thread
-		// contention by using an OMP reduction on the verification value.
-		// For accelerators, a different approach might be required
-		// (e.g., atomics, reduction of thread-specific values in large
-		// array via CUDA thrust, etc).
-		double max = -1.0;
-		int max_idx = 0;
-		for(int j = 0; j < 5; j++ )
-		{
-			if( macro_xs_vector[j] > max )
-			{
-				max = macro_xs_vector[j];
-				max_idx = j;
-			}
-		}
-		verification += max_idx+1;
-	}
+	for( int l = 0; l < in.lookups; l++ )
+		verification += verification_array_host[l];
 
 	return verification;
 }
@@ -397,362 +545,5 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 
 	return (a_new * seed + c_new) % m;
 
-}
-
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-// OPTIMIZED VARIANT FUNCTIONS
-////////////////////////////////////////////////////////////////////////////////////
-// This section contains a number of optimized variants of some of the above
-// functions, which each deploy a different combination of optimizations strategies.
-// By default, XSBench will not run any of these variants. They
-// must be specifically selected using the "-k <optimized variant ID>" command
-// line argument.
-//
-// As fast parallel sorting will be required for these optimizations, we will
-// first define a set of key-value parallel quicksort routines.
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-
-
-////////////////////////////////////////////////////////////////////////////////////
-// Parallel Quicksort Key-Value Sorting Algorithms
-////////////////////////////////////////////////////////////////////////////////////
-//
-// These algorithms are based on the parallel quicksort implementation by
-// Eduard Lopez published at https://github.com/eduardlopez/quicksort-parallel
-//
-// Eduard's original version was for an integer type quicksort, but I have modified
-// it to form two different versions that can sort key-value pairs together without
-// having to bundle them into a separate object. Additionally, I have modified the
-// optimal chunk sizes and restricted the number of threads for the array sizing
-// that XSBench will be using by default.
-//
-// Eduard's original implementation carries the following license, which applies to
-// the following functions only:
-//
-//	void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
-//  void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads)
-//  void quickSort_parallel_internal_d_i(double* key,int * value, int left, int right, int cutoff)
-//  void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads)
-//
-// The MIT License (MIT)
-//
-// Copyright (c) 2016 Eduard López
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
-////////////////////////////////////////////////////////////////////////////////////
-void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
-{
-	int i = left, j = right;
-	int tmp;
-	int pivot = key[(left + right) / 2];
-	
-	{
-		while (i <= j) {
-			while (key[i] < pivot)
-				i++;
-			while (key[j] > pivot)
-				j--;
-			if (i <= j) {
-				tmp = key[i];
-				key[i] = key[j];
-				key[j] = tmp;
-				double tmp_v = value[i];
-				value[i] = value[j];
-				value[j] = tmp_v;
-				i++;
-				j--;
-			}
-		}
-
-	}
-
-	if ( ((right-left)<cutoff) ){
-		if (left < j){ quickSort_parallel_internal_i_d(key, value, left, j, cutoff); }			
-		if (i < right){ quickSort_parallel_internal_i_d(key, value, i, right, cutoff); }
-
-	}else{
-		#pragma omp task 	
-		{ quickSort_parallel_internal_i_d(key, value, left, j, cutoff); }
-		#pragma omp task 	
-		{ quickSort_parallel_internal_i_d(key, value, i, right, cutoff); }		
-	}
-
-}
-
-void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads){
-
-	// Set minumum problem size to still spawn threads for
-	int cutoff = 10000;
-
-	// For this problem size, more than 16 threads on CPU is not helpful
-	if( numThreads > 16 )
-		numThreads = 16;
-
-	#pragma omp parallel num_threads(numThreads)
-	{	
-		#pragma omp single nowait
-		{
-			quickSort_parallel_internal_i_d(key,value, 0, lenArray-1, cutoff);	
-		}
-	}	
-
-}
-
-void quickSort_parallel_internal_d_i(double* key,int * value, int left, int right, int cutoff) 
-{
-	int i = left, j = right;
-	double tmp;
-	double pivot = key[(left + right) / 2];
-	
-	{
-		while (i <= j) {
-			while (key[i] < pivot)
-				i++;
-			while (key[j] > pivot)
-				j--;
-			if (i <= j) {
-				tmp = key[i];
-				key[i] = key[j];
-				key[j] = tmp;
-				int tmp_v = value[i];
-				value[i] = value[j];
-				value[j] = tmp_v;
-				i++;
-				j--;
-			}
-		}
-
-	}
-
-	if ( ((right-left)<cutoff) ){
-		if (left < j){ quickSort_parallel_internal_d_i(key, value, left, j, cutoff); }			
-		if (i < right){ quickSort_parallel_internal_d_i(key, value, i, right, cutoff); }
-
-	}else{
-		#pragma omp task 	
-		{ quickSort_parallel_internal_d_i(key, value, left, j, cutoff); }
-		#pragma omp task 	
-		{ quickSort_parallel_internal_d_i(key, value, i, right, cutoff); }		
-	}
-
-}
-
-void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads){
-
-	// Set minumum problem size to still spawn threads for
-	int cutoff = 10000;
-
-	// For this problem size, more than 16 threads on CPU is not helpful
-	if( numThreads > 16 )
-		numThreads = 16;
-
-	#pragma omp parallel num_threads(numThreads)
-	{	
-		#pragma omp single nowait
-		{
-			quickSort_parallel_internal_d_i(key,value, 0, lenArray-1, cutoff);	
-		}
-	}	
-
-}
-
-////////////////////////////////////////////////////////////////////////////////////
-// Optimization 1 -- Event-based Sample/XS Lookup kernel splitting + Sorting
-//                   lookups by material and energy
-////////////////////////////////////////////////////////////////////////////////////
-// This kernel separates out the sampling and lookup regions of the event-based
-// model, and then sorts the lookups by material type and energy. The goal of this
-// optimization is to allow for greatly improved cache locality, and XS indices
-// loaded from memory may be re-used for multiple lookups.
-//
-// As efficienct sorting is key for performance, we also must implement an
-// efficient key-value parallel sorting algorithm. We also experimented with using
-// the C++ version of thrust for these purposes, but found that our own implemtation
-// was slightly faster than the thrust library version, so for speed and
-// simplicity we will do not add the thrust dependency.
-////////////////////////////////////////////////////////////////////////////////////
-
-
-unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype)
-{
-	char * optimization_name = "Optimization 1 - Kernel splitting + full material & energy sort";
-	
-	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
-	
-	////////////////////////////////////////////////////////////////////////////////
-	// Allocate Additional Data Structures Needed by Optimized Kernel
-	////////////////////////////////////////////////////////////////////////////////
-	if( mype == 0)	printf("Allocating additional data required by optimized kernel...\n");
-	size_t sz;
-	size_t total_sz = 0;
-	double start, stop;
-
-	sz = in.lookups * sizeof(double);
-	SD.p_energy_samples = (double *) malloc(sz);
-	total_sz += sz;
-	SD.length_p_energy_samples = in.lookups;
-
-	sz = in.lookups * sizeof(int);
-	SD.mat_samples = (int *) malloc(sz);
-	total_sz += sz;
-	SD.length_mat_samples = in.lookups;
-	
-	if( mype == 0)	printf("Allocated an additional %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0);
-	
-	////////////////////////////////////////////////////////////////////////////////
-	// Begin Actual Simulation 
-	////////////////////////////////////////////////////////////////////////////////
-	
-	////////////////////////////////////////////////////////////////////////////////
-	// Sample Materials and Energies
-	////////////////////////////////////////////////////////////////////////////////
-	#pragma omp parallel for schedule(guided)
-	for( int i = 0; i < in.lookups; i++ )
-	{
-		// Set the initial seed value
-		uint64_t seed = STARTING_SEED;	
-
-		// Forward seed to lookup index (we need 2 samples per lookup)
-		seed = fast_forward_LCG(seed, 2*i);
-
-		// Randomly pick an energy and material for the particle
-		double p_energy = LCG_random_double(&seed);
-		int mat         = pick_mat(&seed); 
-
-		SD.p_energy_samples[i] = p_energy;
-		SD.mat_samples[i] = mat;
-	}
-	printf("finished sampling...\n");
-	
-	////////////////////////////////////////////////////////////////////////////////
-	// Sort by Material
-	////////////////////////////////////////////////////////////////////////////////
-	
-	start = omp_get_wtime();
-
-	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, in.nthreads);
-
-	stop = omp_get_wtime();
-
-	printf("Material sort took %.3lf seconds\n", stop-start);
-	
-	////////////////////////////////////////////////////////////////////////////////
-	// Sort by Energy
-	////////////////////////////////////////////////////////////////////////////////
-	
-	start = omp_get_wtime();
-	
-	// Count up number of each type of sample. 
-	int num_samples_per_mat[12] = {0};
-	for( int l = 0; l < in.lookups; l++ )
-		num_samples_per_mat[ SD.mat_samples[l] ]++;
-
-	// Determine offsets
-	int offsets[12] = {0};
-	for( int m = 1; m < 12; m++ )
-		offsets[m] = offsets[m-1] + num_samples_per_mat[m-1];
-	
-	stop = omp_get_wtime();
-	printf("Counting samples and offsets took %.3lf seconds\n", stop-start);
-	start = stop;
-
-	// Sort each material type by energy level
-	int offset = 0;
-	for( int m = 0; m < 12; m++ )
-		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], in.nthreads);
-
-	stop = omp_get_wtime();
-	printf("Energy Sorts took %.3lf seconds\n", stop-start);
-	
-	////////////////////////////////////////////////////////////////////////////////
-	// Perform lookups for each material separately
-	////////////////////////////////////////////////////////////////////////////////
-	start = omp_get_wtime();
-
-	unsigned long long verification = 0;
-
-	// Individual Materials
-	offset = 0;
-	for( int m = 0; m < 12; m++ )
-	{
-		#pragma omp parallel for simd schedule(dynamic,1000) reduction(+:verification)
-		for( int i = offset; i < offset + num_samples_per_mat[m]; i++)
-		{
-			// load pre-sampled energy and material for the particle
-			double p_energy = SD.p_energy_samples[i];
-			int mat         = SD.mat_samples[i]; 
-
-			// debugging
-			//printf("E = %lf mat = %d\n", p_energy, mat);
-
-			double macro_xs_vector[5] = {0};
-
-			// Perform macroscopic Cross Section Lookup
-			calculate_macro_xs(
-					p_energy,        // Sampled neutron energy (in lethargy)
-					mat,             // Sampled material type index neutron is in
-					in.n_isotopes,   // Total number of isotopes in simulation
-					in.n_gridpoints, // Number of gridpoints per isotope in simulation
-					SD.num_nucs,     // 1-D array with number of nuclides per material
-					SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-					SD.unionized_energy_array, // 1-D Unionized energy array
-					SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-					SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-					SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
-					macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
-					in.grid_type,    // Lookup type (nuclide, hash, or unionized)
-					in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-					SD.max_num_nucs  // Maximum number of nuclides present in any material
-					);
-
-			// For verification, and to prevent the compiler from optimizing
-			// all work out, we interrogate the returned macro_xs_vector array
-			// to find its maximum value index, then increment the verification
-			// value by that index. In this implementation, we prevent thread
-			// contention by using an OMP reduction on the verification value.
-			// For accelerators, a different approach might be required
-			// (e.g., atomics, reduction of thread-specific values in large
-			// array via CUDA thrust, etc).
-			double max = -1.0;
-			int max_idx = 0;
-			for(int j = 0; j < 5; j++ )
-			{
-				if( macro_xs_vector[j] > max )
-				{
-					max = macro_xs_vector[j];
-					max_idx = j;
-				}
-			}
-			verification += max_idx+1;
-		}
-		offset += num_samples_per_mat[m];
-	}
-	
-	stop = omp_get_wtime();
-	printf("XS Lookups took %.3lf seconds\n", stop-start);
-	return verification;
 }
 

@@ -134,7 +134,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		double du = 1.0 / in.hash_bins;
 
 		// For each energy level in the hash table
-		#pragma omp parallel for
 		for( long e = 0; e < in.hash_bins; e++ )
 		{
 			double energy = e * du;
