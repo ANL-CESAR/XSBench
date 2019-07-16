@@ -36,7 +36,7 @@ LDFLAGS = -lm
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
-  CC = /home/jtramm/gcc-install-8.2.0/bin/gcc
+  CC = gcc
   CFLAGS += -fopenmp -flto
 endif
 
