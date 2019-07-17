@@ -43,6 +43,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	unsigned long long verification = 0;
 
 	// OpenMP 4.5+ Target offload parallelism
+	// Note: "in" does not need to be mapped, but "SD.max_num_nucs" does, as we are
+	// manually mapping other heap pointers in the SD struct. If we map a field
+	// in a struct, openmp will no longer automatically map the rest of the struct.
 	#pragma omp target teams distribute parallel for\
 	map(to: in, \
 			SD.max_num_nucs, \
