@@ -42,9 +42,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
 
-	// Traditional CPU Threading
-	//	printf("SD.max_num_nucs = %d\n", SD.max_num_nucs);
-	
 	// OpenMP 4.5+ Target offload parallelism
 	#pragma omp target teams distribute parallel for\
 	map(to: in, \
@@ -72,8 +69,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		//printf("E = %lf mat = %d\n", p_energy, mat);
 
 		double macro_xs_vector[5] = {0};
-
-		//printf("SD.max_num_nucs = %d\n", SD.max_num_nucs);
 		
 		// Perform macroscopic Cross Section Lookup
 		calculate_macro_xs(

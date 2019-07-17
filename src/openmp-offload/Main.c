@@ -26,7 +26,7 @@ int main( int argc, char* argv[] )
 	Inputs in = read_CLI( argc, argv );
 
 	// Set number of OpenMP Threads
-	omp_set_num_threads(in.nthreads); 
+	//omp_set_num_threads(in.nthreads); 
 
 	// Print-out of Input Summary
 	if( mype == 0 )
