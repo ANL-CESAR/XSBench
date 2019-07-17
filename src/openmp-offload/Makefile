@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = clang
+COMPILER    = ibm
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no

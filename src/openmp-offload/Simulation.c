@@ -46,7 +46,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	//#pragma omp parallel for reduction(+:verification)
 	
 	// OpenMP 4.5+ Target offload parallelism
-	#pragma omp target parallel for\
+	//#pragma omp target parallel for
+	#pragma omp target teams distribute parallel for\
 	map(\
 			SD.num_nucs[:SD.length_num_nucs],\
 			SD.concs[:SD.length_concs],\
