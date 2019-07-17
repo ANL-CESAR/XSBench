@@ -26,7 +26,6 @@ int NGP_compare(const void * a, const void * b)
 		return 0;
 }
 
-
 size_t estimate_mem_usage( Inputs in )
 {
 	size_t single_nuclide_grid = in.n_gridpoints * sizeof( NuclideGridPoint );
@@ -48,8 +47,12 @@ size_t estimate_mem_usage( Inputs in )
 
 double get_time(void)
 {
-	time_t time;
-	time = clock();
+	struct timeval timecheck;
 
-	return (double) time / (double) CLOCKS_PER_SEC;
+	gettimeofday(&timecheck, NULL);
+	long ms = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
+
+	double time = (double) ms / 1000.0;
+
+	return time;
 }

@@ -13,6 +13,10 @@
 #include<assert.h>
 #include<stdint.h>
 
+#define CL_TARGET_OPENCL_VERSION 200
+#include <CL/cl.h>
+#define MAX_SOURCE_SIZE (0x100000)
+
 // Papi Header
 #ifdef PAPI
 #include "papi.h"
@@ -92,13 +96,12 @@ void fancy_int(long a);
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 void print_inputs(Inputs in, int nprocs, int version);
-int print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+int print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash, double sim_runtime );
 void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.c
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * sim_runtime);
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double * restrict egrid, int * restrict index_data,
@@ -125,6 +128,13 @@ int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
 size_t estimate_mem_usage( Inputs in );
 double get_time(void);
+
+// CLutils.c
+const char *getErrorString(cl_int error);
+void check(cl_int error);
+void printCompilerError( cl_program program, cl_device_id device );
+void print_single_info( cl_platform_id platform, cl_device_id device);
+void print_opencl_info(void);
 
 // Materials.c
 int * load_num_nucs(long n_isotopes);

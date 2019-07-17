@@ -37,7 +37,7 @@ void center_print(const char *s, int width)
 }
 
 int print_results( Inputs in, int mype, double runtime, int nprocs,
-	unsigned long long vhash )
+	unsigned long long vhash, double sim_runtime )
 {
 	// Calculate Lookups per sec
 	int lookups = 0;
@@ -46,6 +46,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	else if( in.simulation_method == EVENT_BASED )
 		lookups = in.lookups;
 	int lookups_per_sec = (int) ((double) lookups / runtime);
+	int sim_only_lookups_per_sec = (int) ((double) lookups/ sim_runtime);
 	
 	// If running in MPI, reduce timing statistics and calculate average
 	#ifdef MPI
@@ -65,7 +66,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		border_print();
 
 		// Print the results
-		printf("Threads:     %d\n", in.nthreads);
+		//printf("Threads:     %d\n", in.nthreads);
 		#ifdef MPI
 		printf("MPI ranks:   %d\n", nprocs);
 		#endif
@@ -75,10 +76,15 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		printf("Avg Lookups/s per MPI rank: ");
 		fancy_int(total_lookups / nprocs);
 		#else
+		printf("Total Time Statistics (OpenCL Init / JIT Compilation + Simulation Kernel)\n");
 		printf("Runtime:     %.3lf seconds\n", runtime);
 		printf("Lookups:     "); fancy_int(lookups);
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
+		printf("Simulation Kernel Only Statistics\n");
+		printf("Runtime:     %.3lf seconds\n", sim_runtime);
+		printf("Lookups/s:   ");
+		fancy_int(sim_only_lookups_per_sec);
 		#endif
 
 		unsigned long long large = 0;

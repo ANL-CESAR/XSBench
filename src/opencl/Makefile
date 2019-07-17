@@ -20,6 +20,7 @@ io.c \
 Simulation.c \
 GridInit.c \
 XSutils.c \
+CLutils.c \
 Materials.c
 
 obj = $(source:.c=.o)

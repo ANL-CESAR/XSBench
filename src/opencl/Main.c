@@ -68,11 +68,13 @@ int main( int argc, char* argv[] )
 	// Start Simulation Timer
 	omp_start = get_time();
 
+	double sim_runtime;
+
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-			verification = run_event_based_simulation(in, SD, mype);
+			verification = run_event_based_simulation(in, SD, mype, &sim_runtime);
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);
@@ -102,7 +104,7 @@ int main( int argc, char* argv[] )
 	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
+	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification, sim_runtime );
 
 	#ifdef MPI
 	MPI_Finalize();
