@@ -92,6 +92,7 @@ int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs )
 	memcpy( mats + *max_num_nucs * 10, mats10, num_nucs[10] * sizeof(int) );	
 	memcpy( mats + *max_num_nucs * 11, mats11, num_nucs[11] * sizeof(int) );	
 
+
 	return mats;
 }
 

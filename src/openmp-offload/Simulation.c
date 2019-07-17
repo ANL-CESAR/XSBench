@@ -43,12 +43,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	unsigned long long verification = 0;
 
 	// Traditional CPU Threading
-	//#pragma omp parallel for reduction(+:verification)
+	//	printf("SD.max_num_nucs = %d\n", SD.max_num_nucs);
 	
 	// OpenMP 4.5+ Target offload parallelism
-	//#pragma omp target parallel for
 	#pragma omp target teams distribute parallel for\
-	map(\
+	map(to: in, \
+			SD.max_num_nucs, \
 			SD.num_nucs[:SD.length_num_nucs],\
 			SD.concs[:SD.length_concs],\
 			SD.mats[:SD.length_mats],\
@@ -73,6 +73,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 		double macro_xs_vector[5] = {0};
 
+		//printf("SD.max_num_nucs = %d\n", SD.max_num_nucs);
+		
 		// Perform macroscopic Cross Section Lookup
 		calculate_macro_xs(
 				p_energy,        // Sampled neutron energy (in lethargy)
@@ -200,7 +202,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
 	
 	//test
-	/*	
+	/*
 	if( omp_get_thread_num() == 0 )
 	{
 		printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
@@ -240,6 +242,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		double du = 1.0 / hash_bins;
 		idx = p_energy / du;
 	}
+	//printf("idx = %ld\n", idx);
 	
 	// Once we find the pointer array on the UEG, we can pull the data
 	// from the respective nuclide grids, as well as the nuclide
@@ -256,6 +259,10 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		double xs_vector[5];
 		p_nuc = mats[mat*max_num_nucs + j];
 		conc = concs[mat*max_num_nucs + j];
+		/*
+		printf("mat = %d, max_num_nucs = %d, j = %d, idx = %d, p_nuc = %d\n",
+				mat, max_num_nucs, j, mat*max_num_nucs + j, p_nuc);
+				*/
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 		                    n_gridpoints, egrid, index_data,
 		                    nuclide_grids, idx, xs_vector, grid_type, hash_bins );
@@ -268,7 +275,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	for( int k = 0; k < 5; k++ )
 		printf("Energy: %lf, Material: %d, XSVector[%d]: %lf\n",
 		       p_energy, mat, k, macro_xs_vector[k]);
-	*/
+			   */
 }
 
 

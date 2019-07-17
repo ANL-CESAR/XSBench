@@ -161,6 +161,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// grid is allocated as a full square grid, even though not all
 	// materials have the same number of nuclides.
 	SD.mats = load_mats(SD.num_nucs, in.n_isotopes, &SD.max_num_nucs);
+	printf("SD.max_num_nucs = %d\n", SD.max_num_nucs);
 	SD.length_mats = SD.length_num_nucs * SD.max_num_nucs;
 
 	// Intialize the flattened 2D grid of nuclide concentration data. The grid holds
