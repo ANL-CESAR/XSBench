@@ -418,7 +418,7 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 }
 
 // picks a material based on a probabilistic distribution
-int pick_mat( unsigned long * seed )
+int pick_mat( uint64_t * seed )
 {
 	// I have a nice spreadsheet supporting these numbers. They are
 	// the fractions (by volume) of material in the core. Not a 

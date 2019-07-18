@@ -108,7 +108,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 long grid_search( long n, double quarry, double * restrict A);
 long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
-int pick_mat(unsigned long * seed);
+int pick_mat( uint64_t * seed );
 double LCG_random_double(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype);
