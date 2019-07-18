@@ -75,7 +75,14 @@ int main( int argc, char* argv[] )
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-			verification = run_event_based_simulation(in, SD, mype);
+		{
+			if( in.grid_type == UNIONIZED )
+				verification = run_event_based_simulation_unionized(in, SD, mype);
+			else if( in.grid_type == HASH )
+				verification = run_event_based_simulation_hash(in, SD, mype);
+			else if( in.grid_type == NUCLIDE )
+				verification = run_event_based_simulation_nuclide(in, SD, mype);
+		}
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);

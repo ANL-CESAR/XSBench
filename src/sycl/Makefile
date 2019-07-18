@@ -4,7 +4,7 @@
 
 COMPILER    = clang
 OPTIMIZE    = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 
