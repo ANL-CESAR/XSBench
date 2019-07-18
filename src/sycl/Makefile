@@ -29,7 +29,8 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=c++14 -Wall
+#CFLAGS := -std=c++14 -Wall
+CFLAGS := -std=c++14
 
 # Linker Flags
 LDFLAGS = -lm

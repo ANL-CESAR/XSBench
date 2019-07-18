@@ -10,6 +10,7 @@
 #include<assert.h>
 #include<stdint.h>
 #include <chrono> 
+#include <CL/sycl.hpp>
 
 // Papi Header
 #ifdef PAPI
@@ -91,25 +92,9 @@ SimulationData binary_read( Inputs in );
 
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
-void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
-                           long n_gridpoints,
-                           double *  egrid, int *  index_data,
-                           NuclideGridPoint *  nuclide_grids,
-                           long idx, double *  xs_vector, int grid_type, int hash_bins );
-void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int *  num_nucs,
-                         double *  concs,
-                         double *  egrid, int *  index_data,
-                         NuclideGridPoint *  nuclide_grids,
-                         int *  mats,
-                         double *  macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-long grid_search( long n, double quarry, double *  A);
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
 int pick_mat(unsigned long * seed);
 double LCG_random_double(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
-unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype);
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
@@ -124,4 +109,28 @@ double get_time(void);
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double * load_concs( int * num_nucs, int max_num_nucs );
+
+// binary search for energy on nuclide energy grid
+template <class T>
+long grid_search_nuclide( long n, double quarry, T A, long low, long high)
+{
+	long lowerLimit = low;
+	long upperLimit = high;
+	long examinationPoint;
+	long length = upperLimit - lowerLimit;
+
+	while( length > 1 )
+	{
+		examinationPoint = lowerLimit + ( length / 2 );
+
+		if( A[examinationPoint].energy > quarry )
+			upperLimit = examinationPoint;
+		else
+			lowerLimit = examinationPoint;
+
+		length = upperLimit - lowerLimit;
+	}
+
+	return lowerLimit;
+}
 #endif
