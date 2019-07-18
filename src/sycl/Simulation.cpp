@@ -36,7 +36,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	// Variables
 	double f;
 	NuclideGridPoint low, high;
-	int low_idx, high_idx;
+	long low_idx, high_idx;
 
 	// If using only the nuclide grid, we must perform a binary search
 	// to find the energy location in this particular nuclide's grid.
@@ -44,7 +44,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	{
 		// Perform binary search on the Nuclide Grid to find the index
 		//idx = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], 0, n_gridpoints-1);
-		int offset = nuc * n_gridpoints;
+		long offset = nuc * n_gridpoints;
 		idx = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids, offset, offset + n_gridpoints-1);
 		//printf("nuclide Idx = %ld\n", idx);
 
@@ -82,7 +82,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		// within the lower and higher limits we've calculated.
 		double e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
 		double e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
-		int lower;
+		long lower;
 		if( p_energy <= e_low )
 			//lower = 0;
 			lower = nuc*n_gridpoints;
@@ -91,7 +91,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 			lower = nuc*n_gridpoints + n_gridpoints - 1;
 		else
 		{
-			int offset = nuc*n_gridpoints;
+			long offset = nuc*n_gridpoints;
 			lower = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids, offset+u_low, offset+u_high);
 		}
 
@@ -242,17 +242,13 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 	
 	// Let's create an extra verification array to reduce manually later on
 	int * verification_host = (int *) malloc(in.lookups * sizeof(int));
-	double dummy_d;
-	int dummy_i;
 
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 		//queue sycl_q{default_selector()};
-		queue sycl_q{gpu_selector()};
-		//queue sycl_q{cpu_selector()};
-		std::cout << "Running on "
-            << sycl_q.get_device().get_info<cl::sycl::info::device::name>()
-            << "\n";
+		//queue sycl_q{gpu_selector()};
+		queue sycl_q{cpu_selector()};
+		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
 
 		// assign SYCL buffer to existing memory
 		buffer<int, 1> num_nucs_d     = buffer<int, 1>(SD.num_nucs, range<1>(SD.length_num_nucs));
@@ -419,11 +415,9 @@ unsigned long long run_event_based_simulation_hash(Inputs in, SimulationData SD,
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 		//queue sycl_q{default_selector()};
-		queue sycl_q{gpu_selector()};
-		//queue sycl_q{cpu_selector()};
-		std::cout << "Running on "
-            << sycl_q.get_device().get_info<cl::sycl::info::device::name>()
-            << "\n";
+		//queue sycl_q{gpu_selector()};
+		queue sycl_q{cpu_selector()};
+		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
 
 		// assign SYCL buffer to existing memory
 		buffer<int, 1> num_nucs_d     = buffer<int, 1>(SD.num_nucs, range<1>(SD.length_num_nucs));
@@ -554,11 +548,9 @@ unsigned long long run_event_based_simulation_nuclide(Inputs in, SimulationData 
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 		//queue sycl_q{default_selector()};
-		queue sycl_q{gpu_selector()};
-		//queue sycl_q{cpu_selector()};
-		std::cout << "Running on "
-            << sycl_q.get_device().get_info<cl::sycl::info::device::name>()
-            << "\n";
+		//queue sycl_q{gpu_selector()};
+		queue sycl_q{cpu_selector()};
+		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
 
 		// assign SYCL buffer to existing memory
 		buffer<int, 1> num_nucs_d     = buffer<int, 1>(SD.num_nucs, range<1>(SD.length_num_nucs));

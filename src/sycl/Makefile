@@ -2,9 +2,9 @@
 # User Options
 #===============================================================================
 
-COMPILER    = clang
+COMPILER    = codeplay
 OPTIMIZE    = yes
-DEBUG       = yes
+DEBUG       = no
 PROFILE     = no
 MPI         = no
 
@@ -46,6 +46,13 @@ ifeq ($(COMPILER),clang)
   CC = clang++
   CFLAGS += -fsycl
   LDFLAGS += -lOpenCL
+endif
+
+# Codeplay Compiler
+ifeq ($(COMPILER),codeplay)
+  CC = compute++
+  CFLAGS += -sycl -sycl-driver
+  LDFLAGS += -lComputeCpp
 endif
 
 # Intel Compiler

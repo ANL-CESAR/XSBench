@@ -126,7 +126,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	{
 		if(mype == 0) printf("Intializing hash grid...\n");
 		SD.length_unionized_energy_array = 0;
-		SD.length_index_grid  = in.hash_bins * in.n_isotopes;
+		SD.length_index_grid  = (long) in.hash_bins * (long) in.n_isotopes;
 		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int)); 
 		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
@@ -134,7 +134,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		double du = 1.0 / in.hash_bins;
 
 		// For each energy level in the hash table
-		#pragma omp parallel for
 		for( long e = 0; e < in.hash_bins; e++ )
 		{
 			double energy = e * du;
