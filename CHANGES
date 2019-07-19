@@ -8,11 +8,15 @@ NEW IN VERSION 19
   models are:
 
     - OpenMP target offloading, for use with OpenMP 4.5+ compilers
-    that can target a variety of acecelerator architectures.
+      that can target a variety of acecelerator architectures.
 
     - CUDA for use on NVIDIA GPUs.
 
     - OpenCL for use on CPU and accelerators. Note that this port
+      may need to be heavily re-optimized if running on a non-GPU
+      architecture.
+
+    - SYCL for use on CPU and accelerators. Note that this port
       may need to be heavily re-optimized if running on a non-GPU
       architecture.
 
@@ -21,6 +25,16 @@ NEW IN VERSION 19
   superior to the history-based model for accelerator architectures.
   As such, running with the accelerator models will require the
   "-m event" flag to be used.
+
+- (Optimization) For the CUDA and openmp-threading code bases,
+  several different optimized kernel variants have been developed.
+  These optimized kernels can be selected with the "-k <kernel ID #>"
+  argument. The optimized kernels work by sorting values by energy
+  and material to reduce thread divergence and greatly improve
+  cache locality. All baseline (default) kernel (-k 0) is generally
+  the same across all programming models. In a future release, we
+  plan on implementing these optimizations for all programming models
+  if possible. 
 
 - (Feature) Verification mode is now default and required, so is no
   longer an option in the Makefile. A new and faster method of

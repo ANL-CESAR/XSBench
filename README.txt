@@ -12,12 +12,13 @@
 Contact Information
 ==============================================================================
 
-Organization:     Computational Science Division
-                  Argonne National Laboratory
+Organization:             Computational Science Division
+                          Argonne National Laboratory
 
-Development Lead: John Tramm   <jtramm@anl.gov>
-                  Ron Rahaman  <rahaman@anl.gov>
-                  Amanda Lund  <alund@anl.gov>
+Development Lead:         John Tramm   <jtramm@anl.gov>
+
+Contributing Developers:  Ron Rahaman  <rahaman@anl.gov>
+                          Amanda Lund  <alund@anl.gov>
 
 ==============================================================================
 What is XSBench?
@@ -80,7 +81,7 @@ Selecting A Source Version----------------------------------------------------
 	NOTE: The Makefile will likely not work by default and will need to be
 	adjusted to utilize your OpenMP accelerator compiler.
 
-	3. XSBench/src/CUDA
+	3. XSBench/src/cuda
 
 	This version of XSBench is written in CUDA for use with NVIDIA GPU
 	architectures.
@@ -88,13 +89,21 @@ Selecting A Source Version----------------------------------------------------
 	NOTE: You will likely want to specify in the makefile the SM version
 	for the card you are running on.
 
-	4. XSBench/src/OpenCL
+	4. XSBench/src/opencl
 
 	This version of XSBench is written in OpenCL, and can be used for CPU,
-	GPU, FPGA, or other architecture that supports OpenCL. It was written
+	GPU, FPGA, or other architectures that support OpenCL. It was written
 	with GPUs in mind, so if running on other architectures you may need to
 	heavily re-optimize the code. You will also likely need to edit the
 	makefile to supply the path to your OpenCL compiler.
+	
+	4. XSBench/src/sycl
+
+	This version of XSBench is written in SYCL, and can be used for CPU,
+	GPU, FPGA, or other architectures that support OpenCL and SYCL.
+	It was written with GPUs in mind, so if running on other architectures
+	you may need to heavily re-optimize the code. You will also likely need
+	to edit the makefile to supply the path to your SYCL compiler.
 	
 
 Compilation-------------------------------------------------------------------
@@ -124,7 +133,8 @@ Running XSBench---------------------------------------------------------------
 	  -l <lookups>     Number of Cross-section (XS) lookups per particle history
 	  -h <hash bins>   Number of hash bins (only relevant when used with "-G hash")
 	  -b <binary mode> Read or write all data structures to file. If reading, this will skip initialization phase. (read, write)
-	Default is equivalent to: -s large -l 34 -p 500000 -G unionized
+	  -k <kernel>      Optimized kernel selector. The baseline kernel "0" is default. If available, optimized variants are 1, 2, ...
+	Default is equivalent to: -s large -l 34 -p 500000 -G unionized -k 0
 
 	-m <simulation method>
 
@@ -246,6 +256,23 @@ Running XSBench---------------------------------------------------------------
 		was generated. E.g., if the file was generated with the "-G nuclide"
 		argument, subsequent runs reading from that file must use the same
 		configuration flags.
+	
+	-k <kernel>
+
+		For some of the XSBench code-bases (e.g., openmp-threading and cuda)
+		there are several optimized variants of the main kernel. All source
+		bases run basically the same "baseline" kernel as default. Optimized
+		kernels can be selected at runtime with this argument. Default is
+		"0" for the baseline, other variants are numbered 1, 2, ... etc. 
+		People interested in implementing their own optimized variants are
+		encouraged to use this interface for convenience rather than writing
+		over the main kernel. The baseline kernel is defined at the top of
+		the "Simulation.c" source file, with the other variants being defined
+		towards the end of the file after a large comment block delineation.
+		The optimized variants are related to different ways of sorting
+		the sampled values such that there is less thread divergence and
+		much better cache re-usage when executing the lookup kernel on
+		contiguous sorted elements.
 
 ==============================================================================
 Debugging, Optimization & Profiling
@@ -293,7 +320,7 @@ make use of your desired compiler.
 Verification Support
 ==============================================================================
 
-Legacy versions of XSBench had a special "Veriication" compiler flag option
+Legacy versions of XSBench had a special "Verification" compiler flag option
 to enable verification of the results. However, a much more performant and
 portable verification scheme was developed and is now used for all
 configurations -- therefore, it is not necessary to compile with or without
@@ -304,8 +331,9 @@ it with the other data once the code has completed executing. This hash can
 then be verified against hashes that other versions or configurations of
 the code generate. For instance, running XSBench with 4 threads vs 8 threads
 (on a machine that supports that configuration) should generate the
-same hash number. Changing the model / run parameters should NOT generate
-the same hash number (i.e., increasing the number of particles, number
+same hash number. Running on GPU vs CPU should not change the hash number.
+However, changing the model / run parameters is expected to generate a totally
+different hash number (i.e., increasing the number of particles, number
 of gridpoints, etc, will result in different hashes). However, changing
 the type of lookup performed (e.g., nuclide, unionized, or hash) should result
 in the same hash being generated. Changing the simulation mode (history or
@@ -321,21 +349,14 @@ a data set and write it to file. It can then be read on subsequent runs to
 speed up initialization. This process is controlled with the 
 "-b (read, write)" command line argument.
 
-Can be set to yes in order to write or read a binary file containing
-a randomized XS data set (both nuclide grids, hash grids, and unionized grids).
 This feature may be extremely useful for users running on simulators where
 walltime minimization is critical for logistical purposes, or for users
 who are doing many sequential runs.
 
-Note that identical input parameters (problem size, etc) must be used
-when reading and writing a binary file. No runtime checks are made
+Note that identical input parameters (problem size, solution method etc)
+must be used when reading and writing a binary file. No runtime checks are made
 to validate that the file correctly corresponds to the selected input
 parameters.
-
-Also note that if you create the grid when specifying the -G flag as
-"nuclide", data for the unionized energy grid will not be written, and
-therefore any subsequent runs using that file in binary read mode must
-also use the "-G nuclide" option.
 
 ==============================================================================
 Citing XSBench
