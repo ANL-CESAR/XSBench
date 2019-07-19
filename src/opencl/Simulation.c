@@ -131,8 +131,10 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		// even though it hasn't succeeded, so we check manually.
 		cl_ulong max_opencl_allocation_size;
 		clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(max_opencl_allocation_size), &max_opencl_allocation_size, NULL);
+
 		cl_ulong index_grid_requested_allocation_size = sz;
-		assert( index_grid_requested_allocation_size < max_opencl_allocation_size);
+		assert( index_grid_requested_allocation_size <= max_opencl_allocation_size);
+
 		index_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
 		check(ret);
 		assert( ret == CL_SUCCESS);

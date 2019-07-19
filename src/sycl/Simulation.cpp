@@ -45,10 +45,15 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 	// to ensure all work is done and that we can read from verification_host array.
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
+
 		//queue sycl_q{default_selector()};
 		queue sycl_q{gpu_selector()};
 		//queue sycl_q{cpu_selector()};
 		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
+	
+		////////////////////////////////////////////////////////////////////////////////
+		// Create Device Buffers
+		////////////////////////////////////////////////////////////////////////////////
 
 		// assign SYCL buffer to existing memory
 		buffer<int, 1> num_nucs_d(SD.num_nucs,SD.length_num_nucs);
@@ -78,11 +83,17 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 		size_t index_grid_allocation_sz = ceil((SD.length_index_grid * sizeof(int)));
 		assert( index_grid_allocation_sz <= sycl_q.get_device().get_info<cl::sycl::info::device::max_mem_alloc_size>() );
 		buffer<int, 1> index_grid_d(SD.index_grid, (unsigned long long ) SD.length_index_grid);
+		
+		////////////////////////////////////////////////////////////////////////////////
+		// Define Device Kernel
+		////////////////////////////////////////////////////////////////////////////////
 
 		// queue a kernel to be run, as a lambda
 		sycl_q.submit([&](handler &cgh)
 				{
-				// define how the SYCL buffers will be accessed
+				////////////////////////////////////////////////////////////////////////////////
+				// Create Device Accessors for Device Buffers
+				////////////////////////////////////////////////////////////////////////////////
 				auto num_nucs = num_nucs_d.get_access<access::mode::read>(cgh);
 				auto concs = concs_d.get_access<access::mode::read>(cgh);
 				auto mats = mats_d.get_access<access::mode::read>(cgh);
@@ -91,9 +102,10 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 				auto unionized_energy_array = unionized_energy_array_d.get_access<access::mode::read>(cgh);
 				auto index_grid = index_grid_d.get_access<access::mode::read>(cgh);
 
-				// define kernel code that will run on device, as a lambda
-				cgh.parallel_for<kernel>(range<1>(in.lookups),
-					[=](id<1> idx)
+				////////////////////////////////////////////////////////////////////////////////
+				// XS Lookup Simulation Loop
+				////////////////////////////////////////////////////////////////////////////////
+				cgh.parallel_for<kernel>(range<1>(in.lookups), [=](id<1> idx)
 					{
 					// get the index to operate on, first dimemsion
 					size_t i = idx[0];
@@ -157,17 +169,13 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 	for( int i = 0; i < in.lookups; i++ )
 		verification_scalar += verification_host[i];
 
-	////////////////////////////////////////////////////////////////////////////////
-	// Begin Actual Simulation Loop 
-	////////////////////////////////////////////////////////////////////////////////
-
 	return verification_scalar;
 }
 
 
-// (fixed) binary search for energy on unionized energy grid
+// binary search for energy on unionized energy grid
 // returns lower index
-template <class T>
+	template <class T>
 long grid_search( long n, double quarry, T A)
 {
 	long lowerLimit = 0;
@@ -296,15 +304,15 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 
 	//test
 	/*
-	   //if( omp_get_thread_num() == 0 )
-	   {
-	   printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
-	   printf("Low nuclide index = %ld, high nuclide index = %ld\n", low_idx, high_idx);
-	   printf("e_h = %lf e_l = %lf\n", high.energy , low.energy);
-	   printf("xs_h = %lf xs_l = %lf\n", high.elastic_xs, low.elastic_xs);
-	   printf("total_xs = %lf\n\n", xs_vector[1]);
-	   }
-	   */
+	//if( omp_get_thread_num() == 0 )
+	{
+	printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
+	printf("Low nuclide index = %ld, high nuclide index = %ld\n", low_idx, high_idx);
+	printf("e_h = %lf e_l = %lf\n", high.energy , low.energy);
+	printf("xs_h = %lf xs_l = %lf\n", high.elastic_xs, low.elastic_xs);
+	printf("total_xs = %lf\n\n", xs_vector[1]);
+	}
+	*/
 
 }
 

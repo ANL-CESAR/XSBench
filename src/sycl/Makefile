@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = codeplay
+COMPILER    = clang
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
