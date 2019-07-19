@@ -45,8 +45,8 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 
-		//queue sycl_q{default_selector()};
-		queue sycl_q{gpu_selector()};
+		queue sycl_q{default_selector()};
+		//queue sycl_q{gpu_selector()};
 		//queue sycl_q{cpu_selector()};
 		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
 	
