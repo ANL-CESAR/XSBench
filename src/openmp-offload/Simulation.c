@@ -103,7 +103,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 			*/
 	//int * verification_array = (int *) malloc(in.lookups * sizeof(int));
 	//#pragma omp target teams distribute parallel for map(to: num_nucs[:length_num_nucs], concs[:length_concs], mats[:length_mats], unionized_energy_array[:length_unionized_energy_array], index_grid[:length_index_grid], nuclide_grid[:length_nuclide_grid], verification_array[:in.lookups])
-	#pragma omp target teams distribute parallel for map(to: SD.max_num_nucs, SD.num_nucs[:SD.length_num_nucs], SD.concs[:SD.length_concs], SD.mats[:SD.length_mats], SD.unionized_energy_array[:SD.length_unionized_energy_array], SD.index_grid[:SD.length_index_grid] SD.nuclide_grid[:SD.length_nuclide_grid]) reduction(+:verification)
+	#pragma omp target teams distribute parallel for map(to: SD.max_num_nucs, SD.num_nucs[:SD.length_num_nucs], SD.concs[:SD.length_concs], SD.mats[:SD.length_mats], SD.unionized_energy_array[:SD.length_unionized_energy_array], SD.index_grid[:SD.length_index_grid], SD.nuclide_grid[:SD.length_nuclide_grid]) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -190,9 +190,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 // Calculates the microscopic cross section for a given nuclide & energy
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           double * restrict egrid, int * restrict index_data,
-                           NuclideGridPoint * restrict nuclide_grids,
-                           long idx, double * restrict xs_vector, int grid_type, int hash_bins ){
+                           double *  egrid, int *  index_data,
+                           NuclideGridPoint *  nuclide_grids,
+                           long idx, double *  xs_vector, int grid_type, int hash_bins ){
 	// Variables
 	double f;
 	NuclideGridPoint * low, * high;
@@ -286,12 +286,12 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 
 // Calculates macroscopic cross section based on a given material & energy 
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int * restrict num_nucs,
-                         double * restrict concs,
-                         double * restrict egrid, int * restrict index_data,
-                         NuclideGridPoint * restrict nuclide_grids,
-                         int * restrict mats,
-                         double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
+                         long n_gridpoints, int *  num_nucs,
+                         double *  concs,
+                         double *  egrid, int *  index_data,
+                         NuclideGridPoint *  nuclide_grids,
+                         int *  mats,
+                         double *  macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
 	long idx = -1;	
 	double conc; // the concentration of the nuclide in the material
@@ -351,7 +351,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 
 // (fixed) binary search for energy on unionized energy grid
 // returns lower index
-long grid_search( long n, double quarry, double * restrict A)
+long grid_search( long n, double quarry, double *  A)
 {
 	long lowerLimit = 0;
 	long upperLimit = n-1;
