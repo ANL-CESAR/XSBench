@@ -127,6 +127,8 @@ int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double * load_concs( int * num_nucs, int max_num_nucs );
 
 // binary search for energy on nuclide energy grid
+// This funciton is defined in the header, as it is also used by the
+// initialization region of the program.
 template <class T>
 long grid_search_nuclide( long n, double quarry, T A, long low, long high)
 {

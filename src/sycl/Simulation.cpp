@@ -41,11 +41,13 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 	// Let's create an extra verification array to reduce manually later on
 	int * verification_host = (int *) malloc(in.lookups * sizeof(int));
 
+	// Scope here is important, as when we exit this blocl we will automatically sync with device
+	// to ensure all work is done and that we can read from verification_host array.
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 		//queue sycl_q{default_selector()};
-		//queue sycl_q{gpu_selector()};
-		queue sycl_q{cpu_selector()};
+		queue sycl_q{gpu_selector()};
+		//queue sycl_q{cpu_selector()};
 		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
 
 		// assign SYCL buffer to existing memory
@@ -71,7 +73,11 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 			SD.length_index_grid = 1;
 			SD.index_grid = (int *) malloc(sizeof(int));
 		}
-		buffer<int, 1> index_grid_d(SD.index_grid, SD.length_index_grid);
+		// For the unionized grid, this is a large array. Enforce that it is able to be allocated on the
+		// OpenCL device (as some OpenCL devices have fairly low limts here for some reason...)
+		size_t index_grid_allocation_sz = ceil((SD.length_index_grid * sizeof(int)));
+		assert( index_grid_allocation_sz <= sycl_q.get_device().get_info<cl::sycl::info::device::max_mem_alloc_size>() );
+		buffer<int, 1> index_grid_d(SD.index_grid, (unsigned long long ) SD.length_index_grid);
 
 		// queue a kernel to be run, as a lambda
 		sycl_q.submit([&](handler &cgh)
@@ -86,7 +92,7 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 				auto index_grid = index_grid_d.get_access<access::mode::read>(cgh);
 
 				// define kernel code that will run on device, as a lambda
-				cgh.parallel_for<class kernel_unionized>(range<1>(in.lookups),
+				cgh.parallel_for<kernel>(range<1>(in.lookups),
 					[=](id<1> idx)
 					{
 					// get the index to operate on, first dimemsion
@@ -128,11 +134,8 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 					// For verification, and to prevent the compiler from optimizing
 					// all work out, we interrogate the returned macro_xs_vector array
 					// to find its maximum value index, then increment the verification
-					// value by that index. In this implementation, we prevent thread
-					// contention by using an OMP reduction on the verification value.
-					// For accelerators, a different approach might be required
-					// (e.g., atomics, reduction of thread-specific values in large
-					// array via CUDA thrust, etc).
+					// value by that index. In this implementation, we store to a global
+					// array that will get tranferred back and reduced on the host.
 					double max = -1.0;
 					int max_idx = 0;
 					for(int j = 0; j < 5; j++ )
@@ -149,6 +152,7 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 				});
 	}
 
+	// Host reduces the verification array
 	unsigned long long verification_scalar = 0;
 	for( int i = 0; i < in.lookups; i++ )
 		verification_scalar += verification_host[i];
@@ -159,6 +163,7 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 
 	return verification_scalar;
 }
+
 
 // (fixed) binary search for energy on unionized energy grid
 // returns lower index
@@ -184,6 +189,9 @@ long grid_search( long n, double quarry, T A)
 
 	return lowerLimit;
 }
+
+// Note grid_search_nuclide() is defined in XSbench_header.h as it
+// it templated and will be used by multiple files
 
 // Calculates the microscopic cross section for a given nuclide & energy
 template <class Double_Type, class Int_Type, class NGP_Type>
@@ -222,7 +230,10 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		if( index_data[idx * n_isotopes + nuc] == n_gridpoints - 1 )
 			low_idx = nuc*n_gridpoints + index_data[idx * n_isotopes + nuc] - 1;
 		else
+		{
 			low_idx = nuc*n_gridpoints + index_data[idx * n_isotopes + nuc];
+			//printf("low_idx = %ld,   nuc*gridpoints = %ld,  index_data index = %ld,  index_data = %d\n", low_idx, nuc*n_gridpoints, idx * n_isotopes + nuc, index_data[idx * n_isotopes + nuc]);
+		}
 	}
 	else // Hash grid
 	{
@@ -288,6 +299,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	   //if( omp_get_thread_num() == 0 )
 	   {
 	   printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
+	   printf("Low nuclide index = %ld, high nuclide index = %ld\n", low_idx, high_idx);
 	   printf("e_h = %lf e_l = %lf\n", high.energy , low.energy);
 	   printf("xs_h = %lf xs_l = %lf\n", high.elastic_xs, low.elastic_xs);
 	   printf("total_xs = %lf\n\n", xs_vector[1]);
