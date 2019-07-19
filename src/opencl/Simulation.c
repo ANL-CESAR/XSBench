@@ -106,6 +106,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	ret = clEnqueueWriteBuffer(command_queue, mats_d, CL_TRUE, 0, sz, SD.mats, 0, NULL, NULL);
 	check(ret);
 	
+	// This buffer is not used if we are using the nuclide grid or hash grid methods,
+	// so only allocate it if we need it.
 	sz = SD.length_unionized_energy_array * sizeof(double);
 	cl_mem unionized_energy_array_d;
 	if( sz > 0 )
@@ -116,12 +118,25 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		check(ret);
 	}
 	
+	// This buffer is not used if we are using the nuclide grid only method,
+	// so only allocate it if we need it.
 	sz = SD.length_index_grid * sizeof(int);
 	cl_mem index_grid_d;
 	if( sz > 0 )
 	{
+		// If using the unionized grid, this will be our largest allocation. As OpenCL
+		// devices can have (for no good reason) very small maximum allocation sizes,
+		// we need to check if our allocation will go over the limit ourselves. Currently,
+		// this is not policed for us, OpenCL gives CL_SUCCESS and returns a non-zero ptr
+		// even though it hasn't succeeded, so we check manually.
+		cl_ulong max_opencl_allocation_size;
+		clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(max_opencl_allocation_size), &max_opencl_allocation_size, NULL);
+		cl_ulong index_grid_requested_allocation_size = sz;
+		assert( index_grid_requested_allocation_size < max_opencl_allocation_size);
 		index_grid_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
 		check(ret);
+		assert( ret == CL_SUCCESS);
+		assert( index_grid_d != NULL);
 		ret = clEnqueueWriteBuffer(command_queue, index_grid_d, CL_TRUE, 0, sz, SD.index_grid, 0, NULL, NULL);
 		check(ret);
 	}
@@ -206,7 +221,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Execute the OpenCL kernel on the list
 	size_t global_item_size = in.lookups; // Process the entire lists
 	size_t local_item_size = 64; // Divide work items into groups of 64
-	//size_t local_item_size = 1; // Divide work items into groups of 64
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
 	
