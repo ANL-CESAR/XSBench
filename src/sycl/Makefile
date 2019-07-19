@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = clang
+COMPILER    = codeplay
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -29,8 +29,7 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-#CFLAGS := -std=c++14 -Wall
-CFLAGS := -std=c++14
+CFLAGS := -std=c++14 -Wall
 
 # Linker Flags
 LDFLAGS = -lm

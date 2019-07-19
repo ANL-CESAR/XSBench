@@ -8,8 +8,7 @@
 // Following these functions are a number of optimized variants,
 // which each deploy a different combination of optimizations strategies. By
 // default, XSBench will only run the baseline implementation. Optimized variants
-// must be specifically selected using the "-k <optimized variant ID>" command
-// line argument.
+// are not yet implemented for this OpenMP targeting offload port.
 ////////////////////////////////////////////////////////////////////////////////////
 
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
@@ -42,68 +41,15 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
 
-	/*
-	int * num_nucs = SD.num_nucs;                      // Length = length_num_nucs;
-	double * concs = SD.concs;                         // Length = length_concs
-	int * mats = SD.mats;                              // Length = length_mats
-	double * unionized_energy_array = SD.unionized_energy_array;    // Length = length_unionized_energy_array
-	int * index_grid = SD.index_grid;                  // Length = length_index_grid
-	NuclideGridPoint * nuclide_grid = SD.nuclide_grid; // Length = length_nuclide_grid
-	
-	long length_num_nucs = SD.length_num_nucs;
-	long length_concs = SD.length_concs;
-	long length_mats = SD.length_mats;
-	long length_unionized_energy_array = SD.length_unionized_energy_array;
-	long length_index_grid = SD.length_index_grid;
-	long length_nuclide_grid = SD.length_nuclide_grid;
-	*/
-
-	// OpenMP 4.5+ Target offload parallelism
-	// Note: "in" does not need to be mapped, but "SD.max_num_nucs" does, as we are
-	// manually mapping other heap pointers in the SD struct. If we map a field
-	// in a struct, openmp will no longer automatically map the rest of the struct.
-	/*
 	#pragma omp target teams distribute parallel for\
-	map(to: num_nucs[:length_num_nucs], \
-			concs[:length_concs],\
-			mats[:length_mats],\
-			unionized_energy_array[:length_unionized_energy_array],\
-			index_grid[:length_index_grid])\
+	map(to: SD.max_num_nucs)\
+	map(to: SD.num_nucs[:SD.length_num_nucs])\
+	map(to: SD.concs[:SD.length_concs])\
+	map(to: SD.mats[:SD.length_mats])\
+	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
+	map(to: SD.index_grid[:SD.length_index_grid])\
+	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
 	reduction(+:verification)
-	*/
-			//nuclide_grid[:length_nuclide_grid])
-	/*
-	map(to: \
-			num_nucs[:SD.length_num_nucs],\
-			concs[:SD.length_concs],\
-			mats[:SD.length_mats],\
-			unionized_energy_array[:SD.length_unionized_energy_array],\
-			index_grid[:SD.length_index_grid],\
-			nuclide_grid[:SD.length_nuclide_grid])
-			*/
-	/*
-	map(to: in, \
-			SD.max_num_nucs)
-			SD.num_nucs[:SD.length_num_nucs],\
-			SD.concs[:SD.length_concs],\
-			SD.mats[:SD.length_mats],\
-			SD.unionized_energy_array[:SD.length_unionized_energy_array],\
-			SD.index_grid[:SD.length_index_grid],\
-			SD.nuclide_grid[:SD.length_nuclide_grid])
-			*/
-	/*
-	#pragma omp target teams distribute parallel for \
-	map(to: \
-			num_nucs[:length_num_nucs], \
-			concs[:length_concs], \
-			mats[:length_mats], \
-			unionized_energy_array[:length_unionized_energy_array], \
-			index_grid[:length_index_grid], \
-			nuclide_grid[:length_nuclide_grid])
-			*/
-	//int * verification_array = (int *) malloc(in.lookups * sizeof(int));
-	//#pragma omp target teams distribute parallel for map(to: num_nucs[:length_num_nucs], concs[:length_concs], mats[:length_mats], unionized_energy_array[:length_unionized_energy_array], index_grid[:length_index_grid], nuclide_grid[:length_nuclide_grid], verification_array[:in.lookups])
-	#pragma omp target teams distribute parallel for map(to: SD.max_num_nucs, SD.num_nucs[:SD.length_num_nucs], SD.concs[:SD.length_concs], SD.mats[:SD.length_mats], SD.unionized_energy_array[:SD.length_unionized_energy_array], SD.index_grid[:SD.length_index_grid], SD.nuclide_grid[:SD.length_nuclide_grid]) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -138,24 +84,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
 				SD.max_num_nucs  // Maximum number of nuclides present in any material
 				);
-		/*
-		calculate_macro_xs(
-				p_energy,        // Sampled neutron energy (in lethargy)
-				mat,             // Sampled material type index neutron is in
-				in.n_isotopes,   // Total number of isotopes in simulation
-				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-				num_nucs,     // 1-D array with number of nuclides per material
-				concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				unionized_energy_array, // 1-D Unionized energy array
-				index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
-				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
-				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
-				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-				SD.max_num_nucs  // Maximum number of nuclides present in any material
-				);
-				*/
 
 		// For verification, and to prevent the compiler from optimizing
 		// all work out, we interrogate the returned macro_xs_vector array
@@ -176,13 +104,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 			}
 		}
 		verification += max_idx+1;
-		//verification_array[i] = max_idx+1;
 	}
-
-	/*
-	for( int i = 0; i < in.lookups; i++ )
-		verification += verification_array[i];
-		*/
 
 	return verification;
 }
@@ -312,7 +234,6 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		double du = 1.0 / hash_bins;
 		idx = p_energy / du;
 	}
-	//printf("idx = %ld\n", idx);
 	
 	// Once we find the pointer array on the UEG, we can pull the data
 	// from the respective nuclide grids, as well as the nuclide
@@ -329,10 +250,6 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		double xs_vector[5];
 		p_nuc = mats[mat*max_num_nucs + j];
 		conc = concs[mat*max_num_nucs + j];
-		/*
-		printf("mat = %d, max_num_nucs = %d, j = %d, idx = %d, p_nuc = %d\n",
-				mat, max_num_nucs, j, mat*max_num_nucs + j, p_nuc);
-				*/
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 		                    n_gridpoints, egrid, index_data,
 		                    nuclide_grids, idx, xs_vector, grid_type, hash_bins );
@@ -349,7 +266,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 }
 
 
-// (fixed) binary search for energy on unionized energy grid
+// binary search for energy on unionized energy grid
 // returns lower index
 long grid_search( long n, double quarry, double *  A)
 {

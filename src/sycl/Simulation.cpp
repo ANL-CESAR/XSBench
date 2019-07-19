@@ -8,8 +8,7 @@
 // Following these functions are a number of optimized variants,
 // which each deploy a different combination of optimizations strategies. By
 // default, XSBench will only run the baseline implementation. Optimized variants
-// must be specifically selected using the "-k <optimized variant ID>" command
-// line argument.
+// are not yet implemented in this SYCL port.
 ////////////////////////////////////////////////////////////////////////////////////
 
 // use SYCL namespace to reduce symbol names
@@ -175,7 +174,7 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 
 // binary search for energy on unionized energy grid
 // returns lower index
-	template <class T>
+template <class T>
 long grid_search( long n, double quarry, T A)
 {
 	long lowerLimit = 0;
@@ -198,9 +197,6 @@ long grid_search( long n, double quarry, T A)
 	return lowerLimit;
 }
 
-// Note grid_search_nuclide() is defined in XSbench_header.h as it
-// it templated and will be used by multiple files
-
 // Calculates the microscopic cross section for a given nuclide & energy
 template <class Double_Type, class Int_Type, class NGP_Type>
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
@@ -218,15 +214,12 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	if( grid_type == NUCLIDE )
 	{
 		// Perform binary search on the Nuclide Grid to find the index
-		//idx = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], 0, n_gridpoints-1);
 		long offset = nuc * n_gridpoints;
 		idx = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids, offset, offset + n_gridpoints-1);
-		//printf("nuclide Idx = %ld\n", idx);
 
 		// pull ptr from nuclide grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
 		if( idx == n_gridpoints - 1 )
-			//low_idx = nuc*n_gridpoints + idx - 1;
 			low_idx = idx - 1;
 		else
 			low_idx = idx;
@@ -240,7 +233,6 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		else
 		{
 			low_idx = nuc*n_gridpoints + index_data[idx * n_isotopes + nuc];
-			//printf("low_idx = %ld,   nuc*gridpoints = %ld,  index_data index = %ld,  index_data = %d\n", low_idx, nuc*n_gridpoints, idx * n_isotopes + nuc, index_data[idx * n_isotopes + nuc]);
 		}
 	}
 	else // Hash grid
@@ -262,10 +254,8 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		double e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
 		long lower;
 		if( p_energy <= e_low )
-			//lower = 0;
 			lower = nuc*n_gridpoints;
 		else if( p_energy >= e_high )
-			//lower = n_gridpoints - 1;
 			lower = nuc*n_gridpoints + n_gridpoints - 1;
 		else
 		{
@@ -274,7 +264,6 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		}
 
 		if( (lower % n_gridpoints) == n_gridpoints - 1 )
-			//low_idx = nuc*n_gridpoints + lower - 1;
 			low_idx = lower - 1;
 		else
 			low_idx = lower;
@@ -301,19 +290,6 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 
 	// Nu Fission XS
 	xs_vector[4] = high.nu_fission_xs - f * (high.nu_fission_xs - low.nu_fission_xs);
-
-	//test
-	/*
-	//if( omp_get_thread_num() == 0 )
-	{
-	printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
-	printf("Low nuclide index = %ld, high nuclide index = %ld\n", low_idx, high_idx);
-	printf("e_h = %lf e_l = %lf\n", high.energy , low.energy);
-	printf("xs_h = %lf xs_l = %lf\n", high.elastic_xs, low.elastic_xs);
-	printf("total_xs = %lf\n\n", xs_vector[1]);
-	}
-	*/
-
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
@@ -345,7 +321,6 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		double du = 1.0 / hash_bins;
 		idx = p_energy / du;
 	}
-	//printf("idx = %ld\n", idx);
 
 	// Once we find the pointer array on the UEG, we can pull the data
 	// from the respective nuclide grids, as well as the nuclide
@@ -362,23 +337,12 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		double xs_vector[5];
 		p_nuc = mats[mat*max_num_nucs + j];
 		conc = concs[mat*max_num_nucs + j];
-		/*
-		   printf("mat = %d, max_num_nucs = %d, j = %d, idx = %d, p_nuc = %d\n",
-		   mat, max_num_nucs, j, mat*max_num_nucs + j, p_nuc);
-		   */
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 				n_gridpoints, egrid, index_data,
 				nuclide_grids, idx, xs_vector, grid_type, hash_bins );
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-
-	//test
-	/*
-	   for( int k = 0; k < 5; k++ )
-	   printf("Energy: %lf, Material: %d, XSVector[%d]: %lf\n",
-	   p_energy, mat, k, macro_xs_vector[k]);
-	   */
 }
 
 // picks a material based on a probabilistic distribution
@@ -429,8 +393,6 @@ double LCG_random_double(uint64_t * seed)
 	const uint64_t c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
 	return (double) (*seed) / (double) m;
-	//return ldexp(*seed, -63);
-
 }	
 
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)

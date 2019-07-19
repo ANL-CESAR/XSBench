@@ -41,7 +41,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Begin Actual Simulation Loop 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
-	#pragma omp parallel for schedule(guided) reduction(+:verification)
+	#pragma omp parallel for schedule(dynamic,100) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -53,9 +53,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		// Randomly pick an energy and material for the particle
 		double p_energy = LCG_random_double(&seed);
 		int mat         = pick_mat(&seed); 
-
-		// debugging
-		//printf("E = %lf mat = %d\n", p_energy, mat);
 
 		double macro_xs_vector[5] = {0};
 
@@ -129,7 +126,7 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 	unsigned long long verification = 0;
 
 	// Begin outer lookup loop over particles. This loop is independent.
-	#pragma omp parallel for schedule(guided) reduction(+:verification)
+	#pragma omp parallel for schedule(dynamic, 100) reduction(+:verification)
 	for( int p = 0; p < in.particles; p++ )
 	{
 		// Set the initial seed value
@@ -148,9 +145,6 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 		// i.e., Next iteration uses data computed in previous iter.
 		for( int i = 0; i < in.lookups; i++ )
 		{
-			// debugging
-			//printf("E = %lf mat = %d\n", p_energy, mat);
-
 			double macro_xs_vector[5] = {0};
 
 			// Perform macroscopic Cross Section Lookup
@@ -296,18 +290,6 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-	
-	//test
-	/*	
-	if( omp_get_thread_num() == 0 )
-	{
-		printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
-		printf("e_h = %lf e_l = %lf\n", high->energy , low->energy);
-		printf("xs_h = %lf xs_l = %lf\n", high->elastic_xs, low->elastic_xs);
-		printf("total_xs = %lf\n\n", xs_vector[1]);
-	}
-	*/
-	
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
@@ -360,17 +342,10 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-	
-	//test
-	/*
-	for( int k = 0; k < 5; k++ )
-		printf("Energy: %lf, Material: %d, XSVector[%d]: %lf\n",
-		       p_energy, mat, k, macro_xs_vector[k]);
-	*/
 }
 
 
-// (fixed) binary search for energy on unionized energy grid
+// binary search for energy on unionized energy grid
 // returns lower index
 long grid_search( long n, double quarry, double * restrict A)
 {
@@ -425,9 +400,6 @@ int pick_mat( uint64_t * seed )
 	// *perfect* approximation of where XS lookups are going to occur,
 	// but this will do a good job of biasing the system nonetheless.
 
-	// Also could be argued that doing fractions by weight would be 
-	// a better approximation, but volume does a good enough job for now.
-
 	double dist[12];
 	dist[0]  = 0.140;	// fuel
 	dist[1]  = 0.052;	// cladding
@@ -465,8 +437,6 @@ double LCG_random_double(uint64_t * seed)
 	const uint64_t c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
 	return (double) (*seed) / (double) m;
-	//return ldexp(*seed, -63);
-
 }	
 
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
@@ -728,7 +698,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	////////////////////////////////////////////////////////////////////////////////
 	// Sample Materials and Energies
 	////////////////////////////////////////////////////////////////////////////////
-	#pragma omp parallel for schedule(guided)
+	#pragma omp parallel for schedule(dynamic, 100)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -744,7 +714,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		SD.p_energy_samples[i] = p_energy;
 		SD.mat_samples[i] = mat;
 	}
-	printf("finished sampling...\n");
+	if(mype == 0) printf("finished sampling...\n");
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Sort by Material
@@ -756,7 +726,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 
 	stop = omp_get_wtime();
 
-	printf("Material sort took %.3lf seconds\n", stop-start);
+	if(mype == 0) printf("Material sort took %.3lf seconds\n", stop-start);
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Sort by Energy
@@ -775,7 +745,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		offsets[m] = offsets[m-1] + num_samples_per_mat[m-1];
 	
 	stop = omp_get_wtime();
-	printf("Counting samples and offsets took %.3lf seconds\n", stop-start);
+	if(mype == 0) printf("Counting samples and offsets took %.3lf seconds\n", stop-start);
 	start = stop;
 
 	// Sort each material type by energy level
@@ -784,7 +754,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], in.nthreads);
 
 	stop = omp_get_wtime();
-	printf("Energy Sorts took %.3lf seconds\n", stop-start);
+	if(mype == 0) printf("Energy Sorts took %.3lf seconds\n", stop-start);
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Perform lookups for each material separately
@@ -797,15 +767,12 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	offset = 0;
 	for( int m = 0; m < 12; m++ )
 	{
-		#pragma omp parallel for simd schedule(dynamic,1000) reduction(+:verification)
+		#pragma omp parallel for schedule(dynamic,100) reduction(+:verification)
 		for( int i = offset; i < offset + num_samples_per_mat[m]; i++)
 		{
 			// load pre-sampled energy and material for the particle
 			double p_energy = SD.p_energy_samples[i];
 			int mat         = SD.mat_samples[i]; 
-
-			// debugging
-			//printf("E = %lf mat = %d\n", p_energy, mat);
 
 			double macro_xs_vector[5] = {0};
 
@@ -851,7 +818,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	}
 	
 	stop = omp_get_wtime();
-	printf("XS Lookups took %.3lf seconds\n", stop-start);
+	if(mype == 0) printf("XS Lookups took %.3lf seconds\n", stop-start);
 	return verification;
 }
 

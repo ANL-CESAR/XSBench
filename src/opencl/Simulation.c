@@ -8,8 +8,7 @@
 // Following these functions are a number of optimized variants,
 // which each deploy a different combination of optimizations strategies. By
 // default, XSBench will only run the baseline implementation. Optimized variants
-// must be specifically selected using the "-k <optimized variant ID>" command
-// line argument.
+// have not yet neen implemented in this OpenCL port.
 ////////////////////////////////////////////////////////////////////////////////////
 
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * sim_runtime)
@@ -48,9 +47,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	cl_int ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
 	check(ret);
 	ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
-	check(ret);
 	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_CPU, 1, &device_id, &ret_num_devices);
 	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices);
+	check(ret);
 
 	// Print info about where we are running
 	print_single_info(platform_id, device_id);
@@ -60,7 +59,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	check(ret);
 
 	// Create a command queue
-	//cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 	cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
 	check(ret);
 
@@ -169,7 +167,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Create the OpenCL kernel
 	cl_kernel kernel = clCreateKernel(program, "macro_xs_lookup_kernel", &ret);
-
 	check(ret);
 
 	// Set the arguments of the kernel
@@ -209,16 +206,14 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	check(ret);
 	
 	double stop = get_time();
-	if( mype == 0)	
-		printf("OpenCL initialization time: %.3lf seconds\n", stop-start);
+	if( mype == 0) printf("OpenCL initialization time: %.3lf seconds\n", stop-start);
 	start = stop;
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Run Simulation Kernel
 	////////////////////////////////////////////////////////////////////////////////
 	
-	if( mype == 0)	
-		printf("Running event based simulation...\n");
+	if( mype == 0) printf("Running event based simulation...\n");
 
 	// Execute the OpenCL kernel on the list
 	size_t global_item_size = in.lookups; // Process the entire lists
@@ -234,8 +229,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	ret = clEnqueueReadBuffer(command_queue, verification_array, CL_TRUE, 0, in.lookups * sizeof(int), verification_array_host, 0, NULL, NULL);
 	check(ret);
 	
-	if( mype == 0)	
-		printf("Reducing verification value...\n");
+	if( mype == 0) printf("Reducing verification value...\n");
 	
 	unsigned long long verification = 0;
 
@@ -244,8 +238,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	stop = get_time();
 	*sim_runtime = stop-start;
-	if( mype == 0)	
-		printf("Simulation + Verification Reduction Runtime: %.3lf seconds\n", *sim_runtime);
+	if( mype == 0) printf("Simulation + Verification Reduction Runtime: %.3lf seconds\n", *sim_runtime);
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// OpenCL cleanup

@@ -38,11 +38,6 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	return verification_scalar;
 }
 
-// Alternative kernel ideas:
-// - Outer kernel call loop over material type. No sorting/ordering, just quitting if we get the wrong lookup type!
-// - Kernel splitting: Do sampling, then sort, then do lookup loop by material type
-// - Outer kernel call loop, but just between fuel vs. non-fuel
-
 // In this kernel, we perform a single lookup with each thread. Threads within a warp
 // do not really have any relation to each other, and divergence due to high nuclide count fuel
 // material lookups are costly. This kernel constitutes baseline performance.
@@ -186,18 +181,6 @@ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-	
-	//test
-	/*	
-	if( omp_get_thread_num() == 0 )
-	{
-		printf("Lookup: Energy = %lf, nuc = %d\n", p_energy, nuc);
-		printf("e_h = %lf e_l = %lf\n", high->energy , low->energy);
-		printf("xs_h = %lf xs_l = %lf\n", high->elastic_xs, low->elastic_xs);
-		printf("total_xs = %lf\n\n", xs_vector[1]);
-	}
-	*/
-	
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
@@ -250,17 +233,10 @@ __device__ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-	
-	//test
-	/*
-	for( int k = 0; k < 5; k++ )
-		printf("Energy: %lf, Material: %d, XSVector[%d]: %lf\n",
-		       p_energy, mat, k, macro_xs_vector[k]);
-	*/
 }
 
 
-// (fixed) binary search for energy on unionized energy grid
+// binary search for energy on unionized energy grid
 // returns lower index
 __device__ long grid_search( long n, double quarry, double * __restrict__ A)
 {
@@ -355,7 +331,6 @@ __host__ __device__ double LCG_random_double(uint64_t * seed)
 	const uint64_t c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
 	return (double) (*seed) / (double) m;
-
 }	
 
 __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
@@ -778,7 +753,7 @@ __global__ void xs_lookup_kernel_optimization_3(Inputs in, SimulationData GSD, i
 ////////////////////////////////////////////////////////////////////////////////////
 unsigned long long run_event_based_simulation_optimization_4(Inputs in, SimulationData GSD, int mype)
 {
-	const char * optimization_name = "Optimization 4 - All Material Lookup Kernels + Full Sort";
+	const char * optimization_name = "Optimization 4 - All Material Lookup Kernels + Material Sort";
 	
 	if( mype == 0)	printf("Simulation Kernel:\"%s\"\n", optimization_name);
 	
@@ -818,8 +793,7 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 	for( int m = 0; m < 12; m++ )
 		n_lookups_per_material[m] = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, m);
 
-	//int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
-	//printf("Going to perform %d fuel lookups...\n", n_fuel_lookups);
+	// Sort materials
 	thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
 	
 	// Launch all material kernels individually
@@ -909,16 +883,7 @@ __global__ void xs_lookup_kernel_optimization_4(Inputs in, SimulationData GSD, i
 // kernels for the fuel and other mateirals.
 ////////////////////////////////////////////////////////////////////////////////////
 
-struct fuel_comp {
-	__host__ __device__
-		bool operator()(const int & a, const int & b) {
-			if( a == 0 && b != 0 )
-				return true;
-			else
-				return false;
-		}
-};
-
+// Comparator for partitioning stage
 struct is_mat_fuel{
 	__host__ __device__
 		bool operator()(const int & a)
@@ -968,15 +933,15 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
 
 	// Partition fuel into the first part of the array
-	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples);
-	//thrust::sort_by_key(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, fuel_comp());
 	thrust::partition(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, GSD.p_energy_samples, is_mat_fuel());
 
 	// Launch all material kernels individually (asynchronous is allowed)
 	nblocks = ceil( (double) n_fuel_lookups / (double) nthreads);
 	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, n_fuel_lookups, 0 );
+
 	nblocks = ceil( (double) (in.lookups - n_fuel_lookups) / (double) nthreads);
 	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, in.lookups-n_fuel_lookups, n_fuel_lookups );
+
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
 	
