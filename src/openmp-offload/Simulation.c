@@ -42,12 +42,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
 
-	int * num_nucs = SD.num_nucs;                     // Length = length_num_nucs;
-	double * concs = SD.concs;                     // Length = length_concs
-	int * mats = SD.mats;                         // Length = length_mats
+	/*
+	int * num_nucs = SD.num_nucs;                      // Length = length_num_nucs;
+	double * concs = SD.concs;                         // Length = length_concs
+	int * mats = SD.mats;                              // Length = length_mats
 	double * unionized_energy_array = SD.unionized_energy_array;    // Length = length_unionized_energy_array
-	int * index_grid = SD.index_grid;                   // Length = length_index_grid
-	NuclideGridPoint * nuclide_grid = SD.nuclide_grid;    // Length = length_nuclide_grid
+	int * index_grid = SD.index_grid;                  // Length = length_index_grid
+	NuclideGridPoint * nuclide_grid = SD.nuclide_grid; // Length = length_nuclide_grid
 	
 	long length_num_nucs = SD.length_num_nucs;
 	long length_concs = SD.length_concs;
@@ -55,6 +56,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	long length_unionized_energy_array = SD.length_unionized_energy_array;
 	long length_index_grid = SD.length_index_grid;
 	long length_nuclide_grid = SD.length_nuclide_grid;
+	*/
 
 	// OpenMP 4.5+ Target offload parallelism
 	// Note: "in" does not need to be mapped, but "SD.max_num_nucs" does, as we are
@@ -89,7 +91,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 			SD.index_grid[:SD.length_index_grid],\
 			SD.nuclide_grid[:SD.length_nuclide_grid])
 			*/
-	//#pragma omp target teams distribute parallel for map(to: num_nucs[:length_num_nucs], concs[:length_concs], mats[:length_mats], unionized_energy_array[:length_unionized_energy_array], index_grid[:length_index_grid], nuclide_grid[:length_nuclide_grid])
 	/*
 	#pragma omp target teams distribute parallel for \
 	map(to: \
@@ -100,8 +101,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 			index_grid[:length_index_grid], \
 			nuclide_grid[:length_nuclide_grid])
 			*/
-	int * verification_array = (int *) malloc(in.lookups * sizeof(int));
-	#pragma omp target teams distribute parallel for map(to: num_nucs[:length_num_nucs], concs[:length_concs], mats[:length_mats], unionized_energy_array[:length_unionized_energy_array], index_grid[:length_index_grid], nuclide_grid[:length_nuclide_grid], verification_array[:in.lookups])
+	//int * verification_array = (int *) malloc(in.lookups * sizeof(int));
+	//#pragma omp target teams distribute parallel for map(to: num_nucs[:length_num_nucs], concs[:length_concs], mats[:length_mats], unionized_energy_array[:length_unionized_energy_array], index_grid[:length_index_grid], nuclide_grid[:length_nuclide_grid], verification_array[:in.lookups])
+	#pragma omp target teams distribute parallel for map(to: SD.max_num_nucs, SD.num_nucs[:SD.length_num_nucs], SD.concs[:SD.length_concs], SD.mats[:SD.length_mats], SD.unionized_energy_array[:SD.length_unionized_energy_array], SD.index_grid[:SD.length_index_grid] SD.nuclide_grid[:SD.length_nuclide_grid]) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -120,7 +122,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		double macro_xs_vector[5] = {0};
 		
 		// Perform macroscopic Cross Section Lookup
-		/*
 		calculate_macro_xs(
 				p_energy,        // Sampled neutron energy (in lethargy)
 				mat,             // Sampled material type index neutron is in
@@ -137,7 +138,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
 				SD.max_num_nucs  // Maximum number of nuclides present in any material
 				);
-				*/
+		/*
 		calculate_macro_xs(
 				p_energy,        // Sampled neutron energy (in lethargy)
 				mat,             // Sampled material type index neutron is in
@@ -154,6 +155,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
 				SD.max_num_nucs  // Maximum number of nuclides present in any material
 				);
+				*/
 
 		// For verification, and to prevent the compiler from optimizing
 		// all work out, we interrogate the returned macro_xs_vector array
@@ -173,12 +175,14 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				max_idx = j;
 			}
 		}
-		//verification += max_idx+1;
-		verification_array[i] = max_idx+1;
+		verification += max_idx+1;
+		//verification_array[i] = max_idx+1;
 	}
 
+	/*
 	for( int i = 0; i < in.lookups; i++ )
 		verification += verification_array[i];
+		*/
 
 	return verification;
 }
