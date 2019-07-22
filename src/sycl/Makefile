@@ -47,12 +47,6 @@ ifeq ($(COMPILER),codeplay)
   LDFLAGS += -lComputeCpp
 endif
 
-# Intel Compiler
-ifeq ($(COMPILER),intel)
-  CC = 
-  CFLAGS += 
-endif
-
 # Debug Flags
 ifeq ($(DEBUG),yes)
   CFLAGS += -g
