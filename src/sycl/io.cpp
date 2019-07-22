@@ -80,39 +80,37 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		printf("Lookups/s:   ");
 		fancy_int(lookups_per_sec);
 		#endif
+	}
 
-		unsigned long long large = 0;
-		unsigned long long small = 0; 
-		if( in.simulation_method == EVENT_BASED )
-		{
-			small = 945990;
-			large = 952131;
-		}
-		else if( in.simulation_method == HISTORY_BASED )
-		{
-			small = 941535;
-			large = 954318; 
-		}
-		if( strcmp(in.HM, "large") == 0 )
-		{
-			if( vhash == large )
-			{
-				printf("Verification checksum: %llu (Valid)\n", vhash);
-				is_invalid_result = 0;
-			}
-			else
-				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
-		}
-		else if( strcmp(in.HM, "small") == 0 )
-		{
-			if( vhash == small )
-			{
-				printf("Verification checksum: %llu (Valid)\n", vhash);
-				is_invalid_result = 0;
-			}
-			else
-				printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
-		}
+	unsigned long long large = 0;
+	unsigned long long small = 0; 
+	if( in.simulation_method == EVENT_BASED )
+	{
+		small = 945990;
+		large = 952131;
+	}
+	else if( in.simulation_method == HISTORY_BASED )
+	{
+		small = 941535;
+		large = 954318; 
+	}
+	if( strcmp(in.HM, "large") == 0 )
+	{
+		if( vhash == large )
+			is_invalid_result = 0;
+	}
+	else if( strcmp(in.HM, "small") == 0 )
+	{
+		if( vhash == small )
+			is_invalid_result = 0;
+	}
+
+	if(mype == 0 )
+	{
+		if( is_invalid_result )
+			printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
+		else
+			printf("Verification checksum: %llu (Valid)\n", vhash);
 		border_print();
 	}
 
