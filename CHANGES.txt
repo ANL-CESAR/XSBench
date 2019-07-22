@@ -53,6 +53,20 @@ NEW IN VERSION 19
 - (Removal) A number of optional/outdated Makefile options were
   removed in an effort to clean up the code base and simplify things.
 
+- (Feature) To service the new verification mode, a new PRNG scheme
+  has been implemented. We now use a specific LCG for all random
+  number generation rather than relying on C standard rand() for
+  some parts of initialization. Additionally, instead of selecting
+  seeds by thread ID, we now base the PRNG stream off of a single
+  seed that gets forwarded using a log(N) algorithm. This ensures
+  that each sample is uncorrelated so will better ensure the randomness
+  of our energy and material samples as compared to the old scheme.
+
+- (Feature) The basic data structures in XSBench have all been changed
+  to use a single 1D memory allocation each so as to make it as
+  easy as possible to offload heap memory to devices without having
+  to flatten things manually for each device implementation.  
+
 =====================================================================
 NEW IN VERSION 18
 =====================================================================
