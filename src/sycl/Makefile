@@ -40,13 +40,6 @@ ifeq ($(COMPILER),gnu)
   CFLAGS += -flto
 endif
 
-# Clang SYCL Compiler
-ifeq ($(COMPILER),clang)
-  CC = clang++
-  CFLAGS += -fsycl
-  LDFLAGS += -lOpenCL
-endif
-
 # Codeplay Compiler
 ifeq ($(COMPILER),codeplay)
   CC = compute++
