@@ -47,6 +47,12 @@ ifeq ($(COMPILER),codeplay)
   LDFLAGS += -lComputeCpp
 endif
 
+ifeq ($(COMPILER),clang)
+  CC = clang++
+  CFLAGS += -fsycl
+  LDFLAGS += -lOpenCL
+endif
+
 # Debug Flags
 ifeq ($(DEBUG),yes)
   CFLAGS += -g
