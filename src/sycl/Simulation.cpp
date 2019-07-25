@@ -13,10 +13,8 @@
 
 // use SYCL namespace to reduce symbol names
 using namespace cl::sycl;
-unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationData SD, int mype)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time)
 {
-	if( mype == 0)	
-		printf("Beginning event based simulation...\n");
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
@@ -38,7 +36,12 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 	////////////////////////////////////////////////////////////////////////////////
 	
 	// Let's create an extra verification array to reduce manually later on
+	if( mype == 0 ) printf("Allocating an additional %.1lf MB of memory for verification arrays...\n", in.lookups * sizeof(int) /1024.0/1024.0);
 	int * verification_host = (int *) malloc(in.lookups * sizeof(int));
+	
+	// Timers
+	double start = get_time();
+	double stop;
 
 	// Scope here is important, as when we exit this blocl we will automatically sync with device
 	// to ensure all work is done and that we can read from verification_host array.
@@ -48,7 +51,8 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 		queue sycl_q{default_selector()};
 		//queue sycl_q{gpu_selector()};
 		//queue sycl_q{cpu_selector()};
-		printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
+		if(mype == 0 ) printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
+		if(mype == 0 ) printf("Initializing device buffers and JIT compiling kernel...\n");
 	
 		////////////////////////////////////////////////////////////////////////////////
 		// Create Device Buffers
@@ -161,6 +165,9 @@ unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationDat
 
 					});
 				});
+		stop = get_time();
+		if(mype==0) printf("Kernel initialization, compilation, and launch took %.2lf seconds.\n", stop-start);
+		if(mype==0) printf("Beginning event based simulation...\n");
 	}
 
 	// Host reduces the verification array

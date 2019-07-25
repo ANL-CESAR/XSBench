@@ -70,13 +70,14 @@ int main( int argc, char* argv[] )
 
 	// Start Simulation Timer
 	omp_start = get_time();
+	double kernel_init_time;
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
 		{
-			verification = run_event_based_simulation_unionized(in, SD, mype);
+			verification = run_event_based_simulation(in, SD, mype, &kernel_init_time);
 		}
 		else
 		{
@@ -107,7 +108,7 @@ int main( int argc, char* argv[] )
 	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
+	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification, kernel_init_time );
 
 	#ifdef MPI
 	MPI_Finalize();

@@ -86,12 +86,12 @@ void fancy_int(long a);
 Inputs read_CLI( int argc, char * argv[] );
 void print_CLI_error(void);
 void print_inputs(Inputs in, int nprocs, int version);
-int print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash );
+int print_results( Inputs in, int mype, double runtime, int nprocs, unsigned long long vhash, double time );
 void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.c
-unsigned long long run_event_based_simulation_unionized(Inputs in, SimulationData SD, int mype);
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time);
 int pick_mat(unsigned long * seed);
 double LCG_random_double(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);

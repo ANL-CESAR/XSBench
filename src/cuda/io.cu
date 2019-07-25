@@ -61,7 +61,6 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		border_print();
 
 		// Print the results
-		printf("Threads:     %d\n", in.nthreads);
 		#ifdef MPI
 		printf("MPI ranks:   %d\n", nprocs);
 		#endif
@@ -120,6 +119,7 @@ void print_inputs(Inputs in, int nprocs, int version )
 	logo(version);
 	center_print("INPUT SUMMARY", 79);
 	border_print();
+	printf("Programming Model:            CUDA\n");
 	cudaDeviceProp prop;
 	int device;
 	cudaGetDevice(&device);
@@ -159,10 +159,8 @@ void print_inputs(Inputs in, int nprocs, int version )
 	printf("Total XS Lookups:             "); fancy_int(in.lookups);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
-	printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
 	printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
 	#else
-	printf("Threads:                      %d\n", in.nthreads);
 	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 	#endif
 	printf("Binary File Mode:             ");
@@ -211,7 +209,6 @@ void print_CLI_error(void)
 	printf("Usage: ./XSBench <options>\n");
 	printf("Options include:\n");
 	printf("  -m <simulation method>   Simulation method (history, event)\n");
-	printf("  -t <threads>             Number of OpenMP threads to run\n");
 	printf("  -s <size>                Size of H-M Benchmark to run (small, large, XL, XXL)\n");
 	printf("  -g <gridpoints>          Number of gridpoints per nuclide (overrides -s defaults)\n");
 	printf("  -G <grid type>           Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
@@ -279,16 +276,8 @@ Inputs read_CLI( int argc, char * argv[] )
 	{
 		char * arg = argv[i];
 
-		// nthreads (-t)
-		if( strcmp(arg, "-t") == 0 )
-		{
-			if( ++i < argc )
-				input.nthreads = atoi(argv[i]);
-			else
-				print_CLI_error();
-		}
 		// n_gridpoints (-g)
-		else if( strcmp(arg, "-g") == 0 )
+		if( strcmp(arg, "-g") == 0 )
 		{	
 			if( ++i < argc )
 			{

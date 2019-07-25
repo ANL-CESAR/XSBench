@@ -37,7 +37,7 @@ void center_print(const char *s, int width)
 }
 
 int print_results( Inputs in, int mype, double runtime, int nprocs,
-	unsigned long long vhash )
+	unsigned long long vhash, double kernel_init_time )
 {
 	// Calculate Lookups per sec
 	int lookups = 0;
@@ -46,6 +46,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	else if( in.simulation_method == EVENT_BASED )
 		lookups = in.lookups;
 	int lookups_per_sec = (int) ((double) lookups / runtime);
+	int sim_only_lookups_per_sec = (int) ((double) lookups/ (runtime-kernel_init_time));
 	
 	// If running in MPI, reduce timing statistics and calculate average
 	#ifdef MPI
@@ -65,7 +66,6 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		border_print();
 
 		// Print the results
-		printf("Threads:     %d\n", in.nthreads);
 		#ifdef MPI
 		printf("MPI ranks:   %d\n", nprocs);
 		#endif
@@ -75,10 +75,15 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		printf("Avg Lookups/s per MPI rank: ");
 		fancy_int(total_lookups / nprocs);
 		#else
-		printf("Runtime:     %.3lf seconds\n", runtime);
-		printf("Lookups:     "); fancy_int(lookups);
-		printf("Lookups/s:   ");
+		printf("Total Time Statistics (SYCL+OpenCL Init / JIT Compilation + Simulation Kernel)\n");
+		printf("Runtime:               %.3lf seconds\n", runtime);
+		printf("Lookups:               "); fancy_int(lookups);
+		printf("Lookups/s:             ");
 		fancy_int(lookups_per_sec);
+		printf("Simulation Kernel Only Statistics\n");
+		printf("Runtime:               %.3lf seconds\n", runtime-kernel_init_time);
+		printf("Lookups/s:             ");
+		fancy_int(sim_only_lookups_per_sec);
 		#endif
 	}
 
@@ -124,6 +129,7 @@ void print_inputs(Inputs in, int nprocs, int version )
 	logo(version);
 	center_print("INPUT SUMMARY", 79);
 	border_print();
+	printf("Programming Model:            SYCL\n");
 	if( in.simulation_method == EVENT_BASED )
 		printf("Simulation Method:            Event Based\n");
 	else
@@ -158,10 +164,8 @@ void print_inputs(Inputs in, int nprocs, int version )
 	printf("Total XS Lookups:             "); fancy_int(in.lookups);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
-	printf("OMP Threads per MPI Rank:     %d\n", in.nthreads);
 	printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
 	#else
-	printf("Threads:                      %d\n", in.nthreads);
 	printf("Est. Memory Usage (MB):       "); fancy_int(mem_tot);
 	#endif
 	printf("Binary File Mode:             ");
@@ -210,7 +214,6 @@ void print_CLI_error(void)
 	printf("Usage: ./XSBench <options>\n");
 	printf("Options include:\n");
 	printf("  -m <simulation method>   Simulation method (history, event)\n");
-	printf("  -t <threads>             Number of OpenMP threads to run\n");
 	printf("  -s <size>                Size of H-M Benchmark to run (small, large, XL, XXL)\n");
 	printf("  -g <gridpoints>          Number of gridpoints per nuclide (overrides -s defaults)\n");
 	printf("  -G <grid type>           Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
@@ -278,16 +281,8 @@ Inputs read_CLI( int argc, char * argv[] )
 	{
 		char * arg = argv[i];
 
-		// nthreads (-t)
-		if( strcmp(arg, "-t") == 0 )
-		{
-			if( ++i < argc )
-				input.nthreads = atoi(argv[i]);
-			else
-				print_CLI_error();
-		}
 		// n_gridpoints (-g)
-		else if( strcmp(arg, "-g") == 0 )
+		if( strcmp(arg, "-g") == 0 )
 		{	
 			if( ++i < argc )
 			{
