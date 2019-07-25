@@ -6,7 +6,7 @@ COMPILER    = gnu
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
-MPI         = yes
+MPI         = no
 
 #===============================================================================
 # Program name & source code list
