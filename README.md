@@ -1,5 +1,7 @@
 ![XSBench](img/logo.png)
 
+[![Latest Github release](https://img.shields.io/github/release/ANL-CESAR/XSBench.svg)](https://github.com/ANL-CESAR/XSBench/releases/latest)
+
 XSBench is a mini-app representing a key computational kernel of the Monte Carlo neutronics application OpenMC. Specifically, XSBench represents the continuous energy macroscopic neutron cross section lookup kernel. A full explanation of the theory and purpose of XSBench is provided in docs/XSBench_Theory.pdf. More information is also available in the publications listed at the bottom of this document.
 
 ## Table of Contents
