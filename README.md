@@ -203,10 +203,10 @@ These XS data points are arranged into the nuclide grid:
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
-```c
+```python
 Nuclide_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
-	for each nuclide in M do
+	for each nuclide in M do:
 		index = binary search to find E in nuclide grid
 		interpolate data from grid[nuclide, index]
 		macroscopic XS += data
@@ -222,11 +222,11 @@ One way of speeding up the nuclide grid search is to form a separate acceleratio
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
-```c
+```python
 Unionized_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	UEG_index = binary search to find E in unionized grid
-	for each nuclide in M do
+	for each nuclide in M do:
 		index = unionized_grid[nuclide, UEG_index]
 		interpolate data from grid[nuclide, index]
 		macroscopic XS += data
@@ -236,11 +236,11 @@ Unionized_Grid_Search( Energy E, Material M ):
 
 An alternative to the unionized energy grid is the logarithmic hash grid. This method takes in account the fact that while nuclides will be tabulated on grids containing different numbers of energy points, the points within each nuclide's grid will in general be spaced in (roughly) uniform maner in log space . Therefore, the nuclide grid is augmented with a separate acceleration structure similar to the unionized grid. However, the number of columns is capped at some number of bins spaced evenly in log space, with each row therefore corresponding to an approximate location within each nuclide's grid for that energy level. While the unionized grid points exactly to the correct index in the nuclide grid, the logarithmic hash grid points to only an approximate location below the true point -- meaning that a fast binary or iterative search must still be performed over the constrained area (typically only 10 or so elements in size):
 
-```c
+```python
 Logarithmic_Hash_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	hash_index = grid_delta * (ln(E) - grid_minimum_energy)
-	for each nuclide in M do
+	for each nuclide in M do:
 		i_low  = unionized_grid[nuclide, hash_index]
 		i_high = unionized_grid[nuclide, hash_index+1]
 		index = binary search in range(i_low, i_high) to find E in nuclide grid
