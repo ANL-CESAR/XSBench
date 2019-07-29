@@ -195,11 +195,11 @@ This method of parallelism is requires more memory and requires an extra stream 
 
 This is the default "naive" method of performing macroscopic XS lookups. XS data is stored for a number of energy levels for each nuclide in the simulation problem. Different nuclides can have a different number of energy levels. For instance, U-238 usually has over 100k energy levels, whereas some other nuclides may only have a few thousand. The "Nuclide Grid" is composed of all nuclides in the problem, with a variable number of data points for each nuclide. Each data point is composed of the energy level and accompanying cross section data for multiple different reaction channels:
 
-<img src="img/xs_point.jpg" alt="drawing" width="300"/>
+<img src="img/xs_point.jpg" alt="xs_point" width="300"/>
 
 These XS data points are arranged into the nuclide grid:
 
-<img src="img/nuclide_grid.jpg" alt="drawing" width="400"/>
+<img src="img/nuclide_grid.jpg" alt="nuclide_grid" width="400"/>
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
@@ -218,7 +218,7 @@ This algorithm requires no extra memory usage beyond the minimum to represent th
 
 One way of speeding up the nuclide grid search is to form a separate acceleration structure to reduce the number of binary searches that need to be performed. In the Unionized Energy Grid (EUG) method, a second grid is created with columns corresponding to the **union** of all energy levels from the nuclide grid. For each energy level (column) in the unionized grid, each row stores an index corresponding to the closest location in the nuclide grid for each nuclide corresponding that energy level:
 
-<img src="img/UEG.jpg" alt="drawing" width="400"/>
+<img src="img/UEG.jpg" alt="UEG" width="400"/>
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
