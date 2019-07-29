@@ -1,29 +1,26 @@
-
 ![XSBench](img/logo.png)
-
-# XSBench
 
 XSBench is a mini-app representing a key computational kernel of the Monte Carlo neutronics application OpenMC. Specifically, XSBench represents the continuous energy macroscopic neutron cross section lookup kernel. A full explanation of the theory and purpose of XSBench is provided in docs/XSBench_Theory.pdf. More information is also available in the publications listed at the bottom of this document.
 
 ## Table of Contents
 
-1. [Selecting a Source Version](https://github.com/ANL-CESAR/XSBench#selecting-a-source-version)
-2. [Compilation](https://github.com/ANL-CESAR/XSBench#Compilation)
-3. [Running XSBench](https://github.com/ANL-CESAR/XSBench#Running-XSBench)
-4. [MPI Support](https://github.com/ANL-CESAR/XSBench#MPI-Support)
-5. [Verification Support](https://github.com/ANL-CESAR/XSBench#Verification-Support)
-6. [Binary File Support](https://github.com/ANL-CESAR/XSBench#Binary-File-Support)
-7. [Citing XSBench](https://github.com/ANL-CESAR/XSBench#Citing-XSBench)
-8. [Algorithms](https://github.com/ANL-CESAR/XSBench#Algorithms)
-	* [Transport Simulation Styles](https://github.com/ANL-CESAR/XSBench#Transport-Simulation-Styles)
-		- [History-Based Transport](https://github.com/ANL-CESAR/XSBench#History-Based-Transport)
-		- [Event-Based Transport](https://github.com/ANL-CESAR/XSBench#Event-Based-Transport)
-	* [Cross Section Lookup Methods](https://github.com/ANL-CESAR/XSBench#Cross-Section-Lookup-Methods)
-		- [Nuclide Grid](https://github.com/ANL-CESAR/XSBench#Nuclide-Grid)
-		- [Unionized Energy Grid](https://github.com/ANL-CESAR/XSBench#Unionized-Energy-Grid)
-		- [Logarithmic Hash Grid](https://github.com/ANL-CESAR/XSBench#Logarithmic-Hash-Grid)
-9. [Optimized Kernels](https://github.com/ANL-CESAR/XSBench#Optimized-Kernels)
-10. [Thanks](https://github.com/ANL-CESAR/XSBench#Thanks) 
+1. [Selecting a Source Version](https://github.com/ANL-CESAR/XSBench/tree/better_docs#selecting-a-source-version)
+2. [Compilation](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Compilation)
+3. [Running XSBench](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Running-XSBench)
+4. [MPI Support](https://github.com/ANL-CESAR/XSBench/tree/better_docs#MPI-Support)
+5. [Verification Support](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Verification-Support)
+6. [Binary File Support](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Binary-File-Support)
+7. [Citing XSBench](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Citing-XSBench)
+8. [Algorithms](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Algorithms)
+	* [Transport Simulation Styles](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Transport-Simulation-Styles)
+		- [History-Based Transport](https://github.com/ANL-CESAR/XSBench/tree/better_docs#History-Based-Transport)
+		- [Event-Based Transport](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Event-Based-Transport)
+	* [Cross Section Lookup Methods](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Cross-Section-Lookup-Methods)
+		- [Nuclide Grid](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Nuclide-Grid)
+		- [Unionized Energy Grid](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Unionized-Energy-Grid)
+		- [Logarithmic Hash Grid](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Logarithmic-Hash-Grid)
+9. [Optimized Kernels](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Optimized-Kernels)
+10. [Thanks](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Thanks) 
 
 ## Selecting A Source Version
 
@@ -198,11 +195,11 @@ This method of parallelism is requires more memory and requires an extra stream 
 
 This is the default "naive" method of performing macroscopic XS lookups. XS data is stored for a number of energy levels for each nuclide in the simulation problem. Different nuclides can have a different number of energy levels. For instance, U-238 usually has over 100k energy levels, whereas some other nuclides may only have a few thousand. The "Nuclide Grid" is composed of all nuclides in the problem, with a variable number of data points for each nuclide. Each data point is composed of the energy level and accompanying cross section data for multiple different reaction channels:
 
-![XS data point](img/xs_point.png)
+![XS data point](img/xs_point.png =300x)
 
 These XS data points are arranged into the nuclide grid:
 
-![XS data point](img/nuclide_grid.png)
+![XS data point](img/nuclide_grid.png =400x)
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
@@ -263,4 +260,4 @@ One promising optimization for the event-based model is to perform a key-value s
 We have implemented this optimization in both the OpenMP threading and CUDA models. They are not enabled by default, but must be enabled with the "-k 1" or "-k 6" flags if running with OpenMP and CUDA respectively. These optimizations have not yet been implemented in the other programming models due to the lack of an efficient parallel sorting function being easily available without having to create an external library dependency.
 
 # Thanks
-Authored and maintained by John Tramm with help from Ron Rahaman, Amanda Lund, and other [contributors](https://github.com/ANL-CESAR/XSBench/graphs/contributors).
+Authored and maintained by John Tramm ([@jtramm](https://github.com/jtramm)) with help from Ron Rahaman, Amanda Lund, and other [contributors](https://github.com/ANL-CESAR/XSBench/graphs/contributors).
