@@ -10,7 +10,7 @@ compiler:
 addons:
   apt:
     packages:
-      - llvm-3.9-dev
+      - llvm-dev
 
 script:
     - echo $CC
