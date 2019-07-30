@@ -9,23 +9,29 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 
 ## Table of Contents
 
-1. [Selecting a Source Version](https://github.com/ANL-CESAR/XSBench/tree/better_docs#selecting-a-source-version)
-2. [Compilation](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Compilation)
-3. [Running XSBench](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Running-XSBench)
-4. [MPI Support](https://github.com/ANL-CESAR/XSBench/tree/better_docs#MPI-Support)
-5. [Verification Support](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Verification-Support)
-6. [Binary File Support](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Binary-File-Support)
-7. [Citing XSBench](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Citing-XSBench)
-8. [Algorithms](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Algorithms)
-	* [Transport Simulation Styles](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Transport-Simulation-Styles)
-		- [History-Based Transport](https://github.com/ANL-CESAR/XSBench/tree/better_docs#History-Based-Transport)
-		- [Event-Based Transport](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Event-Based-Transport)
-	* [Cross Section Lookup Methods](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Cross-Section-Lookup-Methods)
+1. [Selecting a Source Version](#selecting-a-source-version)
+2. [Compilation](#Compilation)
+3. [Running XSBench](#Running-XSBench)
+4. [MPI Support](#MPI-Support)
+5. [Verification Support](#Verification-Support)
+6. [Binary File Support](#Binary-File-Support)
+7. [Citing XSBench](#Citing-XSBench)
+8. [Algorithms](#Algorithms)
+	* [Transport Simulation Styles](#Transport-Simulation-Styles)
+		- [History-Based Transport](#History-Based-Transport)
+		- [Event-Based Transport](#Event-Based-Transport)
+	* [Cross Section Lookup Methods](#Cross-Section-Lookup-Methods)
 		- [Nuclide Grid](#Nuclide-Grid)
 		- [Unionized Energy Grid](#Unionized-Energy-Grid)
 		- [Logarithmic Hash Grid](#Logarithmic-Hash-Grid)
 9. [Optimized Kernels](#Optimized-Kernels)
 10. [Thanks](#Thanks) 
+
+## Test Equation
+
+$$
+\Gamma(z) = \int_0^\infty t^{z-1}e^{-t}dt\,.
+$$
 
 ## Selecting A Source Version
 
