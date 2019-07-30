@@ -1,20 +1,52 @@
 language: C
 matrix:
   include:
-    - env: CXX=g++-5 CC=gcc-5 COMPILER=gnu
+    # works on Precise and Trusty
+    - os: linux
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env:
+         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && COMPILER=gnu"
+
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - g++-5
-          sources: &sources
-            - llvm-toolchain-precise
-            - ubuntu-toolchain-r-test
-    - env: CXX=clang++-3.8 CC=clang-3.8 COMPILER=llvm
+      env:
+         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && COMPILER=gnu"
+
+    # works on Precise and Trusty
+    - os: linux
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
-            - clang-3.8
-          sources: *sources
+            - g++-6
+      env:
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && COMPILER=gnu"
+
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && COMPILER=gnu"
+
+before_install:
+    - eval "${MATRIX_EVAL}"
 script:
     - cd src/openmp-threading
     - make
