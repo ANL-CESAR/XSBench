@@ -1,5 +1,4 @@
 language: C
-sudo: false
 matrix:
   include:
     - env: CXX=g++-5 CC=gcc-5 COMPILER=gnu
