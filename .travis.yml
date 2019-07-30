@@ -69,4 +69,9 @@ script:
     - $CC --version
     - cd openmp-threading
     - make
-    - ./XSBench -s small -t 4
+    - ./XSBench -s small -t 4 -m history -G nuclide
+    - ./XSBench -s small -t 4 -m history -G hash
+    - ./XSBench -s small -t 4 -m history -G unionized
+    - ./XSBench -s small -t 4 -m event -G nuclide
+    - ./XSBench -s small -t 4 -m event -G hash
+    - ./XSBench -s small -t 4 -m event -G unionized
