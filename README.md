@@ -257,9 +257,7 @@ We have implemented this optimization in both the OpenMP threading and CUDA mode
 
 Papers citing the XSBench program in general should refer to:
 
->J. R. Tramm, A. R. Siegel, T. Islam, and M. Schulz, “XSBench - The Development and Verification of a Performance Abstraction for Monte Carlo Reactor Analysis,” presented at PHYSOR 2014 - The Role of Reactor Physics toward a Sustainable Future, Kyoto.
-
-A PDF of this paper can be accessed directly at this link: http://www.mcs.anl.gov/papers/P5064-0114.pdf
+>J. R. Tramm, A. R. Siegel, T. Islam, and M. Schulz, “XSBench - The Development and Verification of a Performance Abstraction for Monte Carlo Reactor Analysis,” presented at PHYSOR 2014 - The Role of Reactor Physics toward a Sustainable Future, Kyoto. https://www.mcs.anl.gov/papers/P5064-0114.pdf
 
 Bibtex Entry:
 
@@ -268,7 +266,9 @@ Bibtex Entry:
 author = {Tramm, John R and Siegel, Andrew R and Islam, Tanzima and Schulz, Martin},
 title = {{XSBench} - The Development and Verification of a Performance Abstraction for {M}onte {C}arlo Reactor Analysis},
 booktitle = {{PHYSOR} 2014 - The Role of Reactor Physics toward a Sustainable Future},
-address = {Kyoto}
+address = {Kyoto},
+year = 2014,
+url = "https://www.mcs.anl.gov/papers/P5064-0114.pdf"
 }
 ```
 
