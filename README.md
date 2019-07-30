@@ -21,11 +21,10 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 		- [History-Based Transport](https://github.com/ANL-CESAR/XSBench/tree/better_docs#History-Based-Transport)
 		- [Event-Based Transport](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Event-Based-Transport)
 	* [Cross Section Lookup Methods](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Cross-Section-Lookup-Methods)
-		- [Nuclide Grid](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Nuclide-Grid)
-		- [Unionized Energy Grid](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Unionized-Energy-Grid)
-		- [Logarithmic Hash Grid](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Logarithmic-Hash-Grid)
-9. [Optimized Kernels](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Optimized-Kernels)
-10. [Thanks](https://github.com/ANL-CESAR/XSBench/tree/better_docs#Thanks) 
+		- [Nuclide Grid](#Nuclide-Grid)
+		- [Unionized Energy Grid](#Unionized-Energy-Grid)
+		- [Logarithmic Hash Grid](#Logarithmic-Hash-Grid)
+9. [Optimized Kernels](#Optimized-Kernels)
 10. [Thanks](#Thanks) 
 
 ## Selecting A Source Version
