@@ -198,7 +198,7 @@ This method of parallelism is requires more memory and requires an extra stream 
 
 XSBench represents the macroscopic cross section lookup kernel. This kernel is responsible for adding together microscopic cross section data from all nuclides present in the material the neutron is travelling through, given a certain energy:
 
-<p align="center"> <img src="img/XS_equation.png" alt="UEG" width="400" class="center"/> </p>
+<p align="center"> <img src="img/XS_equation.svg" alt="XS_Lookup_EQ" width="400"/> </p>
 
 Macroscopic cross section data is typically required for multiple reaction channels "c", such as the total cross section, fission cross section, etc. This data is typically stored in point-wise data form for each nuclide. There are multiple ways of accessesing this data in an efficient manner which will be discusses in this section.
 
@@ -229,7 +229,7 @@ This algorithm requires no extra memory usage beyond the minimum to represent th
 
 One way of speeding up the nuclide grid search is to form a separate acceleration structure to reduce the number of binary searches that need to be performed. In the Unionized Energy Grid (EUG) method, a second grid is created with columns corresponding to the **union** of all energy levels from the nuclide grid. For each energy level (column) in the unionized grid, each row stores an index corresponding to the closest location in the nuclide grid for each nuclide corresponding that energy level:
 
-<p align="center"> <img src="img/UEG.png" alt="UEG" width="500" class="center"/> </p>
+<p align="center"> <img src="img/UEG.png" alt="UEG" width="500"/> </p>
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
