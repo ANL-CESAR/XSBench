@@ -171,7 +171,7 @@ address = {Kyoto}
 The default simulation model used in XSBench is the "history-based" model. In this model, parallelism is expressed over independent particle histories, with each particle being simulated in a serial fashion from birth to death: 
 
 ```c
-for each particle do           // Independent
+for each particle do	       // Independent
 	while particle is alive do // Dependent
 		Move particle to collision site
 		Process particle collision
@@ -185,7 +185,7 @@ An alternative simulation model is the "event-based" model. In this model, paral
 
 ```c
 Get vector of source particles
-while any particles are alive do         // Dependent
+while any particles are alive do	     // Dependent
 	for each living particle do          // Independent
 		Move particle to collision site
 	for each living particle do          // Independent
@@ -214,7 +214,7 @@ These XS data points are arranged into the nuclide grid:
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
-```python
+```ruby
 Nuclide_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	for each nuclide in M do:
@@ -233,7 +233,7 @@ One way of speeding up the nuclide grid search is to form a separate acceleratio
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
-```python
+```ruby
 Unionized_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	UEG_index = binary search to find E in unionized grid
@@ -247,7 +247,7 @@ Unionized_Grid_Search( Energy E, Material M ):
 
 An alternative to the unionized energy grid is the logarithmic hash grid. This method takes in account the fact that while nuclides will be tabulated on grids containing different numbers of energy points, the points within each nuclide's grid will in general be spaced in (roughly) uniform maner in log space . Therefore, the nuclide grid is augmented with a separate acceleration structure similar to the unionized grid. However, the number of columns is capped at some number of bins spaced evenly in log space, with each row therefore corresponding to an approximate location within each nuclide's grid for that energy level. While the unionized grid points exactly to the correct index in the nuclide grid, the logarithmic hash grid points to only an approximate location below the true point -- meaning that a fast binary or iterative search must still be performed over the constrained area (typically only 10 or so elements in size):
 
-```python
+```ruby
 Logarithmic_Hash_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	hash_index = grid_delta * (ln(E) - grid_minimum_energy)
