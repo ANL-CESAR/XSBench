@@ -52,6 +52,12 @@ ifneq (,$(findstring clang,$(CC)))
   CFLAGS += -fopenmp -flto
 endif
 
+# LLVM Compiler
+ifeq ($(COMPILER),llvm)
+  CC = clang
+  CFLAGS += -fopenmp -flto
+endif
+
 # Intel Compiler
 ifneq (,$(findstring intel,$(CC)))
   CFLAGS += -qopenmp -ipo
