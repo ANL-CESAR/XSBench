@@ -196,6 +196,12 @@ This method of parallelism is requires more memory and requires an extra stream 
 
 ### Cross Section (XS) Lookup Methods
 
+XSBench represents the macroscopic cross section lookup kernel. This kernel is responsible for adding together microscopic cross section data from all nuclides present in the material the neutron is travelling through, given a certain energy:
+
+<p align="center"> <img src="img/XS_equation.png" alt="UEG" width="400" class="center"/> </p>
+
+Macroscopic cross section data is typically required for multiple reaction channels "c", such as the total cross section, fission cross section, etc. This data is typically stored in point-wise data form for each nuclide. There are multiple ways of accessesing this data in an efficient manner which will be discusses in this section.
+
 #### Nuclide Grid
 
 This is the default "naive" method of performing macroscopic XS lookups. XS data is stored for a number of energy levels for each nuclide in the simulation problem. Different nuclides can have a different number of energy levels. For instance, U-238 usually has over 100k energy levels, whereas some other nuclides may only have a few thousand. The "Nuclide Grid" is composed of all nuclides in the problem, with a variable number of data points for each nuclide. Each data point is composed of the energy level and accompanying cross section data for multiple different reaction channels:
