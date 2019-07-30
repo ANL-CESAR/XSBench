@@ -8,7 +8,7 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 
 ## Table of Contents
 
-1. [Selecting a Source Version](#selecting-a-programming-model)
+1. [Selecting a Programming Model](#selecting-a-programming-model)
 2. [Compilation](#Compilation)
 3. [Running XSBench / Command Line Interface](#Running-XSBench)
 4. [Feature Discussion](#Feature-Discussion)
@@ -31,19 +31,19 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 
 XSBench has been implemented in multiple different languages to target a variety of computational architectures and accelerators. The available implementations can be found in their own directories:
 
-1. XSBench/openmp-threading
+1. **XSBench/openmp-threading**
 This is the "default" version of XSBench that is appropriate for serial and multicore CPU architectures. The method of parallelism is via the OpenMP threading model.
 
-2. XSBench/openmp-offload
+2. **XSBench/openmp-offload**
 This method of parallelism uses OpenMP 4.5 (or newer) to map program data to a remote accelerator memory space and run targeted kernels on the accelerator. This method of parallelism could be used for a wide variety of architectures (besides CPUs) that support OpenMP 4.5 targeting. NOTE: The Makefile will likely not work by default and will need to be adjusted to utilize your OpenMP accelerator compiler.
 
-3. XSBench/cuda
+3. **XSBench/cuda**
 This version of XSBench is written in CUDA for use with NVIDIA GPU architectures. NOTE: You will likely want to specify in the makefile the SM version for the card you are running on.
 
-4. XSBench/opencl
+4. **XSBench/opencl**
 This version of XSBench is written in OpenCL, and can be used for CPU, GPU, FPGA, or other architectures that support OpenCL. It was written with GPUs in mind, so if running on other architectures you may need to heavily re-optimize the code. You will also likely need to edit the makefile to supply the path to your OpenCL compiler.
 
-4. XSBench/sycl
+4. **XSBench/sycl**
 This version of XSBench is written in SYCL, and can be used for CPU, GPU, FPGA, or other architectures that support OpenCL and SYCL. It was written with GPUs in mind, so if running on other architectures you may need to heavily re-optimize the code. You will also likely need to edit the makefile to supply the path to your SYCL compiler.
 
 ## Compilation
