@@ -4,11 +4,11 @@
 [![Build Status](https://travis-ci.com/ANL-CESAR/XSBench.svg?branch=better_docs)](https://travis-ci.com/ANL-CESAR/XSBench)
 [![Published in Annals of Nuclear Energy](https://img.shields.io/badge/Published%20in-Annals%20of%20Nuclear%20Energy-167DA4.svg)](https://www.sciencedirect.com/science/article/pii/S0306454914004332)
 
-XSBench is a mini-app representing a key computational kernel of the Monte Carlo neutron transport algorithm. Specifically, XSBench represents the continuous energy macroscopic neutron cross section lookup kernel. XSBench serves as a useful performance stand-in for full neutron transport applications like ([OpenMC](https://github.com/openmc-dev/openmc)).
+XSBench is a mini-app representing a key computational kernel of the Monte Carlo neutron transport algorithm. Specifically, XSBench represents the continuous energy macroscopic neutron cross section lookup kernel. XSBench serves as a useful performance stand-in for full neutron transport applications like [OpenMC](https://github.com/openmc-dev/openmc).
 
 ## Table of Contents
 
-1. [Selecting a Source Version](#selecting-a-source-version)
+1. [Selecting a Source Version](#selecting-a-programming-model)
 2. [Compilation](#Compilation)
 3. [Running XSBench / Command Line Interface](#Running-XSBench)
 4. [Feature Discussion](#Feature-Discussion)
@@ -27,7 +27,7 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 7. [Citing XSBench](#Citing-XSBench)
 8. [Development Team](#Development-Team) 
 
-## Selecting A Source Version
+## Selecting A Programming Model
 
 XSBench has been implemented in multiple different languages to target a variety of computational architectures and accelerators. The available implementations can be found in their own directories:
 
