@@ -29,34 +29,34 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 
 ## Selecting A Source Version
 
-XSBench has been implemented in multiple different languages to target a variety of computational architectures and accelerators. The available implementations can be found in the "XSBench/src" directory:
+XSBench has been implemented in multiple different languages to target a variety of computational architectures and accelerators. The available implementations can be found in their own directories:
 
-1. XSBench/src/openmp-threading
+1. XSBench/openmp-threading
 This is the "default" version of XSBench that is appropriate for serial and multicore CPU architectures. The method of parallelism is via the OpenMP threading model.
 
-2. XSBench/src/openmp-offload
+2. XSBench/openmp-offload
 This method of parallelism uses OpenMP 4.5 (or newer) to map program data to a remote accelerator memory space and run targeted kernels on the accelerator. This method of parallelism could be used for a wide variety of architectures (besides CPUs) that support OpenMP 4.5 targeting. NOTE: The Makefile will likely not work by default and will need to be adjusted to utilize your OpenMP accelerator compiler.
 
-3. XSBench/src/cuda
+3. XSBench/cuda
 This version of XSBench is written in CUDA for use with NVIDIA GPU architectures. NOTE: You will likely want to specify in the makefile the SM version for the card you are running on.
 
-4. XSBench/src/opencl
+4. XSBench/opencl
 This version of XSBench is written in OpenCL, and can be used for CPU, GPU, FPGA, or other architectures that support OpenCL. It was written with GPUs in mind, so if running on other architectures you may need to heavily re-optimize the code. You will also likely need to edit the makefile to supply the path to your OpenCL compiler.
 
-4. XSBench/src/sycl
+4. XSBench/sycl
 This version of XSBench is written in SYCL, and can be used for CPU, GPU, FPGA, or other architectures that support OpenCL and SYCL. It was written with GPUs in mind, so if running on other architectures you may need to heavily re-optimize the code. You will also likely need to edit the makefile to supply the path to your SYCL compiler.
 
 ## Compilation
 
-To compile XSBench with default settings, navigate to your selected src directory and use the following command:
+To compile XSBench with default settings, navigate to your selected source directory and use the following command:
 
 ```bash
 make
 ```
  
- You can alter compiler settings in the included Makefile. Alternatively, for the OpenMP threading version of XSBench you may specify a compiler via the COMPILER environment variable to either "gnu", "llvm", or "intel" and then making as normal:
+ You can alter compiler settings in the included Makefile. Alternatively, for the OpenMP threading version of XSBench you may specify a compiler via the CC environment variable and then making as normal, e.g.:
 ```bash
-export COMPILER=llvm
+export CC=clang
 make
 ```
 
@@ -65,7 +65,6 @@ make
 There are also a number of switches that can be set in the makefile. Here is a sample of the control panel at the top of the makefile:
 
 ```make
-COMPILER = gnu
 OPTIMIZE = yes
 DEBUG    = no
 PROFILE  = no
@@ -171,7 +170,7 @@ address = {Kyoto}
 The default simulation model used in XSBench is the "history-based" model. In this model, parallelism is expressed over independent particle histories, with each particle being simulated in a serial fashion from birth to death: 
 
 ```c
-for each particle do	       // Independent
+for each particle do		   // Independent
 	while particle is alive do // Dependent
 		Move particle to collision site
 		Process particle collision
@@ -214,7 +213,7 @@ These XS data points are arranged into the nuclide grid:
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
-```ruby
+```
 Nuclide_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	for each nuclide in M do:
@@ -233,7 +232,7 @@ One way of speeding up the nuclide grid search is to form a separate acceleratio
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
-```ruby
+```
 Unionized_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	UEG_index = binary search to find E in unionized grid
@@ -247,7 +246,7 @@ Unionized_Grid_Search( Energy E, Material M ):
 
 An alternative to the unionized energy grid is the logarithmic hash grid. This method takes in account the fact that while nuclides will be tabulated on grids containing different numbers of energy points, the points within each nuclide's grid will in general be spaced in (roughly) uniform maner in log space . Therefore, the nuclide grid is augmented with a separate acceleration structure similar to the unionized grid. However, the number of columns is capped at some number of bins spaced evenly in log space, with each row therefore corresponding to an approximate location within each nuclide's grid for that energy level. While the unionized grid points exactly to the correct index in the nuclide grid, the logarithmic hash grid points to only an approximate location below the true point -- meaning that a fast binary or iterative search must still be performed over the constrained area (typically only 10 or so elements in size):
 
-```ruby
+```
 Logarithmic_Hash_Grid_Search( Energy E, Material M ):
 	macroscopic XS = 0
 	hash_index = grid_delta * (ln(E) - grid_minimum_energy)
