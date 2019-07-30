@@ -2,7 +2,12 @@
 # User Options
 #===============================================================================
 
+# Compiler options are "gnu", "llvm", and "intel".
+# This can be set below, or with the "COMPILER" environment variable.
+# Default is gnu.
+ifeq ($(COMPILER),)
 COMPILER    = gnu
+endif
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -37,6 +42,12 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
+  CFLAGS += -fopenmp -flto
+endif
+
+# LLVM Compiler
+ifeq ($(COMPILER),llvm)
+  CC = clang
   CFLAGS += -fopenmp -flto
 endif
 
