@@ -1,22 +1,21 @@
-![XSBench](img/logo.png)
+![XSBench](docs/img/logo.png)
 
 [![Latest Github release](https://img.shields.io/github/release/ANL-CESAR/XSBench.svg)](https://github.com/ANL-CESAR/XSBench/releases/latest)
 [![Build Status](https://travis-ci.com/ANL-CESAR/XSBench.svg?branch=better_docs)](https://travis-ci.com/ANL-CESAR/XSBench)
 [![Published in Annals of Nuclear Energy](https://img.shields.io/badge/Published%20in-Annals%20of%20Nuclear%20Energy-167DA4.svg)](https://www.sciencedirect.com/science/article/pii/S0306454914004332)
 
-
-XSBench is a mini-app representing a key computational kernel of the Monte Carlo neutronics application OpenMC. Specifically, XSBench represents the continuous energy macroscopic neutron cross section lookup kernel. A full explanation of the theory and purpose of XSBench is provided in docs/XSBench_Theory.pdf. More information is also available in the publications listed at the bottom of this document.
+XSBench is a mini-app representing a key computational kernel of the Monte Carlo neutronics application OpenMC. Specifically, XSBench represents the continuous energy macroscopic neutron cross section lookup kernel.
 
 ## Table of Contents
 
 1. [Selecting a Source Version](#selecting-a-source-version)
 2. [Compilation](#Compilation)
-3. [Running XSBench](#Running-XSBench)
-4. [MPI Support](#MPI-Support)
-5. [Verification Support](#Verification-Support)
-6. [Binary File Support](#Binary-File-Support)
-7. [Citing XSBench](#Citing-XSBench)
-8. [Algorithms](#Algorithms)
+3. [Running XSBench / Command Line Interface](#Running-XSBench)
+4. [Feature Discussion](#Feature-Discussion)
+	* [MPI Support](#MPI-Support)
+	* [Verification Support](#Verification-Support)
+	* [Binary File Support](#Binary-File-Support)
+5. [Theory & Algorithms](#Algorithms)
 	* [Transport Simulation Styles](#Transport-Simulation-Styles)
 		- [History-Based Transport](#History-Based-Transport)
 		- [Event-Based Transport](#Event-Based-Transport)
@@ -24,8 +23,9 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 		- [Nuclide Grid](#Nuclide-Grid)
 		- [Unionized Energy Grid](#Unionized-Energy-Grid)
 		- [Logarithmic Hash Grid](#Logarithmic-Hash-Grid)
-9. [Optimized Kernels](#Optimized-Kernels)
-10. [Thanks](#Thanks) 
+6. [Optimized Kernels](#Optimized-Kernels)
+7. [Citing XSBench](#Citing-XSBench)
+8. [Development Team](#Development-Team) 
 
 ## Selecting A Source Version
 
@@ -130,36 +130,20 @@ This optional mode can read or write the simulation data structures to disk. Opt
 - **-k [kernel]**
 For some of the XSBench code-bases (e.g., openmp-threading and cuda) there are several optimized variants of the main kernel. All source bases run basically the same "baseline" kernel as default. Optimized kernels can be selected at runtime with this argument. Default is "0" for the baseline, other variants are numbered 1, 2, ... etc. People interested in implementing their own optimized variants are encouraged to use this interface for convenience rather than writing over the main kernel. The baseline kernel is defined at the top of the "Simulation.c" source file, with the other variants being defined towards the end of the file after a large comment block delineation. The optimized variants are related to different ways of sorting the sampled values such that there is less thread divergence and much better cache re-usage when executing the lookup kernel on contiguous sorted elements.
 
-## MPI Support
+## Feature Discussion
+
+### MPI Support
 
 While XSBench is primarily used to investigate "on node parallelism" issues, some systems provide power & performance statistics batched in multi-node configurations. To accommodate this, XSBench provides an MPI mode which runs the code on all MPI ranks simultaneously. There is no decomposition across ranks of any kind, and all ranks accomplish the same work. This is a "weak scaling" approach -- for instance, if running the event-based model all MPI ranks will execute 17,000,000 cross section lookups regardless of how many ranks are used. There is only one point of MPI communication (a reduce) at the end, which aggregates the timing statistics and averages them across MPI ranks before printing them out. MPI support can be enabled with the makefile flag "MPI". If you are not using the mpicc wrapper on your system, you may need to alter the makefile to make use of your desired compiler.
 
-## Verification Support
+### Verification Support
 
 Legacy versions of XSBench had a special "Verification" compiler flag option to enable verification of the results. However, a much more performant and portable verification scheme was developed and is now used for all configurations -- therefore, it is not necessary to compile with or without the verification mode as it is always enabled by default. XSBench generates a hash of the results at the end of the simulation and displays it with the other data once the code has completed executing. This hash can then be verified against hashes that other versions or configurations of the code generate. For instance, running XSBench with 4 threads vs 8 threads (on a machine that supports that configuration) should generate the same hash number. Running on GPU vs CPU should not change the hash number. However, changing the model / run parameters is expected to generate a totally different hash number (i.e., increasing the number of particles, number of gridpoints, etc, will result in different hashes). However, changing the type of lookup performed (e.g., nuclide, unionized, or hash) should result in the same hash being generated. Changing the simulation mode (history or event) will generate different hashes.
 
-## Binary File Support
+### Binary File Support
 
 Instead of initializing the randomized synthetic cross section data structres in XSBench everytime it is run, you may optionally have XSBench generate a data set and write it to file. It can then be read on subsequent runs to speed up initialization. This process is controlled with the "-b (read, write)" command line argument. This feature may be extremely useful for users running on simulators where walltime minimization is critical for logistical purposes, or for users who are doing many sequential runs. Note that identical input parameters (problem size, solution method etc) must be used when reading and writing a binary file. No runtime checks are made to validate that the file correctly corresponds to the selected input parameters.
 
-## Citing XSBench
-
-Papers citing the XSBench program in general should refer to:
-
-J. R. Tramm, A. R. Siegel, T. Islam, and M. Schulz, “XSBench - The Development and Verification of a Performance Abstraction for Monte Carlo Reactor Analysis,” presented at PHYSOR 2014 - The Role of Reactor Physics toward a Sustainable Future, Kyoto.
-
-A PDF of this paper can be accessed directly at this link: http://www.mcs.anl.gov/papers/P5064-0114.pdf
-
-Bibtex Entry:
-
-```bibtex
-@inproceedings{Tramm:wy,
-author = {Tramm, John R and Siegel, Andrew R and Islam, Tanzima and Schulz, Martin},
-title = {{XSBench} - The Development and Verification of a Performance Abstraction for {M}onte {C}arlo Reactor Analysis},
-booktitle = {{PHYSOR} 2014 - The Role of Reactor Physics toward a Sustainable Future},
-address = {Kyoto}
-}
-```
 
 ## Algorithms
 
@@ -197,7 +181,7 @@ This method of parallelism is requires more memory and requires an extra stream 
 
 XSBench represents the macroscopic cross section lookup kernel. This kernel is responsible for adding together microscopic cross section data from all nuclides present in the material the neutron is travelling through, given a certain energy:
 
-<p align="center"> <img src="img/XS_equation.svg" alt="XS_Lookup_EQ" width="400"/> </p>
+<p align="center"> <img src="docs/img/XS_equation.svg" alt="XS_Lookup_EQ" width="500"/> </p>
 
 Macroscopic cross section data is typically required for multiple reaction channels "c", such as the total cross section, fission cross section, etc. This data is typically stored in point-wise data form for each nuclide. There are multiple ways of accessesing this data in an efficient manner which will be discusses in this section.
 
@@ -205,11 +189,11 @@ Macroscopic cross section data is typically required for multiple reaction chann
 
 This is the default "naive" method of performing macroscopic XS lookups. XS data is stored for a number of energy levels for each nuclide in the simulation problem. Different nuclides can have a different number of energy levels. For instance, U-238 usually has over 100k energy levels, whereas some other nuclides may only have a few thousand. The "Nuclide Grid" is composed of all nuclides in the problem, with a variable number of data points for each nuclide. Each data point is composed of the energy level and accompanying cross section data for multiple different reaction channels:
 
-<p align="center"> <img src="img/xs_point.png" alt="xs_point" width="300"/> </p>
+<p align="center"> <img src="docs/img/xs_point.png" alt="xs_point" width="300"/> </p>
 
 These XS data points are arranged into the nuclide grid:
 
-<p align="center"> <img src="img/nuclide_grid.png" alt="nuclide_grid" width="350"/> </p>
+<p align="center"> <img src="docs/img/nuclide_grid.png" alt="nuclide_grid" width="350"/> </p>
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
@@ -228,7 +212,7 @@ This algorithm requires no extra memory usage beyond the minimum to represent th
 
 One way of speeding up the nuclide grid search is to form a separate acceleration structure to reduce the number of binary searches that need to be performed. In the Unionized Energy Grid (EUG) method, a second grid is created with columns corresponding to the **union** of all energy levels from the nuclide grid. For each energy level (column) in the unionized grid, each row stores an index corresponding to the closest location in the nuclide grid for each nuclide corresponding that energy level:
 
-<p align="center"> <img src="img/UEG.png" alt="UEG" width="500"/> </p>
+<p align="center"> <img src="docs/img/UEG.png" alt="UEG" width="500"/> </p>
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
@@ -269,5 +253,24 @@ One promising optimization for the event-based model is to perform a key-value s
 
 We have implemented this optimization in both the OpenMP threading and CUDA models. They are not enabled by default, but must be enabled with the "-k 1" or "-k 6" flags if running with OpenMP and CUDA respectively. These optimizations have not yet been implemented in the other programming models due to the lack of an efficient parallel sorting function being easily available without having to create an external library dependency.
 
-# Thanks
+## Citing XSBench
+
+Papers citing the XSBench program in general should refer to:
+
+J. R. Tramm, A. R. Siegel, T. Islam, and M. Schulz, “XSBench - The Development and Verification of a Performance Abstraction for Monte Carlo Reactor Analysis,” presented at PHYSOR 2014 - The Role of Reactor Physics toward a Sustainable Future, Kyoto.
+
+A PDF of this paper can be accessed directly at this link: http://www.mcs.anl.gov/papers/P5064-0114.pdf
+
+Bibtex Entry:
+
+```bibtex
+@inproceedings{Tramm:wy,
+author = {Tramm, John R and Siegel, Andrew R and Islam, Tanzima and Schulz, Martin},
+title = {{XSBench} - The Development and Verification of a Performance Abstraction for {M}onte {C}arlo Reactor Analysis},
+booktitle = {{PHYSOR} 2014 - The Role of Reactor Physics toward a Sustainable Future},
+address = {Kyoto}
+}
+```
+
+## Development Team
 Authored and maintained by John Tramm ([@jtramm](https://github.com/jtramm)) with help from Ron Rahaman, Amanda Lund, and other [contributors](https://github.com/ANL-CESAR/XSBench/graphs/contributors).
