@@ -67,6 +67,6 @@ before_install:
 script:
     - echo $CC
     - $CC --version
-    - cd src/openmp-threading
+    - cd openmp-threading
     - make
     - ./XSBench -s small -t 4
