@@ -2,11 +2,9 @@
 # User Options
 #===============================================================================
 
-# Compiler options are "gnu", "llvm", and "intel".
-# This can be set below, or with the "COMPILER" environment variable.
-# Default is gnu.
-ifeq ($(COMPILER),)
-COMPILER    = gnu
+# Compiler can be set below, or via environment variable
+ifeq ($(CC),)
+CC    = gcc
 endif
 OPTIMIZE    = yes
 DEBUG       = no
@@ -33,7 +31,10 @@ obj = $(source:.c=.o)
 # Sets Flags
 #===============================================================================
 
-External_CC = $(CC)
+# Make sure we didn't pick up lower case cc
+ifeq (cc,$(CC))
+CC    = gcc
+endif
 
 # Standard Flags
 CFLAGS := -std=gnu99 -Wall
@@ -42,20 +43,17 @@ CFLAGS := -std=gnu99 -Wall
 LDFLAGS = -lm
 
 # Regular gcc Compiler
-ifeq ($(COMPILER),gnu)
-  CC = gcc
+ifneq (,$(findstring gcc,$(CC)))
   CFLAGS += -fopenmp -flto
 endif
 
 # LLVM Compiler
-ifeq ($(COMPILER),llvm)
-  CC = clang
+ifneq (,$(findstring clang,$(CC)))
   CFLAGS += -fopenmp -flto
 endif
 
 # Intel Compiler
-ifeq ($(COMPILER),intel)
-  CC = icc
+ifneq (,$(findstring intel,$(CC)))
   CFLAGS += -qopenmp -ipo
 endif
 
@@ -81,12 +79,6 @@ ifeq ($(MPI),yes)
   CC = mpicc
   CFLAGS += -DMPI
 endif
-
-#===============================================================================
-ifeq ($(EXTERNAL_CC),)
-CC    = $(EXTERNAL_CC)
-endif
-#===============================================================================
 
 #===============================================================================
 # Targets to Build
