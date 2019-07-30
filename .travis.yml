@@ -49,6 +49,7 @@ before_install:
     - eval "${MATRIX_EVAL}"
 script:
     - echo $COMPILER
+    - echo $CC
     - cd src/openmp-threading
     - make
     - ./XSBench -s small -t 4
