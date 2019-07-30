@@ -27,12 +27,6 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 9. [Optimized Kernels](#Optimized-Kernels)
 10. [Thanks](#Thanks) 
 
-## Test Equation
-
-$$
-\Gamma(z) = \int_0^\infty t^{z-1}e^{-t}dt\,.
-$$
-
 ## Selecting A Source Version
 
 XSBench has been implemented in multiple different languages to target a variety of computational architectures and accelerators. The available implementations can be found in the "XSBench/src" directory:
@@ -206,11 +200,11 @@ This method of parallelism is requires more memory and requires an extra stream 
 
 This is the default "naive" method of performing macroscopic XS lookups. XS data is stored for a number of energy levels for each nuclide in the simulation problem. Different nuclides can have a different number of energy levels. For instance, U-238 usually has over 100k energy levels, whereas some other nuclides may only have a few thousand. The "Nuclide Grid" is composed of all nuclides in the problem, with a variable number of data points for each nuclide. Each data point is composed of the energy level and accompanying cross section data for multiple different reaction channels:
 
-<img src="img/xs_point.png" alt="xs_point" width="300" class="center"/>
+<p align="center"> <img src="img/xs_point.png" alt="xs_point" width="300"/> </p>
 
 These XS data points are arranged into the nuclide grid:
 
-<img src="img/nuclide_grid.png" alt="nuclide_grid" width="350" class="center"/>
+<p align="center"> <img src="img/nuclide_grid.png" alt="nuclide_grid" width="350"/> </p>
 
 When assembling a macroscopic cross section data point, we will be accessing and interpolating data from the nuclide grid for a neutron travelling through a given material (composed of some number of nuclides) and at a given energy level. This will involve performing a binary search for each nuclide:
 
@@ -229,7 +223,7 @@ This algorithm requires no extra memory usage beyond the minimum to represent th
 
 One way of speeding up the nuclide grid search is to form a separate acceleration structure to reduce the number of binary searches that need to be performed. In the Unionized Energy Grid (EUG) method, a second grid is created with columns corresponding to the **union** of all energy levels from the nuclide grid. For each energy level (column) in the unionized grid, each row stores an index corresponding to the closest location in the nuclide grid for each nuclide corresponding that energy level:
 
-<img src="img/UEG.png" alt="UEG" width="500" class="center"/>
+<p align="center"> <img src="img/UEG.png" alt="UEG" width="500" class="center"/> </p>
 
 A lookup using the UEG therefore requires only one single binary search on the unionized grid, allowing then for fast accesses using the indices stored at that energy level:
 
