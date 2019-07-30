@@ -1,6 +1,7 @@
 ![XSBench](img/logo.png)
 
 [![Latest Github release](https://img.shields.io/github/release/ANL-CESAR/XSBench.svg)](https://github.com/ANL-CESAR/XSBench/releases/latest)
+[![Build Status](https://travis-ci.com/ANL-CESAR/XSBench.svg?branch=better_docs)](https://travis-ci.com/ANL-CESAR/XSBench)
 [![Published in Annals of Nuclear Energy](https://img.shields.io/badge/Published%20in-Annals%20of%20Nuclear%20Energy-167DA4.svg)](https://www.sciencedirect.com/science/article/pii/S0306454914004332)
 
 

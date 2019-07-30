@@ -2,14 +2,15 @@ language: c
 
 os:
   - linux
-  - osx
 
 compiler:
   - gcc
   - clang
 
-intall:
-    llvm-3.9-dev
+addons:
+  apt:
+    packages:
+      - llvm-3.9-dev
 
 script:
     - echo $CC
