@@ -50,6 +50,9 @@ before_install:
 install:
     - shopt -s expand_aliases
 script:
+    - gcc --version
+    - CC --version
+    - $echo COMPILER
     - cd src/openmp-threading
     - make
     - ./XSBench -s small -t 4
