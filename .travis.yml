@@ -10,7 +10,7 @@ matrix:
           packages:
             - g++-4.9
       env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && COMPILER=gnu && alias gcc=CC"
+         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && COMPILER=gnu"
 
     # works on Precise and Trusty
     - os: linux
@@ -21,7 +21,7 @@ matrix:
           packages:
             - g++-5
       env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && COMPILER=gnu && alias gcc=CC"
+         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && COMPILER=gnu"
 
     # works on Precise and Trusty
     - os: linux
@@ -32,7 +32,7 @@ matrix:
           packages:
             - g++-6
       env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && COMPILER=gnu && alias gcc=CC"
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && COMPILER=gnu"
 
     # works on Precise and Trusty
     - os: linux
@@ -43,16 +43,12 @@ matrix:
           packages:
             - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && COMPILER=gnu && alias gcc=CC"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && COMPILER=gnu"
 
 before_install:
     - eval "${MATRIX_EVAL}"
-install:
-    - shopt -s expand_aliases
 script:
-    - gcc --version
-    - CC --version
-    - $echo COMPILER
+    - echo $COMPILER
     - cd src/openmp-threading
     - make
     - ./XSBench -s small -t 4
