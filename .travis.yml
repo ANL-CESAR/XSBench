@@ -8,6 +8,9 @@ compiler:
   - gcc
   - clang
 
+intall:
+    llvm-3.9-dev
+
 script:
     - echo $CC
     - $CC --version
