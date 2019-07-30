@@ -87,7 +87,7 @@ For non-default settings, XSBench supports the following command line options:
 
 | Argument    |Description | Options     | Default
 |-------------|------------|---------------|------------|
-|-t           |# of OpenMP threads| 1, 2, ...| System Default|
+|-t           |# of OpenMP threads| integer value | System Default|
 |-m           |Simulation method| history, event| history|
 |-s | Problem Size | small, large, XL, XXL | large|
 |-g | # of gridpoints per nuclide (overrides -s defaults) | integer value| 11,303 |
@@ -99,7 +99,7 @@ For non-default settings, XSBench supports the following command line options:
 -k | Optimized kernel ID | integer value | 0
 
 - **-t [threads]**
-Sets the number of OpenMP threads to run. By default, XSBench will run with 1 thread per hardware core. If the architecture supports hyperthreading, multiple threads will be run per core. If running in MPI mode, this will be the number of threads per MPI rank.
+Sets the number of OpenMP threads to run. By default, XSBench will run with 1 thread per hardware core. If the architecture supports hyperthreading, multiple threads will be run per core. If running in MPI mode, this will be the number of threads per MPI rank. This argument is only used by the OpenMP threading version of XSBench.
 
 - **-m [simulation method]**
 Sets the simulation method, either "history" or "event". These options represent the history based or event based algorithms respectively. The default is the history based method. These two methods represent different methods of parallelizing the Monte Carlo transport method. In the history based method, the central mode of parallelism is expressed over particles, which each require some number of macroscopic cross sections to be executed in series and in a dependent order. The event based method expresses its parallelism over a large pool of independent macroscopic cross section lookups that can be executed in any order without dependence. They key difference between the two methods is the dependence/independence of the macroscopic cross section loop.
