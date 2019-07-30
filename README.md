@@ -242,7 +242,7 @@ Logarithmic_Hash_Grid_Search( Energy E, Material M ):
 
 Compared to the unionized energy grid method, the logarithmic hash method uses far less memory but typically results in competitive performance. More details on this method can be found in the following publication:
    
-Forrest B Brown. New hash-based energy lookup algorithm for monte carlo codes. Trans. Am. Nucl. Soc., 111:659–662, 2014. http://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-14-27037
+>Forrest B Brown. New hash-based energy lookup algorithm for monte carlo codes. Trans. Am. Nucl. Soc., 111:659–662, 2014. http://permalink.lanl.gov/object/tr?what=info:lanl-repo/lareport/LA-UR-14-27037
 
 
 ## Optimized Kernels
@@ -257,7 +257,7 @@ We have implemented this optimization in both the OpenMP threading and CUDA mode
 
 Papers citing the XSBench program in general should refer to:
 
-J. R. Tramm, A. R. Siegel, T. Islam, and M. Schulz, “XSBench - The Development and Verification of a Performance Abstraction for Monte Carlo Reactor Analysis,” presented at PHYSOR 2014 - The Role of Reactor Physics toward a Sustainable Future, Kyoto.
+>J. R. Tramm, A. R. Siegel, T. Islam, and M. Schulz, “XSBench - The Development and Verification of a Performance Abstraction for Monte Carlo Reactor Analysis,” presented at PHYSOR 2014 - The Role of Reactor Physics toward a Sustainable Future, Kyoto.
 
 A PDF of this paper can be accessed directly at this link: http://www.mcs.anl.gov/papers/P5064-0114.pdf
 
