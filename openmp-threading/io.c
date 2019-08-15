@@ -232,7 +232,11 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.simulation_method = HISTORY_BASED;
 	
 	// defaults to max threads on the system	
+	#ifdef OPENMP
 	input.nthreads = omp_get_num_procs();
+	#else
+	input.nthreads = 1;
+	#endif
 	
 	// defaults to 355 (corresponding to H-M Large benchmark)
 	input.n_isotopes = 355;

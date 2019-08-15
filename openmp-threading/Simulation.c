@@ -720,11 +720,11 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	// Sort by Material
 	////////////////////////////////////////////////////////////////////////////////
 	
-	start = omp_get_wtime();
+	start = get_time();
 
 	quickSort_parallel_i_d(SD.mat_samples, SD.p_energy_samples, in.lookups, in.nthreads);
 
-	stop = omp_get_wtime();
+	stop = get_time();
 
 	if(mype == 0) printf("Material sort took %.3lf seconds\n", stop-start);
 	
@@ -732,7 +732,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	// Sort by Energy
 	////////////////////////////////////////////////////////////////////////////////
 	
-	start = omp_get_wtime();
+	start = get_time();
 	
 	// Count up number of each type of sample. 
 	int num_samples_per_mat[12] = {0};
@@ -744,7 +744,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	for( int m = 1; m < 12; m++ )
 		offsets[m] = offsets[m-1] + num_samples_per_mat[m-1];
 	
-	stop = omp_get_wtime();
+	stop = get_time();
 	if(mype == 0) printf("Counting samples and offsets took %.3lf seconds\n", stop-start);
 	start = stop;
 
@@ -753,13 +753,13 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	for( int m = 0; m < 12; m++ )
 		quickSort_parallel_d_i(SD.p_energy_samples + offsets[m],SD.mat_samples + offsets[m], num_samples_per_mat[m], in.nthreads);
 
-	stop = omp_get_wtime();
+	stop = get_time();
 	if(mype == 0) printf("Energy Sorts took %.3lf seconds\n", stop-start);
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Perform lookups for each material separately
 	////////////////////////////////////////////////////////////////////////////////
-	start = omp_get_wtime();
+	start = get_time();
 
 	unsigned long long verification = 0;
 
@@ -817,7 +817,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		offset += num_samples_per_mat[m];
 	}
 	
-	stop = omp_get_wtime();
+	stop = get_time();
 	if(mype == 0) printf("XS Lookups took %.3lf seconds\n", stop-start);
 	return verification;
 }
