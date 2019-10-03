@@ -93,7 +93,7 @@ SimulationData binary_read( Inputs in );
 
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
-unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
+#pragma omp declare target
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double *  egrid, int *  index_data,
@@ -111,7 +111,7 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 int pick_mat( uint64_t * seed );
 double LCG_random_double(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
-unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype);
+#pragma omp end declare target
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );

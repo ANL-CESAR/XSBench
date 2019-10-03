@@ -41,16 +41,41 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
 
+	int * num_nucs = SD.num_nucs;
+	double * concs = SD.concs;
+	int * mats = SD.mats;
+	double * unionized_energy_array = SD.unionized_energy_array;
+	int * index_grid = SD.index_grid;
+	NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
+	int length_num_nucs = SD.length_num_nucs;
+	int length_concs = SD.length_concs;
+	int length_mats = SD.length_mats;
+	int length_unionized_energy_array = SD.length_unionized_energy_array;
+	int length_index_grid = SD.length_index_grid;
+	int length_nuclide_grid = SD.length_nuclide_grid;
+	int lookups = in.lookups;
+
+	/*
 	#pragma omp target teams distribute parallel for\
-	map(to: SD.max_num_nucs)\
-	map(to: SD.num_nucs[:SD.length_num_nucs])\
-	map(to: SD.concs[:SD.length_concs])\
-	map(to: SD.mats[:SD.length_mats])\
-	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
-	map(to: SD.index_grid[:SD.length_index_grid])\
-	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
+	map(to: num_nucs[:length_num_nucs])\
+	map(to: concs[:length_concs])\
+	map(to: mats[:length_mats])\
+	map(to: unionized_energy_array[:length_unionized_energy_array])\
+	map(to: index_grid[:length_index_grid])\
+	map(to: nuclide_grid[:length_nuclide_grid])\
 	reduction(+:verification)
-	for( int i = 0; i < in.lookups; i++ )
+	*/
+	//map(to: unionized_energy_array[:length_unionized_energy_array])
+
+	int * verification_array = (int *) malloc(lookups * sizeof(int));
+	#pragma omp target teams distribute parallel for\
+	map(to: num_nucs[:length_num_nucs])\
+	map(to: concs[:length_concs])\
+	map(to: mats[:length_mats])\
+	map(to: index_grid[:length_index_grid])\
+	map(to: nuclide_grid[:length_nuclide_grid])\
+	map(tofrom: verification_array[:lookups])
+	for( int i = 0; i < lookups; i++ )
 	{
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
@@ -73,12 +98,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				mat,             // Sampled material type index neutron is in
 				in.n_isotopes,   // Total number of isotopes in simulation
 				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-				SD.num_nucs,     // 1-D array with number of nuclides per material
-				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				SD.unionized_energy_array, // 1-D Unionized energy array
-				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+				num_nucs,     // 1-D array with number of nuclides per material
+				concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				unionized_energy_array, // 1-D Unionized energy array
+				index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
 				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
@@ -103,13 +128,18 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				max_idx = j;
 			}
 		}
-		verification += max_idx+1;
+		//verification += max_idx+1;
+		verification_array[i] = max_idx+1;
 	}
+
+	for( int i = 0; i < lookups; i++)
+		verification += verification_array[i];
 
 	return verification;
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy
+#pragma omp declare target
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
                            double *  egrid, int *  index_data,
@@ -393,4 +423,5 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 	return (a_new * seed + c_new) % m;
 
 }
+#pragma omp end declare target
 
