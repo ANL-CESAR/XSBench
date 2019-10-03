@@ -67,14 +67,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	*/
 	//map(to: unionized_energy_array[:length_unionized_energy_array])
 
-	int * verification_array = (int *) malloc(lookups * sizeof(int));
 	#pragma omp target teams distribute parallel for\
 	map(to: num_nucs[:length_num_nucs])\
 	map(to: concs[:length_concs])\
 	map(to: mats[:length_mats])\
 	map(to: index_grid[:length_index_grid])\
 	map(to: nuclide_grid[:length_nuclide_grid])\
-	map(tofrom: verification_array[:lookups])
+	reduction(+:verification)
 	for( int i = 0; i < lookups; i++ )
 	{
 		// Set the initial seed value
@@ -128,12 +127,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				max_idx = j;
 			}
 		}
-		//verification += max_idx+1;
-		verification_array[i] = max_idx+1;
+		verification += max_idx+1;
 	}
-
-	for( int i = 0; i < lookups; i++)
-		verification += verification_array[i];
 
 	return verification;
 }
