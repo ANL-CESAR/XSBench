@@ -54,25 +54,31 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	int length_index_grid = SD.length_index_grid;
 	int length_nuclide_grid = SD.length_nuclide_grid;
 	int lookups = in.lookups;
+	
+	// If using hash or nuclide grid type, unionized energy array is zero length
+	// and will not be used. The zero length can make mapping awkward,
+	// so we will map a dummy array instead.
+	if(in.grid_type != UNIONIZED)
+	{
+		unionized_energy_array = (double *) malloc(sizeof(double));
+		length_unionized_energy_array = 1;
+	}
+	// If using nuclide grid type, we have a similar problem with the
+	// index grid being zero length, so we use a similar hack here.
+	if(in.grid_type == NUCLIDE)
+	{
+		index_grid = (int *) malloc(sizeof(int));
+		length_index_grid = 1;
+	}
+	
 
-	/*
 	#pragma omp target teams distribute parallel for\
 	map(to: num_nucs[:length_num_nucs])\
 	map(to: concs[:length_concs])\
 	map(to: mats[:length_mats])\
+	map(to: index_grid[:length_index_grid])\
+	map(to: nuclide_grid[:length_nuclide_grid])\
 	map(to: unionized_energy_array[:length_unionized_energy_array])\
-	map(to: index_grid[:length_index_grid])\
-	map(to: nuclide_grid[:length_nuclide_grid])\
-	reduction(+:verification)
-	*/
-	//map(to: unionized_energy_array[:length_unionized_energy_array])
-
-	#pragma omp target teams distribute parallel for\
-	map(to: num_nucs[:length_num_nucs])\
-	map(to: concs[:length_concs])\
-	map(to: mats[:length_mats])\
-	map(to: index_grid[:length_index_grid])\
-	map(to: nuclide_grid[:length_nuclide_grid])\
 	reduction(+:verification)
 	for( int i = 0; i < lookups; i++ )
 	{
