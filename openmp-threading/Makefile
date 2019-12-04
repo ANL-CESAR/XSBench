@@ -7,6 +7,7 @@ ifeq ($(CC),)
 CC    = gcc
 endif
 OPTIMIZE    = yes
+OPENMP      = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
@@ -44,17 +45,26 @@ LDFLAGS = -lm
 
 # Regular gcc Compiler
 ifneq (,$(findstring gcc,$(CC)))
-  CFLAGS += -fopenmp -flto
+  CFLAGS += -flto
+  ifeq ($(OPENMP),yes)
+	CFLAGS += -fopenmp -DOPENMP
+  endif
 endif
 
 # LLVM Compiler
 ifneq (,$(findstring clang,$(CC)))
-  CFLAGS += -fopenmp -flto
+  CFLAGS += -flto
+  ifeq ($(OPENMP),yes)
+	CFLAGS += -fopenmp -DOPENMP
+  endif
 endif
 
 # Intel Compiler
 ifneq (,$(findstring intel,$(CC)))
-  CFLAGS += -qopenmp -ipo
+  CFLAGS += -ipo
+  ifeq ($(OPENMP),yes)
+	CFLAGS += -fopenmp -DOPENMP
+  endif
 endif
 
 # Debug Flags

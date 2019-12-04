@@ -2,7 +2,10 @@
 # User Options
 #===============================================================================
 
-COMPILER    = codeplay
+# Compiler can be set below, or via environment variable
+ifeq ($(CC),)
+CC    = clang
+endif
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -28,26 +31,26 @@ obj = $(source:.cpp=.o)
 # Sets Flags
 #===============================================================================
 
+# Make sure we didn't pick up lower case cc
+ifeq (cc,$(CC))
+CC    = clang
+endif
+
 # Standard Flags
 CFLAGS := -std=c++14 -Wall
 
 # Linker Flags
 LDFLAGS = -lm
 
-# Regular gcc Compiler
-ifeq ($(COMPILER),gnu)
-  CC = gcc
-  CFLAGS += -flto
-endif
-
 # Codeplay Compiler
-ifeq ($(COMPILER),codeplay)
+ifneq (,$(findstring codeplay,$(CC)))
   CC = compute++
   CFLAGS += -sycl -sycl-driver
   LDFLAGS += -lComputeCpp
 endif
 
-ifeq ($(COMPILER),clang)
+# LLVM Compiler
+ifneq (,$(findstring clang,$(CC)))
   CC = clang++
   CFLAGS += -fsycl
   LDFLAGS += -lOpenCL

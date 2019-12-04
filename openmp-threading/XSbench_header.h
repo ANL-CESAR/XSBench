@@ -7,11 +7,14 @@
 #include<string.h>
 #include<strings.h>
 #include<math.h>
-#include<omp.h>
 #include<unistd.h>
 #include<sys/time.h>
 #include<assert.h>
 #include<stdint.h>
+
+#ifdef OPENMP
+#include<omp.h>
+#endif
 
 // Papi Header
 #ifdef PAPI
@@ -120,6 +123,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype );
 int NGP_compare( const void * a, const void * b );
 int double_compare(const void * a, const void * b);
 size_t estimate_mem_usage( Inputs in );
+double get_time(void);
 
 // Materials.c
 int * load_num_nucs(long n_isotopes);
