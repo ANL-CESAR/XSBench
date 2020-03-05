@@ -358,6 +358,6 @@ __kernel void macro_xs_lookup_kernel(		Inputs in,
 			max_idx = j;
 		}
 	}
-	verification_array[i] += max_idx+1;
+	verification_array[i] = max_idx+1;
 
 }
