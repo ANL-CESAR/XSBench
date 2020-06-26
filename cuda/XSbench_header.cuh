@@ -72,7 +72,7 @@ typedef struct{
 	int length_concs;
 	int length_mats;
 	int length_unionized_energy_array;
-	int length_index_grid;
+	long length_index_grid;
 	int length_nuclide_grid;
 	int max_num_nucs;
 	unsigned long * verification;
