@@ -21,6 +21,10 @@ int main( int argc, char* argv[] )
 	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 	#endif
 
+	#ifdef AML
+	aml_init(&argc, &argv);
+	#endif
+
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
 
@@ -109,6 +113,10 @@ int main( int argc, char* argv[] )
 
 	#ifdef MPI
 	MPI_Finalize();
+	#endif
+
+	#ifdef AML
+	aml_finalize();
 	#endif
 
 	return is_invalid_result;
