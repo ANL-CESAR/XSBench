@@ -93,8 +93,8 @@ endif
 
 # AML
 ifeq ($(AML),yes)
-  LDFLAGS += $(shell pkg-config --libs aml) -lhwloc
-  CFLAGS += -DAML
+  LDFLAGS += $(shell pkg-config --libs aml)
+  CFLAGS += -DAML $(shell pkg-config --cflags aml)
 endif
 
 #===============================================================================
