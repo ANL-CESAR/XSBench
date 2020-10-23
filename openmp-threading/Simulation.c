@@ -44,6 +44,20 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	#pragma omp parallel for schedule(dynamic,100) reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
+		#ifdef AML
+		int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
+		double * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
+		double * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
+		int * index_grid = aml_replicaset_hwloc_local_replica(SD.index_grid_replica);
+		NuclideGridPoint * nuclide_grid = aml_replicaset_hwloc_local_replica(SD.nuclide_grid_replica);
+		#else
+		int * num_nucs = SD.num_nucs;
+		double * concs = SD.concs;
+		double * unionized_energy_array = SD.unionized_energy_array;
+		int * index_grid = SD.index_grid;
+		NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
+		#endif
+
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
@@ -62,11 +76,11 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				mat,             // Sampled material type index neutron is in
 				in.n_isotopes,   // Total number of isotopes in simulation
 				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-				SD.num_nucs,     // 1-D array with number of nuclides per material
-				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				SD.unionized_energy_array, // 1-D Unionized energy array
-				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				num_nucs,     // 1-D array with number of nuclides per material
+				concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				unionized_energy_array, // 1-D Unionized energy array
+				index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
 				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
 				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
@@ -129,6 +143,20 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 	#pragma omp parallel for schedule(dynamic, 100) reduction(+:verification)
 	for( int p = 0; p < in.particles; p++ )
 	{
+		#ifdef AML
+		int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
+		double * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
+		double * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
+		int * index_grid = aml_replicaset_hwloc_local_replica(SD.index_grid_replica);
+		NuclideGridPoint * nuclide_grid = aml_replicaset_hwloc_local_replica(SD.nuclide_grid_replica);
+		#else
+		int * num_nucs = SD.num_nucs;
+		double * concs = SD.concs;
+		double * unionized_energy_array = SD.unionized_energy_array;
+		int * index_grid = SD.index_grid;
+		NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
+		#endif
+
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
@@ -153,11 +181,11 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 					mat,             // Sampled material type neutron is in
 					in.n_isotopes,   // Total number of isotopes in simulation
 					in.n_gridpoints, // Number of gridpoints per isotope in simulation
-					SD.num_nucs,     // 1-D array with number of nuclides per material
-					SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-					SD.unionized_energy_array, // 1-D Unionized energy array
-					SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-					SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+					num_nucs,     // 1-D array with number of nuclides per material
+					concs,        // Flattened 2-D array with concentration of each nuclide in each material
+					unionized_energy_array, // 1-D Unionized energy array
+					index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+					nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
 					SD.mats,         // Flattened 2-D array with nuclide indices for each type of material
 					macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 					in.grid_type,    // Lookup type (nuclide, hash, or unionized)
@@ -770,6 +798,20 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		#pragma omp parallel for schedule(dynamic,100) reduction(+:verification)
 		for( int i = offset; i < offset + num_samples_per_mat[m]; i++)
 		{
+			#ifdef AML
+			int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
+			double * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
+			double * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
+			int * index_grid = aml_replicaset_hwloc_local_replica(SD.index_grid_replica);
+			NuclideGridPoint * nuclide_grid = aml_replicaset_hwloc_local_replica(SD.nuclide_grid_replica);
+			#else
+			int * num_nucs = SD.num_nucs;
+			double * concs = SD.concs;
+			double * unionized_energy_array = SD.unionized_energy_array;
+			int * index_grid = SD.index_grid;
+			NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
+			#endif
+
 			// load pre-sampled energy and material for the particle
 			double p_energy = SD.p_energy_samples[i];
 			int mat         = SD.mat_samples[i]; 
@@ -782,11 +824,11 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 					mat,             // Sampled material type index neutron is in
 					in.n_isotopes,   // Total number of isotopes in simulation
 					in.n_gridpoints, // Number of gridpoints per isotope in simulation
-					SD.num_nucs,     // 1-D array with number of nuclides per material
-					SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-					SD.unionized_energy_array, // 1-D Unionized energy array
-					SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-					SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+					num_nucs,     // 1-D array with number of nuclides per material
+					concs,        // Flattened 2-D array with concentration of each nuclide in each material
+					unionized_energy_array, // 1-D Unionized energy array
+					index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+					nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
 					SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
 					macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 					in.grid_type,    // Lookup type (nuclide, hash, or unionized)
