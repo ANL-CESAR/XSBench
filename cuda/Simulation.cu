@@ -20,7 +20,7 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	if( mype == 0)	printf("Running baseline event-based simulation...\n");
 
 	int nthreads = 32;
-	int nblocks = ceil( (double) in.lookups / 32.0);
+	int nblocks = ceil( (double) in.lookups / (double) nthreads);
 
 	xs_lookup_kernel_baseline<<<nblocks, nthreads>>>( in, GSD );
 	gpuErrchk( cudaPeekAtLastError() );
@@ -163,7 +163,43 @@ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	}
 	
 	high = low + 1;
+
+
+  double low_energy         = __ldg(&low->energy);
+  double high_energy        = __ldg(&high->energy);
+
+  double high_total_xs      = __ldg(&high->total_xs);
+  double high_elastic_xs    = __ldg(&high->elastic_xs);
+  double high_absorbtion_xs = __ldg(&high->absorbtion_xs);
+  double high_fission_xs    = __ldg(&high->fission_xs);
+  double high_nu_fission_xs = __ldg(&high->nu_fission_xs);
+  
+  double low_total_xs      = __ldg(&low->total_xs);
+  double low_elastic_xs    = __ldg(&low->elastic_xs);
+  double low_absorbtion_xs = __ldg(&low->absorbtion_xs);
+  double low_fission_xs    = __ldg(&low->fission_xs);
+  double low_nu_fission_xs = __ldg(&low->nu_fission_xs);
 	
+  // calculate the re-useable interpolation factor
+	f = (high_energy - p_energy) / (high_energy - low_energy);
+
+	// Total XS
+	xs_vector[0] = high_total_xs - f * (high_total_xs - low_total_xs);
+	
+	// Elastic XS
+	xs_vector[1] = high_elastic_xs - f * (high_elastic_xs - low_elastic_xs);
+	
+	// Absorbtion XS
+	xs_vector[2] = high_absorbtion_xs - f * (high_absorbtion_xs - low_absorbtion_xs);
+	
+	// Fission XS
+	xs_vector[3] = high_fission_xs - f * (high_fission_xs - low_fission_xs);
+	
+	// Nu Fission XS
+	xs_vector[4] = high_nu_fission_xs - f * (high_nu_fission_xs - low_nu_fission_xs);
+
+	
+  /*
 	// calculate the re-useable interpolation factor
 	f = (high->energy - p_energy) / (high->energy - low->energy);
 
@@ -181,6 +217,7 @@ __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
+  */
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
@@ -361,6 +398,7 @@ __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 	return (a_new * seed + c_new) % m;
 }
 
+/*
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -1097,3 +1135,4 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 
 	return verification_scalar;
 }
+*/

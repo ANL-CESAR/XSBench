@@ -37,7 +37,9 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),nvidia)
   CC = nvcc
-  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11
+  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11 -lineinfo
+  #CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11 -lineinfo -ccbin /opt/ibm/xlC/16.1.1/bin/xlc
+  #CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11
 endif
 
 # Debug Flags

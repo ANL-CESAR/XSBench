@@ -31,6 +31,7 @@ obj = $(source:.c=.o)
 
 # Standard Flags
 CFLAGS := -std=gnu99 -Wall
+#CFLAGS := --compiler-options "-std=gnu99 -Wall" -arch=sm_37
 
 # Linker Flags
 LDFLAGS = -lm
@@ -38,6 +39,7 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
+  #CC = nvcc
   CFLAGS += -lOpenCL
 endif
 

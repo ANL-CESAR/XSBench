@@ -70,15 +70,34 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		index_grid = (int *) malloc(sizeof(int));
 		length_index_grid = 1;
 	}
-	
+  
+  double start = omp_get_wtime();
+  double stop;
 
-	#pragma omp target teams distribute parallel for\
+  #pragma omp target data\
 	map(to: num_nucs[:length_num_nucs])\
 	map(to: concs[:length_concs])\
 	map(to: mats[:length_mats])\
 	map(to: index_grid[:length_index_grid])\
 	map(to: nuclide_grid[:length_nuclide_grid])\
 	map(to: unionized_energy_array[:length_unionized_energy_array])\
+  map(tofrom: stop)
+  {
+
+  stop = omp_get_wtime();
+  printf("Data mapping time = %.6lf\n", stop-start);
+  start=stop;
+	
+  /*
+  map(to: num_nucs[:length_num_nucs])\
+	map(to: concs[:length_concs])\
+	map(to: mats[:length_mats])\
+	map(to: index_grid[:length_index_grid])\
+	map(to: nuclide_grid[:length_nuclide_grid])\
+	map(to: unionized_energy_array[:length_unionized_energy_array])\
+  */
+
+	#pragma omp target teams distribute parallel for\
 	reduction(+:verification)
 	for( int i = 0; i < lookups; i++ )
 	{
@@ -134,7 +153,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 			}
 		}
 		verification += max_idx+1;
+  }
+  stop = omp_get_wtime();
+  printf("Kernel exec time = %.6lf\n", stop-start);
 	}
+  
+  stop = omp_get_wtime();
+  printf("Kernel exec time = %.6lf\n", stop-start);
 
 	return verification;
 }

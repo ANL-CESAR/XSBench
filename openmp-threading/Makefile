@@ -8,7 +8,7 @@ CC    = gcc
 endif
 OPTIMIZE    = yes
 OPENMP      = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 

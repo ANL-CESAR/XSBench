@@ -37,9 +37,12 @@ typedef struct{
 unsigned long fast_forward_LCG(unsigned long seed, unsigned long n)
 {
 	// LCG parameters
-	const unsigned long m = 9223372036854775808ULL; // 2^63
-	unsigned long a = 2806196910506780709ULL;
-	unsigned long c = 1ULL;
+	//const unsigned long m = 9223372036854775808ULL; // 2^63
+	const unsigned long m = 9223372036854775808UL; // 2^63
+	//unsigned long a = 2806196910506780709ULL;
+	unsigned long a = 2806196910506780709UL;
+	//unsigned long c = 1ULL;
+	unsigned long c = 1UL;
 
 	n = n % m;
 
@@ -66,9 +69,12 @@ unsigned long fast_forward_LCG(unsigned long seed, unsigned long n)
 double LCG_random_double(unsigned long * seed)
 {
 	// LCG parameters
-	const unsigned long m = 9223372036854775808ULL; // 2^63
-	const unsigned long a = 2806196910506780709ULL;
-	const unsigned long c = 1ULL;
+	//const unsigned long m = 9223372036854775808ULL; // 2^63
+	const unsigned long m = 9223372036854775808UL; // 2^63
+	//const unsigned long a = 2806196910506780709ULL;
+	const unsigned long a = 2806196910506780709UL;
+	//const unsigned long c = 1ULL;
+	const unsigned long c = 1UL;
 	*seed = (a * (*seed) + c) % m;
 	return (double) (*seed) / (double) m;
 }	

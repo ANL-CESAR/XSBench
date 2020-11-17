@@ -52,7 +52,10 @@ endif
 # LLVM Compiler
 ifneq (,$(findstring clang,$(CC)))
   CC = clang++
+  #CC = syclcc-clang-wrapper
+  #CC = syclcc-clang
   CFLAGS += -fsycl
+  #CFLAGS += -lineinfo
   LDFLAGS += -lOpenCL
 endif
 
@@ -87,7 +90,7 @@ $(program): $(obj) XSbench_header.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
 %.o: %.cpp XSbench_header.h Makefile
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -lineinfo -c $< -o $@
 
 clean:
 	rm -rf $(program) $(obj)

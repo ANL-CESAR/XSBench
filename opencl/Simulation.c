@@ -39,6 +39,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	source_size = fread( source_str, 1, MAX_SOURCE_SIZE, fp);
 	fclose( fp );
 
+  /*
 	// Get platform and device information
 	cl_platform_id platform_id = NULL;
 	cl_device_id device_id = NULL;   
@@ -59,8 +60,57 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	check(ret);
 
 	// Create a command queue
-	cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+	//cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+	cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 	check(ret);
+  */
+
+
+  int user_platform_id = 1;
+  int user_device_id = 1;
+
+  int platform_idx = 0;
+  if( user_platform_id != -1 )
+    platform_idx = user_platform_id;
+
+  // Get # of Platforms
+  cl_uint ret_num_platforms;
+  cl_int ret = clGetPlatformIDs(0, NULL, &ret_num_platforms);
+  check(ret);
+
+  // Allocate space for platform information
+  cl_platform_id * platform_ids = (cl_platform_id *) malloc(ret_num_platforms * sizeof(cl_platform_id));
+
+  // Fill in data on Platforms
+  ret = clGetPlatformIDs(ret_num_platforms, platform_ids, NULL);
+
+  cl_platform_id target_platform_id = platform_ids[platform_idx];   // '1' is the target platform index. needs to be changed accordingly.
+
+  int device_idx = CL_DEVICE_TYPE_DEFAULT;
+  if( user_device_id != -1 )
+    device_idx = user_device_id;
+
+  cl_uint ret_num_devices;
+  cl_device_id device_id = NULL;
+  ret = clGetDeviceIDs( target_platform_id, device_idx, 1, &device_id, &ret_num_devices);
+
+  // Print info about where we are running
+  printf("Selected Device (platform id = %d, device id = %d)\n", platform_idx, device_idx);
+  print_single_info(target_platform_id, device_id);
+  printf("Note: platform ID can be specified with the \"-P\" flag and device id with the \"-D\" flag\n");
+
+  // Create an OpenCL context
+  cl_context context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &ret);
+  check(ret);
+
+  // Create a command queue
+  //cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+  cl_command_queue command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+  check(ret);
+
+
+
+
 
 	////////////////////////////////////////////////////////////////////////////////
 	// OpenCL Move Memory To Device Buffers
@@ -217,7 +267,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Execute the OpenCL kernel on the list
 	size_t global_item_size = in.lookups; // Process the entire lists
-	size_t local_item_size = 64; // Divide work items into groups of 64
+	size_t local_item_size = 32; // Divide work items into groups of 64
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
 	

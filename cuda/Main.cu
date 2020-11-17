@@ -37,9 +37,16 @@ int main( int argc, char* argv[] )
 	// structures to file
 	if( in.binary_mode == WRITE && mype == 0 )
 		binary_write(in, SD);
+	
+  // Start Data Movement Timer
+	omp_start = get_time();
 
 	// Move data to GPU
 	SimulationData GSD = move_simulation_data_to_device( in, mype, SD );
+  
+  // Start Data Movement Timer
+	omp_end = get_time();
+  printf("Time spent in initialization = %.6lf seconds\n", omp_end-omp_start);
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation
@@ -63,6 +70,7 @@ int main( int argc, char* argv[] )
 	{
 		if( in.kernel_id == 0 )
 			verification = run_event_based_simulation_baseline(in, GSD, mype);
+    /*
 		else if( in.kernel_id == 1 )
 			verification = run_event_based_simulation_optimization_1(in, GSD, mype);
 		else if( in.kernel_id == 2 )
@@ -75,6 +83,7 @@ int main( int argc, char* argv[] )
 			verification = run_event_based_simulation_optimization_5(in, GSD, mype);
 		else if( in.kernel_id == 6 )
 			verification = run_event_based_simulation_optimization_6(in, GSD, mype);
+      */
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);

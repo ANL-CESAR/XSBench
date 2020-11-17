@@ -3,13 +3,13 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-#include<time.h>
+//#include<time.h>
 #include<string.h>
 #include<strings.h>
 #include<math.h>
 #include<assert.h>
 #include<stdint.h>
-#include <chrono> 
+//#include <chrono> 
 #include <CL/sycl.hpp>
 
 // Papi Header

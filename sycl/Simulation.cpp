@@ -11,6 +11,84 @@
 // are not yet implemented in this SYCL port.
 ////////////////////////////////////////////////////////////////////////////////////
 
+uint64_t fast_forward_LCG_device(uint64_t seed, uint64_t n)
+{
+	// LCG parameters
+	const uint64_t m = 9223372036854775808ULL; // 2^63
+	uint64_t a = 2806196910506780709ULL;
+	uint64_t c = 1ULL;
+
+	n = n % m;
+
+	uint64_t a_new = 1;
+	uint64_t c_new = 0;
+
+	while(n > 0) 
+	{
+		if(n & 1)
+		{
+			a_new *= a;
+			c_new = c_new * a + c;
+		}
+		c *= (a + 1);
+		a *= a;
+
+		n >>= 1;
+	}
+
+	return (a_new * seed + c_new) % m;
+
+}
+
+double LCG_random_double_device(uint64_t * seed)
+{
+	// LCG parameters
+	const uint64_t m = 9223372036854775808ULL; // 2^63
+	const uint64_t a = 2806196910506780709ULL;
+	const uint64_t c = 1ULL;
+	*seed = (a * (*seed) + c) % m;
+	return (double) (*seed) / (double) m;
+}	
+
+int pick_mat_device( unsigned long * seed )
+{
+	// I have a nice spreadsheet supporting these numbers. They are
+	// the fractions (by volume) of material in the core. Not a 
+	// *perfect* approximation of where XS lookups are going to occur,
+	// but this will do a good job of biasing the system nonetheless.
+
+	// Also could be argued that doing fractions by weight would be 
+	// a better approximation, but volume does a good enough job for now.
+
+	double dist[12];
+	dist[0]  = 0.140;	// fuel
+	dist[1]  = 0.052;	// cladding
+	dist[2]  = 0.275;	// cold, borated water
+	dist[3]  = 0.134;	// hot, borated water
+	dist[4]  = 0.154;	// RPV
+	dist[5]  = 0.064;	// Lower, radial reflector
+	dist[6]  = 0.066;	// Upper reflector / top plate
+	dist[7]  = 0.055;	// bottom plate
+	dist[8]  = 0.008;	// bottom nozzle
+	dist[9]  = 0.015;	// top nozzle
+	dist[10] = 0.025;	// top of fuel assemblies
+	dist[11] = 0.013;	// bottom of fuel assemblies
+
+	double roll = LCG_random_double_device(seed);
+
+	// makes a pick based on the distro
+	for( int i = 0; i < 12; i++ )
+	{
+		double running = 0;
+		for( int j = i; j > 0; j-- )
+			running += dist[j];
+		if( roll < running )
+			return i;
+	}
+
+	return 0;
+}
+
 // use SYCL namespace to reduce symbol names
 using namespace cl::sycl;
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time)
@@ -97,13 +175,23 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				////////////////////////////////////////////////////////////////////////////////
 				// Create Device Accessors for Device Buffers
 				////////////////////////////////////////////////////////////////////////////////
-				auto num_nucs = num_nucs_d.get_access<access::mode::read>(cgh);
+				auto num_nucs = num_nucs_d.get_access<access::mode::read_write>(cgh);
+				auto concs = concs_d.get_access<access::mode::read_write>(cgh);
+				auto mats = mats_d.get_access<access::mode::read_write>(cgh);
+				auto nuclide_grid = nuclide_grid_d.get_access<access::mode::read_write>(cgh);
+				auto verification = verification_d.get_access<access::mode::read_write>(cgh);
+				auto unionized_energy_array = unionized_energy_array_d.get_access<access::mode::read_write>(cgh);
+				auto index_grid = index_grid_d.get_access<access::mode::read_write>(cgh);
+				
+        /*
+        auto num_nucs = num_nucs_d.get_access<access::mode::read>(cgh);
 				auto concs = concs_d.get_access<access::mode::read>(cgh);
 				auto mats = mats_d.get_access<access::mode::read>(cgh);
 				auto nuclide_grid = nuclide_grid_d.get_access<access::mode::read>(cgh);
 				auto verification = verification_d.get_access<access::mode::write>(cgh);
 				auto unionized_energy_array = unionized_energy_array_d.get_access<access::mode::read>(cgh);
 				auto index_grid = index_grid_d.get_access<access::mode::read>(cgh);
+        */
 
 				////////////////////////////////////////////////////////////////////////////////
 				// XS Lookup Simulation Loop
@@ -117,11 +205,11 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 					uint64_t seed = STARTING_SEED;	
 
 					// Forward seed to lookup index (we need 2 samples per lookup)
-					seed = fast_forward_LCG(seed, 2*i);
+					seed = fast_forward_LCG_device(seed, 2*i);
 
 					// Randomly pick an energy and material for the particle
-					double p_energy = LCG_random_double(&seed);
-					int mat         = pick_mat(&seed); 
+					double p_energy = LCG_random_double_device(&seed);
+					int mat         = pick_mat_device(&seed); 
 
 					// debugging
 					//printf("E = %lf mat = %d\n", p_energy, mat);
