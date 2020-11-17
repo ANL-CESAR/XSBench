@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = ibm
+COMPILER    = intel
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -42,8 +42,8 @@ endif
 
 # Intel Compiler
 ifeq ($(COMPILER),intel)
-  CC =
-  CFLAGS +=
+  CC = icx 
+  CFLAGS += -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ 
 endif
 
 # Clang-ykt compiler Targeting P100
