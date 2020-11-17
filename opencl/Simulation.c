@@ -13,9 +13,6 @@
 
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * sim_runtime)
 {
-	if( mype == 0)	
-		printf("Initializing OpenCL data structures and JIT compiling kernel...\n");
-
 	double start = get_time();
 
 	int * verification_array_host = (int *) malloc( in.lookups * sizeof(int));
@@ -39,28 +36,10 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	source_size = fread( source_str, 1, MAX_SOURCE_SIZE, fp);
 	fclose( fp );
 
-	// Get platform and device information
-	cl_platform_id platform_id = NULL;
-	cl_device_id device_id = NULL;   
-	cl_uint ret_num_devices;
-	cl_uint ret_num_platforms;
-	cl_int ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
-	check(ret);
-	ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
-	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_CPU, 1, &device_id, &ret_num_devices);
-	//ret = clGetDeviceIDs( platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices);
-	check(ret);
-
-	// Print info about where we are running
-	print_single_info(platform_id, device_id);
-
-	// Create an OpenCL context
-	cl_context context = clCreateContext( NULL, 1, &device_id, NULL, NULL, &ret);
-	check(ret);
-
-	// Create a command queue
-	cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
-	check(ret);
+  OpenCLInfo CL = initialize_device(in.platform_id, in.device_id);
+	cl_device_id device_id = CL.device_id;
+	cl_context context = CL.context;
+	cl_command_queue command_queue = CL.command_queue;
 
 	////////////////////////////////////////////////////////////////////////////////
 	// OpenCL Move Memory To Device Buffers
@@ -87,6 +66,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	
 	// Create memory buffers on the device for each vector and move data over
 	size_t sz = SD.length_num_nucs * sizeof(int);
+  cl_int ret;
 	cl_mem num_nucs_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
 	check(ret);
 	ret = clEnqueueWriteBuffer(command_queue, num_nucs_d, CL_TRUE, 0, sz, SD.num_nucs, 0, NULL, NULL);
@@ -212,6 +192,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	// Run Simulation Kernel
 	////////////////////////////////////////////////////////////////////////////////
+	
+  if( mype == 0 )
+	{
+		border_print();
+		center_print("SIMULATION", 79);
+		border_print();
+	}
 	
 	if( mype == 0) printf("Running event based simulation...\n");
 

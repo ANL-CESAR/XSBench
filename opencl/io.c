@@ -183,6 +183,15 @@ void print_inputs(Inputs in, int nprocs, int version )
 		printf("Read\n");
 	else
 		printf("Write\n");
+  if( in.platform_id == -1 )
+    printf("OpenCL Platform ID:           Default\n");
+  else
+    printf("OpenCL Platform ID:           %d\n", in.platform_id);
+
+  if( in.device_id == -1 )
+    printf("OpenCL Device ID:             Default\n");
+  else
+    printf("OpenCL Device ID:             %d\n", in.device_id);
 	border_print();
 	center_print("INITIALIZATION - DO NOT PROFILE", 79);
 	border_print();
@@ -230,6 +239,8 @@ void print_CLI_error(void)
 	printf("  -h <hash bins>           Number of hash bins (only relevant when used with \"-G hash\")\n");
 	printf("  -b <binary mode>         Read or write all data structures to file. If reading, this will skip initialization phase. (read, write)\n");
 	printf("  -k <kernel ID>           Specifies which kernel to run. 0 is baseline, 1, 2, etc are optimized variants. (0 is default.)\n");
+  printf("  -P <platform id>         Manually specify the OpenCL platform id to run on\n");
+  printf("  -D <device id>           Manually specify the OpenCL device id to run on\n");
 	printf("Default is equivalent to: -m history -s large -l 34 -p 500000 -G unionized\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
@@ -271,6 +282,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// defaults to H-M Large benchmark
 	input.HM = LARGE;
+
+  input.platform_id = -1;
+  input.device_id = -1;
 	
 	// Check if user sets these
 	int user_g = 0;
@@ -410,6 +424,22 @@ Inputs read_CLI( int argc, char * argv[] )
 			else
 				print_CLI_error();
 		}
+        // Platform selection (-P)
+    else if( strcmp(arg, "-P") == 0 )
+    {
+      if( ++i < argc )
+        input.platform_id = atoi(argv[i]);
+      else
+        print_CLI_error();
+    }
+    // Device selection (-D)
+    else if( strcmp(arg, "-D") == 0 )
+    {
+      if( ++i < argc )
+        input.device_id = atoi(argv[i]);
+      else
+        print_CLI_error();
+    }
 		else
 			print_CLI_error();
 	}
@@ -440,7 +470,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	// (defaults to large)
 	if( input.HM == SMALL )
 		input.n_isotopes = 68;
-	else if( input.HM == XL && user_g == 0 )
+  else if( input.HM == XL && user_g == 0 )
 		input.n_gridpoints = 238847; // sized to make 120 GB XS data
 	else if( input.HM == XXL && user_g == 0 )
 		input.n_gridpoints = 238847 * 2.1; // 252 GB XS data

@@ -57,13 +57,6 @@ int main( int argc, char* argv[] )
 	// lookup kernel.
 	// =====================================================================
 
-	if( mype == 0 )
-	{
-		printf("\n");
-		border_print();
-		center_print("SIMULATION", 79);
-		border_print();
-	}
 
 	// Start Simulation Timer
 	omp_start = get_time();

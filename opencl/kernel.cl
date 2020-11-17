@@ -20,6 +20,8 @@ typedef struct{
 	int simulation_method;
 	int binary_mode;
 	int kernel_id;
+  int platform_id;
+  int device_id;
 } Inputs;
 
 // Grid types

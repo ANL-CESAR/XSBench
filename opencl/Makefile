@@ -74,17 +74,17 @@ endif
 # Targets to Build
 #===============================================================================
 
-$(program): $(obj) XSbench_header.h Makefile
+$(program): $(obj) XSbench_header.h CLutils.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.c XSbench_header.h Makefile
+%.o: %.c XSbench_header.h CLutils.h Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(program) $(obj)
 
 edit:
-	vim -p $(source) kernel.cl XSbench_header.h
+	vim -p $(source) kernel.cl XSbench_header.h CLutils.h
 
 run:
 	./$(program)

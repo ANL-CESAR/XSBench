@@ -17,6 +17,8 @@
 #include <CL/cl.h>
 #define MAX_SOURCE_SIZE (0x100000)
 
+#include "CLutils.h"
+
 // Papi Header
 #ifdef PAPI
 #include "papi.h"
@@ -66,6 +68,8 @@ typedef struct{
 	int simulation_method;
 	int binary_mode;
 	int kernel_id;
+  int platform_id;
+  int device_id;
 } Inputs;
 
 typedef struct{
