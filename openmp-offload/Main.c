@@ -4,6 +4,10 @@
 #include<mpi.h>
 #endif
 
+#ifdef AML
+#include "aml.c"
+#endif
+
 int main( int argc, char* argv[] )
 {
 	// =====================================================================
@@ -20,6 +24,12 @@ int main( int argc, char* argv[] )
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
+	#endif
+
+	#ifdef AML
+	if (aml_init(&argc, &argv) != AML_SUCCESS)
+		return 1;
+	assert(aml_support_backends(AML_BACKEND_ZE));
 	#endif
 
 	// Process CLI Fields -- store in "Inputs" structure
@@ -52,6 +62,14 @@ int main( int argc, char* argv[] )
 	if( in.binary_mode == WRITE && mype == 0 )
 		binary_write(in, SD);
 
+	// GPU initialization
+#ifdef AML
+	SimulationData GSD;
+	assert(aml_mapper_mmap(&SimulationData_mapper,
+												 &SD, &GSD, 1, aml_area_ze_device, NULL,
+												 aml_dma_ze_default, aml_dma_ze_copy_1D,
+												 NULL) == AML_SUCCESS);
+#endif
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation
@@ -75,7 +93,11 @@ int main( int argc, char* argv[] )
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
+#ifdef AML
+			verification = run_event_based_simulation(in, GSD, mype);
+#else
 			verification = run_event_based_simulation(in, SD, mype);
+#endif
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);
@@ -107,6 +129,12 @@ int main( int argc, char* argv[] )
 	// Print / Save Results and Exit
 	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
+	#ifdef AML
+	aml_mapper_munmap(&SimulationData_mapper,&GSD, aml_area_ze_device,
+										aml_dma_ze_default, NULL, NULL);
+	aml_finalize();
+	#endif
+	
 	#ifdef MPI
 	MPI_Finalize();
 	#endif

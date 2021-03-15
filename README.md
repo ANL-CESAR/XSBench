@@ -146,8 +146,15 @@ XSBench can be compiled to include these optimizations by toggling `make` `AML=y
 Current optimizations featured in XSBench are as follow:
 - **replicaset**: Performance sensitive data structures are replicated on memories close to processing elements. If a group of processing elements have several close memories (e.g a NUMA cluster on Intel Knights Landing processor with has both a MCDRAM and DRAM memory modules) then the memory with the smallest latency is elected. Upon accessing sensitive data, the accessor location is looked up and the closest replica (latency wise) is accessed.
 
+- **mapper**: AML mapper provides abstractions to describe the layout of a hierarchical data structure and deepcopy it into a target memory. Complex data structure that needs to be 
+copied on a cuda device can be copied with less code and inside a contiguous memory area.
+Therefore, this optimization moves the complexity of managing deep data copies into the 
+AML library.
+
 Optimizations implementation and availability may depend on the programming model. In the current version the following programming models feature AML optimizations:
 - **openmp-threading**: replicaset.
+- **cuda**: mapper.
+- **openmp-offload**: mapper using level zero backend for allocation and movements.
 
 ### Verification Support
 

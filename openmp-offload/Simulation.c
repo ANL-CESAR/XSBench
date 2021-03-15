@@ -41,7 +41,18 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
 
-	#pragma omp target teams distribute parallel for\
+#ifdef AML
+// No guarantee that the mapped GPU data matches the device where this code is
+// ran. In practice, data is allocated on first device handle returned by
+// level zero API, and code is ran on the default OpenMP device since the device
+// clause is absent.
+// See:
+// https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-5-1.pdf
+// + 2.16.25 Target Teams Distribute Parallel Worksharing-Loop Construct
+#pragma omp target teams distribute parallel for \
+	reduction(+:verification)
+#else
+#pragma omp target teams distribute parallel for\
 	map(to: SD.max_num_nucs)\
 	map(to: SD.num_nucs[:SD.length_num_nucs])\
 	map(to: SD.concs[:SD.length_concs])\
@@ -50,6 +61,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	map(to: SD.index_grid[:SD.length_index_grid])\
 	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
 	reduction(+:verification)
+#endif
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
