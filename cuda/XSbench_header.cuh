@@ -68,19 +68,19 @@ typedef struct{
 	double * unionized_energy_array;    // Length = length_unionized_energy_array
 	int * index_grid;                   // Length = length_index_grid
 	NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
-	int length_num_nucs;
-	int length_concs;
-	int length_mats;
-	int length_unionized_energy_array;
-	long length_index_grid;
-	int length_nuclide_grid;
+	size_t length_num_nucs;
+	size_t length_concs;
+	size_t length_mats;
+	size_t length_unionized_energy_array;
+	size_t length_index_grid;
+	size_t length_nuclide_grid;
 	int max_num_nucs;
 	unsigned long * verification;
-	int length_verification;
+	size_t length_verification;
 	double * p_energy_samples;
-	int length_p_energy_samples;
+	size_t length_p_energy_samples;
 	int * mat_samples;
-	int length_mat_samples;
+	size_t length_mat_samples;
 } SimulationData;
 
 // io.cu
@@ -149,4 +149,14 @@ double get_time(void);
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double * load_concs( int * num_nucs, int max_num_nucs );
+
+#ifdef AML
+#include<aml.h>
+#include<aml/higher/mapper.h>
+#include<aml/area/cuda.h>
+#include<aml/dma/cuda.h>
+
+extern struct aml_mapper SimulationData_mapper;
+#endif // AML
+
 #endif

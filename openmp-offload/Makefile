@@ -7,6 +7,7 @@ OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
+AML         = no
 
 #===============================================================================
 # Program name & source code list
@@ -79,6 +80,12 @@ endif
 ifeq ($(MPI),yes)
   CC = mpicc
   CFLAGS += -DMPI
+endif
+
+# AML
+ifeq ($(AML),yes)
+  LDFLAGS += $(shell pkg-config --libs aml)
+  CFLAGS += -DAML $(shell pkg-config --cflags aml)
 endif
 
 #===============================================================================

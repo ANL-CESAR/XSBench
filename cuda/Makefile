@@ -7,6 +7,7 @@ OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 SM_VERSION  = 70
+AML         = no
 
 #===============================================================================
 # Program name & source code list
@@ -55,6 +56,12 @@ endif
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
+endif
+
+# AML
+ifeq ($(AML),yes)
+  LDFLAGS += $(shell pkg-config --libs aml)
+  CFLAGS += -I$(HOME)/local/include -DAML $(shell pkg-config --cflags aml)
 endif
 
 #===============================================================================

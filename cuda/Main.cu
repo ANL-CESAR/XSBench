@@ -1,4 +1,7 @@
 #include "XSbench_header.cuh"
+#ifdef AML
+#include "aml.cu"
+#endif
 
 int main( int argc, char* argv[] )
 {
@@ -11,6 +14,10 @@ int main( int argc, char* argv[] )
 	int nprocs = 1;
 	unsigned long long verification;
 
+	#ifdef AML
+	if (aml_init(&argc, &argv) != AML_SUCCESS)
+		return 1;
+	#endif
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
 
@@ -32,6 +39,8 @@ int main( int argc, char* argv[] )
 		SD = binary_read(in);
 	else
 		SD = grid_init_do_not_profile( in, mype );
+	SD.length_mat_samples = in.lookups;
+	SD.length_p_energy_samples = in.lookups;
 
 	// If writing from file mode is selected, write all simulation data
 	// structures to file
@@ -102,5 +111,8 @@ int main( int argc, char* argv[] )
 	// Print / Save Results and Exit
 	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
+	#ifdef AML
+	aml_finalize();
+	#endif
 	return is_invalid_result;
 }
