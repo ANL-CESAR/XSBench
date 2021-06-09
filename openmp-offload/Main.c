@@ -64,11 +64,9 @@ int main( int argc, char* argv[] )
 
 	// GPU initialization
 #ifdef AML
-	SimulationData GSD;
-	assert(aml_mapper_mmap(&SimulationData_mapper,
-												 &SD, &GSD, 1, aml_area_ze_device, NULL,
-												 aml_dma_ze_default, aml_dma_ze_copy_1D,
-												 NULL) == AML_SUCCESS);
+	struct aml_replicaset *GSD;
+	assert(aml_replicaset_mapper_ze_create(&GSD, SD, &SimulationData_mapper) ==
+				 AML_SUCCESS);
 #endif
 
 	// =====================================================================
@@ -94,7 +92,7 @@ int main( int argc, char* argv[] )
 	{
 		if( in.kernel_id == 0 )
 #ifdef AML
-			verification = run_event_based_simulation(in, GSD, mype);
+			verification = run_event_based_simulation(in, (SimulationData)GSD, mype);
 #else
 			verification = run_event_based_simulation(in, SD, mype);
 #endif
@@ -130,8 +128,7 @@ int main( int argc, char* argv[] )
 	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
 	#ifdef AML
-	aml_mapper_munmap(&SimulationData_mapper,&GSD, aml_area_ze_device,
-										aml_dma_ze_default, NULL, NULL);
+	aml_replicaset_mapper_destroy(&GSD);
 	aml_finalize();
 	#endif
 	

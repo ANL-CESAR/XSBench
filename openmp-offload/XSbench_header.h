@@ -127,8 +127,8 @@ int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
 double * load_concs( int * num_nucs, int max_num_nucs );
 
 #ifdef AML
-#include<aml.h>
-#include<aml/higher/mapper.h>
+#include <aml.h>
+#include<aml/higher/replicaset/mapper.h>
 #include<aml/area/ze.h>
 #include<aml/dma/ze.h>
 

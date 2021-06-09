@@ -64,6 +64,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 #endif
 	for( int i = 0; i < in.lookups; i++ )
 	{
+#ifdef AML
+		struct aml_replicaset* replicaset = (struct aml_replicaset*) SD;
+		SimulationData GSD =
+			replicaset->replica[omp_get_thread_num() / replicaset->n];
+#endif
+		
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
@@ -85,6 +91,18 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				mat,             // Sampled material type index neutron is in
 				in.n_isotopes,   // Total number of isotopes in simulation
 				in.n_gridpoints, // Number of gridpoints per isotope in simulation
+#ifdef AML
+				GSD.num_nucs,     // 1-D array with number of nuclides per material
+				GSD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				GSD.unionized_energy_array, // 1-D Unionized energy array
+				GSD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				GSD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				GSD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
+				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
+				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
+				GSD.max_num_nucs  // Maximum number of nuclides present in any material
+#else
 				SD.num_nucs,     // 1-D array with number of nuclides per material
 				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
 				SD.unionized_energy_array, // 1-D Unionized energy array
@@ -95,7 +113,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
 				SD.max_num_nucs  // Maximum number of nuclides present in any material
-				);
+#endif
+											 );
 
 		// For verification, and to prevent the compiler from optimizing
 		// all work out, we interrogate the returned macro_xs_vector array
