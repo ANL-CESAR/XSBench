@@ -100,7 +100,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData *SD, int
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
 				SD->max_num_nucs  // Maximum number of nuclides present in any material
-											 );
+				   );
 
 		// For verification, and to prevent the compiler from optimizing
 		// all work out, we interrogate the returned macro_xs_vector array
