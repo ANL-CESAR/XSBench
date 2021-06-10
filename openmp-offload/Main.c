@@ -70,7 +70,7 @@ int main( int argc, char* argv[] )
 #ifdef AML
 	struct aml_replicaset *GSD;
 	assert(aml_replicaset_mapper_ze_create(&GSD, (void*)(&SD), &SimulationData_mapper) ==
-				 AML_SUCCESS);
+	       AML_SUCCESS);
 #endif
 
 	// =====================================================================

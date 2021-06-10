@@ -66,7 +66,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData *SD, int
 	{
 #ifdef AML
 		struct aml_replicaset* replicaset = (struct aml_replicaset*) SD;
-		SD = replicaset->replica[omp_get_thread_num() / replicaset->n];
+		SD = replicaset->replica[omp_get_device_num()];
 #endif
 		
 		// Set the initial seed value
