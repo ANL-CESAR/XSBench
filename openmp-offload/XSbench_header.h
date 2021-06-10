@@ -67,16 +67,16 @@ typedef struct{
 	int * index_grid;                   // Length = length_index_grid
 	NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
 	size_t length_num_nucs;
-  size_t length_concs;
-  size_t length_mats;
-  size_t length_unionized_energy_array;
-  size_t length_index_grid;
-  size_t length_nuclide_grid;
+	size_t length_concs;
+	size_t length_mats;
+	size_t length_unionized_energy_array;
+	size_t length_index_grid;
+	size_t length_nuclide_grid;
 	int max_num_nucs;
 	double * p_energy_samples;
-  size_t length_p_energy_samples;
+	size_t length_p_energy_samples;
 	int * mat_samples;
-  size_t length_mat_samples;
+	size_t length_mat_samples;
 } SimulationData;
 
 // io.c

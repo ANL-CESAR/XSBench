@@ -29,10 +29,10 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 #ifdef AML
 	// Deep copy  of CPU simulation data to GPU simulation data
 	assert(aml_mapper_mmap(&SimulationData_mapper,
-												 &SD, &GSD, 1, &aml_area_cuda, NULL,
-												 &aml_dma_cuda_host_to_device,
-												 aml_dma_cuda_copy_1D,
-												 NULL) == AML_SUCCESS);
+			       &SD, &GSD, 1, &aml_area_cuda, NULL,
+			       &aml_dma_cuda_host_to_device,
+			       aml_dma_cuda_copy_1D,
+			       NULL) == AML_SUCCESS);
 #else
 	size_t total_sz = 0;
 	size_t sz;
