@@ -6,6 +6,10 @@
 
 #ifdef AML
 #include "aml.c"
+
+pid_t gettid(void) {
+	return omp_get_thread_num();
+}
 #endif
 
 int main( int argc, char* argv[] )
@@ -65,7 +69,7 @@ int main( int argc, char* argv[] )
 	// GPU initialization
 #ifdef AML
 	struct aml_replicaset *GSD;
-	assert(aml_replicaset_mapper_ze_create(&GSD, SD, &SimulationData_mapper) ==
+	assert(aml_replicaset_mapper_ze_create(&GSD, (void*)(&SD), &SimulationData_mapper) ==
 				 AML_SUCCESS);
 #endif
 
@@ -92,9 +96,9 @@ int main( int argc, char* argv[] )
 	{
 		if( in.kernel_id == 0 )
 #ifdef AML
-			verification = run_event_based_simulation(in, (SimulationData)GSD, mype);
+			verification = run_event_based_simulation(in, (SimulationData*)GSD, mype);
 #else
-			verification = run_event_based_simulation(in, SD, mype);
+			verification = run_event_based_simulation(in, &SD, mype);
 #endif
 		else
 		{
@@ -128,7 +132,7 @@ int main( int argc, char* argv[] )
 	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
 
 	#ifdef AML
-	aml_replicaset_mapper_destroy(&GSD);
+	aml_replicaset_destroy(&GSD);
 	aml_finalize();
 	#endif
 	

@@ -92,7 +92,7 @@ void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.c
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
+unsigned long long run_event_based_simulation(Inputs in, SimulationData *SD, int mype);
 unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
@@ -128,6 +128,8 @@ double * load_concs( int * num_nucs, int max_num_nucs );
 
 #ifdef AML
 #include <aml.h>
+#include <aml/higher/replicaset.h>
+#include<aml/higher/mapper.h>
 #include<aml/higher/replicaset/mapper.h>
 #include<aml/area/ze.h>
 #include<aml/dma/ze.h>

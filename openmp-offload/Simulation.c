@@ -11,7 +11,7 @@
 // are not yet implemented for this OpenMP targeting offload port.
 ////////////////////////////////////////////////////////////////////////////////////
 
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData *SD, int mype)
 {
 	if( mype == 0)	
 		printf("Beginning event based simulation...\n");
@@ -53,21 +53,20 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	reduction(+:verification)
 #else
 #pragma omp target teams distribute parallel for\
-	map(to: SD.max_num_nucs)\
-	map(to: SD.num_nucs[:SD.length_num_nucs])\
-	map(to: SD.concs[:SD.length_concs])\
-	map(to: SD.mats[:SD.length_mats])\
-	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
-	map(to: SD.index_grid[:SD.length_index_grid])\
-	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
+	map(to: SD->max_num_nucs)\
+	map(to: SD->num_nucs[:SD->length_num_nucs])\
+	map(to: SD->concs[:SD->length_concs])\
+	map(to: SD->mats[:SD->length_mats])\
+	map(to: SD->unionized_energy_array[:SD->length_unionized_energy_array])\
+	map(to: SD->index_grid[:SD->length_index_grid])\
+	map(to: SD->nuclide_grid[:SD->length_nuclide_grid])\
 	reduction(+:verification)
 #endif
 	for( int i = 0; i < in.lookups; i++ )
 	{
 #ifdef AML
 		struct aml_replicaset* replicaset = (struct aml_replicaset*) SD;
-		SimulationData GSD =
-			replicaset->replica[omp_get_thread_num() / replicaset->n];
+		SD = replicaset->replica[omp_get_thread_num() / replicaset->n];
 #endif
 		
 		// Set the initial seed value
@@ -91,29 +90,16 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				mat,             // Sampled material type index neutron is in
 				in.n_isotopes,   // Total number of isotopes in simulation
 				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-#ifdef AML
-				GSD.num_nucs,     // 1-D array with number of nuclides per material
-				GSD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				GSD.unionized_energy_array, // 1-D Unionized energy array
-				GSD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				GSD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				GSD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+				SD->num_nucs,     // 1-D array with number of nuclides per material
+				SD->concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				SD->unionized_energy_array, // 1-D Unionized energy array
+				SD->index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				SD->nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				SD->mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
 				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-				GSD.max_num_nucs  // Maximum number of nuclides present in any material
-#else
-				SD.num_nucs,     // 1-D array with number of nuclides per material
-				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				SD.unionized_energy_array, // 1-D Unionized energy array
-				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
-				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
-				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
-				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-				SD.max_num_nucs  // Maximum number of nuclides present in any material
-#endif
+				SD->max_num_nucs  // Maximum number of nuclides present in any material
 											 );
 
 		// For verification, and to prevent the compiler from optimizing

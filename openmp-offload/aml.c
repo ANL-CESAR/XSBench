@@ -9,7 +9,7 @@ static aml_final_mapper_decl(int_alloc_mapper, AML_MAPPER_FLAG_SPLIT, int);
 // Bulk allocation and copy element of double arrays.
 static aml_final_mapper_decl(double_copy_mapper, 0, double);
 // Bulk allocation and but no copy of double arrays.
-static aml_final_mapper_decl(double_alloc_mapper, 0, double);
+static aml_final_mapper_decl(double_alloc_mapper, AML_MAPPER_FLAG_SPLIT, double);
 // Separate allocation but no copy element of unsigned long arrays.
 static aml_final_mapper_decl(ulong_alloc_mapper, AML_MAPPER_FLAG_SPLIT, unsigned long);
 
@@ -17,8 +17,7 @@ static aml_final_mapper_decl(ulong_alloc_mapper, AML_MAPPER_FLAG_SPLIT, unsigned
 // Copy but do not allocate.
 // The pointer with space will be provided. Only child fields will require
 // allocation.
-aml_mapper_decl(SimulationData_mapper,
-                AML_MAPPER_FLAG_SHALLOW, SimulationData,
+aml_mapper_decl(SimulationData_mapper, 0, SimulationData,
                 num_nucs, length_num_nucs, &int_alloc_mapper,
 								concs, length_concs, &double_copy_mapper,
 								mats, length_mats, &int_alloc_mapper,
