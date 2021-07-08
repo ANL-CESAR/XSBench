@@ -29,10 +29,10 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 #ifdef AML
 	// Deep copy  of CPU simulation data to GPU simulation data
 	assert(aml_mapper_mmap(&SimulationData_mapper,
-												 &SD, &GSD, 1, &aml_area_cuda, NULL,
-												 &aml_dma_cuda_host_to_device,
-												 aml_dma_cuda_copy_1D,
-												 NULL) == AML_SUCCESS);
+			       &SD, &GSD, 1, &aml_area_cuda, NULL,
+			       &aml_dma_cuda_host_to_device,
+			       aml_dma_cuda_copy_1D,
+			       NULL) == AML_SUCCESS);
 #else
 	size_t total_sz = 0;
 	size_t sz;
@@ -79,12 +79,12 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	// Synchronize
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
-
 #ifndef AML
 	if(mype == 0 ) printf("GPU Intialization complete. Allocated %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0 );
 #endif
 
 	return GSD;
+
 }
 
 SimulationData grid_init_do_not_profile( Inputs in, int mype )
