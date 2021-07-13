@@ -56,6 +56,7 @@ typedef struct{
 	int simulation_method;
 	int binary_mode;
 	int kernel_id;
+	int user_g;
 } Inputs;
 
 typedef struct{

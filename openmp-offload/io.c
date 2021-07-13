@@ -55,7 +55,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	           MPI_SUM, 0, MPI_COMM_WORLD);
 	#endif
 
-	int is_invalid_result = 1;
+	int is_invalid_result = 0;
 	
 	// Print output
 	if( mype == 0 )
@@ -81,6 +81,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		#endif
 	}
 
+	int checksum_is_defined = 0;
 	unsigned long long large = 0;
 	unsigned long long small = 0; 
 	if( in.simulation_method == EVENT_BASED )
@@ -95,25 +96,35 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	}
 	if( strcmp(in.HM, "large") == 0 )
 	{
-		if( vhash == large )
-			is_invalid_result = 0;
+		checksum_is_defined = 1;
+		if( vhash != large )
+			is_invalid_result = 1;
 	}
 	else if( strcmp(in.HM, "small") == 0 )
 	{
-		if( vhash == small )
-			is_invalid_result = 0;
+		checksum_is_defined = 1;
+		if( vhash != small )
+			is_invalid_result = 1;
+	}
+	if( in.user_g )
+	{
+		checksum_is_defined = 0;
 	}
 
 	if(mype == 0 )
 	{
-		if( is_invalid_result )
+		if( checksum_is_defined && is_invalid_result )
 			printf("Verification checksum: %llu (WARNING - INVALID CHECKSUM!)\n", vhash);
+		else if( in.user_g )
+			printf("WARNING - Unable to verify due to custom size (checksum: %llu)\n", vhash);
+		else if( !checksum_is_defined )
+			printf("WARNING - Unable to verify due to unsupported size (checksum: %llu)\n", vhash);
 		else
 			printf("Verification checksum: %llu (Valid)\n", vhash);
 		border_print();
 	}
 
-	return is_invalid_result;
+	return checksum_is_defined && is_invalid_result;
 }
 
 void print_inputs(Inputs in, int nprocs, int version )
@@ -265,7 +276,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.HM[5] = '\0';
 	
 	// Check if user sets these
-	int user_g = 0;
+	input.user_g = 0;
 
 	int default_lookups = 1;
 	int default_particles = 1;
@@ -280,7 +291,7 @@ Inputs read_CLI( int argc, char * argv[] )
 		{	
 			if( ++i < argc )
 			{
-				user_g = 1;
+				input.user_g = 1;
 				input.n_gridpoints = atol(argv[i]);
 			}
 			else
@@ -429,9 +440,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	// (defaults to large)
 	if( strcasecmp(input.HM, "small") == 0 )
 		input.n_isotopes = 68;
-	else if( strcasecmp(input.HM, "XL") == 0 && user_g == 0 )
+	else if( strcasecmp(input.HM, "XL") == 0 && input.user_g == 0 )
 		input.n_gridpoints = 238847; // sized to make 120 GB XS data
-	else if( strcasecmp(input.HM, "XXL") == 0 && user_g == 0 )
+	else if( strcasecmp(input.HM, "XXL") == 0 && input.user_g == 0 )
 		input.n_gridpoints = 238847 * 2.1; // 252 GB XS data
 
 	// Return input struct
