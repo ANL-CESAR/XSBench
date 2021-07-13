@@ -290,7 +290,7 @@ Inputs read_CLI( int argc, char * argv[] )
 		// Simulation Method (-m)
 		else if( strcmp(arg, "-m") == 0 )
 		{
-			char * sim_type;
+			char * sim_type = NULL;
 			if( ++i < argc )
 				sim_type = argv[i];
 			else
@@ -352,7 +352,7 @@ Inputs read_CLI( int argc, char * argv[] )
 		// grid type (-G)
 		else if( strcmp(arg, "-G") == 0 )
 		{
-			char * grid_type;
+			char * grid_type = NULL;
 			if( ++i < argc )
 				grid_type = argv[i];
 			else
@@ -370,7 +370,7 @@ Inputs read_CLI( int argc, char * argv[] )
 		// binary mode (-b)
 		else if( strcmp(arg, "-b") == 0 )
 		{
-			char * binary_mode;
+			char * binary_mode = NULL;
 			if( ++i < argc )
 				binary_mode = argv[i];
 			else
