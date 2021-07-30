@@ -39,7 +39,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	// Begin Actual Simulation Loop 
 	////////////////////////////////////////////////////////////////////////////////
-	unsigned long long verification = 0;
+	unsigned long long * verification = malloc(in.lookups * sizeof(unsigned long long));
 
 	#pragma omp target teams distribute parallel for\
 	map(to: SD.max_num_nucs)\
@@ -49,7 +49,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
 	map(to: SD.index_grid[:SD.length_index_grid])\
 	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
-	reduction(+:verification)
+  map(from: verification[:in.lookups])
+	//reduction(+:verification)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -103,10 +104,16 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				max_idx = j;
 			}
 		}
-		verification += max_idx+1;
+		//verification += max_idx+1;
+		verification[i] = max_idx+1;
 	}
 
-	return verification;
+  unsigned long long vali = 0;
+	for( int i = 0; i < in.lookups; i++ )
+    vali += verification[i];
+
+	return vali;
+	//return verification;
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy

@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = intel
+COMPILER    = amd
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -56,6 +56,13 @@ endif
 ifeq ($(COMPILER),ibm)
   CC = xlc_r
   CFLAGS += -qsmp=omp -qoffload
+endif
+
+# AOMP
+ifeq ($(COMPILER),amd)
+  CC = clang
+  CFLAGS += -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
+  #CFLAGS += -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx906
 endif
 
 # Debug Flags

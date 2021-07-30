@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = gnu
+COMPILER    = clang
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -38,6 +38,12 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
+  CFLAGS += -lOpenCL
+endif
+
+# clang
+ifeq ($(COMPILER),clang)
+  CC = clang
   CFLAGS += -lOpenCL
 endif
 
