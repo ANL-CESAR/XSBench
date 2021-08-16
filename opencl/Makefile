@@ -38,7 +38,7 @@ LDFLAGS = -lm
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
-  CFLAGS += -lOpenCL
+  LDFLAGS += -lOpenCL
 endif
 
 # Intel Compiler
