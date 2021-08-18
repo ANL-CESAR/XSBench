@@ -44,7 +44,7 @@ endif
 # clang
 ifeq ($(COMPILER),clang)
   CC = clang
-  CFLAGS += -lOpenCL
+  LDFLAGS += -lOpenCL
 endif
 
 # Intel Compiler

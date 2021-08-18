@@ -1,4 +1,5 @@
-#include "XSbench_header.cuh"
+#include "hip/hip_runtime.h"
+#include "XSbench_header.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
 // BASELINE FUNCTIONS
@@ -19,23 +20,37 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Running baseline event-based simulation...\n");
 
-	int nthreads = 128;
-	int nblocks = ceil( (double) in.lookups / 128.0);
+	int nthreads = 512;
+	int nblocks = ceil( (double) in.lookups / 512.0);
 
-	xs_lookup_kernel_baseline<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(xs_lookup_kernel_baseline, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Reducing verification results...\n");
 
+  
+size_t sz = in.lookups * sizeof(unsigned long);
+  unsigned long * v = (unsigned long *) malloc(sz);
+	gpuErrchk( hipMemcpy(v, GSD.verification, sz, hipMemcpyDeviceToHost) );
+
+unsigned long verification_scalar = 0;
+  for( int i =0; i < in.lookups; i++ )
+    verification_scalar += v[i];
+
+  
+  
+/*
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
+*/
 
 	return verification_scalar;
+	//return 0;
 }
 
 // In this kernel, we perform a single lookup with each thread. Threads within a warp
@@ -360,6 +375,7 @@ __device__ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 
 	return (a_new * seed + c_new) % m;
 }
+/*
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -399,12 +415,12 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	size_t total_sz = 0;
 
 	sz = in.lookups * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.p_energy_samples, sz) );
 	total_sz += sz;
 	GSD.length_p_energy_samples = in.lookups;
 
 	sz = in.lookups * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.mat_samples, sz) );
 	total_sz += sz;
 	GSD.length_mat_samples = in.lookups;
 	
@@ -418,13 +434,13 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 	
-	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(sampling_kernel, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
-	xs_lookup_kernel_optimization_1<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(xs_lookup_kernel_optimization_1, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -432,8 +448,8 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	if( mype == 0)	printf("Reducing verification results...\n");
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	return verification_scalar;
 }
@@ -532,12 +548,12 @@ unsigned long long run_event_based_simulation_optimization_2(Inputs in, Simulati
 	size_t total_sz = 0;
 
 	sz = in.lookups * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.p_energy_samples, sz) );
 	total_sz += sz;
 	GSD.length_p_energy_samples = in.lookups;
 
 	sz = in.lookups * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.mat_samples, sz) );
 	total_sz += sz;
 	GSD.length_mat_samples = in.lookups;
 	
@@ -551,15 +567,15 @@ unsigned long long run_event_based_simulation_optimization_2(Inputs in, Simulati
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 	
-	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(sampling_kernel, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	// Launch all material kernels individually
 	for( int m = 0; m < 12; m++ )
-		xs_lookup_kernel_optimization_2<<<nblocks, nthreads>>>( in, GSD, m );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+		hipLaunchKernelGGL(xs_lookup_kernel_optimization_2, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, m );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -567,8 +583,8 @@ unsigned long long run_event_based_simulation_optimization_2(Inputs in, Simulati
 	if( mype == 0)	printf("Reducing verification results...\n");
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	return verification_scalar;
 }
@@ -648,12 +664,12 @@ unsigned long long run_event_based_simulation_optimization_3(Inputs in, Simulati
 	size_t total_sz = 0;
 
 	sz = in.lookups * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.p_energy_samples, sz) );
 	total_sz += sz;
 	GSD.length_p_energy_samples = in.lookups;
 
 	sz = in.lookups * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.mat_samples, sz) );
 	total_sz += sz;
 	GSD.length_mat_samples = in.lookups;
 	
@@ -667,15 +683,15 @@ unsigned long long run_event_based_simulation_optimization_3(Inputs in, Simulati
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 	
-	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(sampling_kernel, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	// Launch all material kernels individually
-	xs_lookup_kernel_optimization_3<<<nblocks, nthreads>>>( in, GSD, 0 );
-	xs_lookup_kernel_optimization_3<<<nblocks, nthreads>>>( in, GSD, 1 );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(xs_lookup_kernel_optimization_3, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, 0 );
+	hipLaunchKernelGGL(xs_lookup_kernel_optimization_3, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, 1 );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -683,8 +699,8 @@ unsigned long long run_event_based_simulation_optimization_3(Inputs in, Simulati
 	if( mype == 0)	printf("Reducing verification results...\n");
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	return verification_scalar;
 }
@@ -765,12 +781,12 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 	size_t total_sz = 0;
 
 	sz = in.lookups * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.p_energy_samples, sz) );
 	total_sz += sz;
 	GSD.length_p_energy_samples = in.lookups;
 
 	sz = in.lookups * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.mat_samples, sz) );
 	total_sz += sz;
 	GSD.length_mat_samples = in.lookups;
 	
@@ -784,9 +800,9 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 	
-	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(sampling_kernel, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	// Count the number of fuel material lookups that need to be performed (fuel id = 0)
 	int n_lookups_per_material[12];
@@ -802,11 +818,11 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 	{
 		nthreads = 32;
 		nblocks = ceil((double) n_lookups_per_material[m] / (double) nthreads);
-		xs_lookup_kernel_optimization_4<<<nblocks, nthreads>>>( in, GSD, m, n_lookups_per_material[m], offset );
+		hipLaunchKernelGGL(xs_lookup_kernel_optimization_4, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, m, n_lookups_per_material[m], offset );
 		offset += n_lookups_per_material[m];
 	}
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -814,8 +830,8 @@ unsigned long long run_event_based_simulation_optimization_4(Inputs in, Simulati
 	if( mype == 0)	printf("Reducing verification results...\n");
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	return verification_scalar;
 }
@@ -906,12 +922,12 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	size_t total_sz = 0;
 
 	sz = in.lookups * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.p_energy_samples, sz) );
 	total_sz += sz;
 	GSD.length_p_energy_samples = in.lookups;
 
 	sz = in.lookups * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.mat_samples, sz) );
 	total_sz += sz;
 	GSD.length_mat_samples = in.lookups;
 	
@@ -925,9 +941,9 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 	
-	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(sampling_kernel, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	// Count the number of fuel material lookups that need to be performed (fuel id = 0)
 	int n_fuel_lookups = thrust::count(thrust::device, GSD.mat_samples, GSD.mat_samples + in.lookups, 0);
@@ -937,13 +953,13 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 
 	// Launch all material kernels individually (asynchronous is allowed)
 	nblocks = ceil( (double) n_fuel_lookups / (double) nthreads);
-	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, n_fuel_lookups, 0 );
+	hipLaunchKernelGGL(xs_lookup_kernel_optimization_5, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, n_fuel_lookups, 0 );
 
 	nblocks = ceil( (double) (in.lookups - n_fuel_lookups) / (double) nthreads);
-	xs_lookup_kernel_optimization_5<<<nblocks, nthreads>>>( in, GSD, in.lookups-n_fuel_lookups, n_fuel_lookups );
+	hipLaunchKernelGGL(xs_lookup_kernel_optimization_5, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, in.lookups-n_fuel_lookups, n_fuel_lookups );
 
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -951,8 +967,8 @@ unsigned long long run_event_based_simulation_optimization_5(Inputs in, Simulati
 	if( mype == 0)	printf("Reducing verification results...\n");
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	return verification_scalar;
 }
@@ -1035,12 +1051,12 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 	size_t total_sz = 0;
 
 	sz = in.lookups * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.p_energy_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.p_energy_samples, sz) );
 	total_sz += sz;
 	GSD.length_p_energy_samples = in.lookups;
 
 	sz = in.lookups * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mat_samples, sz) );
+	gpuErrchk( hipMalloc((void **) &GSD.mat_samples, sz) );
 	total_sz += sz;
 	GSD.length_mat_samples = in.lookups;
 	
@@ -1054,9 +1070,9 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 	int nthreads = 32;
 	int nblocks = ceil( (double) in.lookups / 32.0);
 	
-	sampling_kernel<<<nblocks, nthreads>>>( in, GSD );
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	hipLaunchKernelGGL(sampling_kernel, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	// Count the number of fuel material lookups that need to be performed (fuel id = 0)
 	int n_lookups_per_material[12];
@@ -1080,11 +1096,11 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 	{
 		nthreads = 32;
 		nblocks = ceil((double) n_lookups_per_material[m] / (double) nthreads);
-		xs_lookup_kernel_optimization_4<<<nblocks, nthreads>>>( in, GSD, m, n_lookups_per_material[m], offset );
+		hipLaunchKernelGGL(xs_lookup_kernel_optimization_4, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD, m, n_lookups_per_material[m], offset );
 		offset += n_lookups_per_material[m];
 	}
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
@@ -1092,8 +1108,9 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 	if( mype == 0)	printf("Reducing verification results...\n");
 
 	unsigned long verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	gpuErrchk( hipPeekAtLastError() );
+	gpuErrchk( hipDeviceSynchronize() );
 
 	return verification_scalar;
 }
+*/

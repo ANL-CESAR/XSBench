@@ -204,7 +204,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Execute the OpenCL kernel on the list
 	size_t global_item_size = in.lookups; // Process the entire lists
-	size_t local_item_size = 64; // Divide work items into groups of 64
+	size_t local_item_size = 256; // Divide work items into groups of 64
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
 	

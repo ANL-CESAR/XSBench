@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = amd
+COMPILER    = intel
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
