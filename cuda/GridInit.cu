@@ -23,11 +23,19 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	// Note: "Lengths" are given as the number of objects in the array, not the
 	//       number of bytes.
 	////////////////////////////////////////////////////////////////////////////////
-	size_t sz;
-	size_t total_sz = 0;
 
 	// Shallow copy of CPU simulation data to GPU simulation data
 	SimulationData GSD = SD;
+#ifdef AML
+	// Deep copy  of CPU simulation data to GPU simulation data
+	assert(aml_mapper_mmap(&SimulationData_mapper,
+			       &SD, &GSD, 1, &aml_area_cuda, NULL,
+			       &aml_dma_cuda_host_to_device,
+			       aml_dma_cuda_copy_1D,
+			       NULL) == AML_SUCCESS);
+#else
+	size_t total_sz = 0;
+	size_t sz;
 
 	// Move data to GPU memory space
 	sz = GSD.length_num_nucs * sizeof(int);
@@ -66,12 +74,14 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	gpuErrchk( cudaMalloc((void **) &GSD.verification, sz) );
 	total_sz += sz;
 	GSD.length_verification = in.lookups;
+#endif
 	
 	// Synchronize
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
-	
+#ifndef AML
 	if(mype == 0 ) printf("GPU Intialization complete. Allocated %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0 );
+#endif
 
 	return GSD;
 
@@ -110,7 +120,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.nuclide_grid     = (NuclideGridPoint *) malloc( SD.length_nuclide_grid * sizeof(NuclideGridPoint));
 	assert(SD.nuclide_grid != NULL);
 	nbytes += SD.length_nuclide_grid * sizeof(NuclideGridPoint);
-	for( int i = 0; i < SD.length_nuclide_grid; i++ )
+	for( size_t i = 0; i < SD.length_nuclide_grid; i++ )
 	{
 		SD.nuclide_grid[i].energy        = LCG_random_double(&seed);
 		SD.nuclide_grid[i].total_xs      = LCG_random_double(&seed);
@@ -156,7 +166,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		nbytes += SD.length_unionized_energy_array * sizeof(double);
 
 		// Copy energy data over from the nuclide energy grid
-		for( int i = 0; i < SD.length_unionized_energy_array; i++ )
+		for( size_t i = 0; i < SD.length_unionized_energy_array; i++ )
 			SD.unionized_energy_array[i] = SD.nuclide_grid[i].energy;
 
 		// Sort unionized energy array
@@ -177,7 +187,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		for( int i = 0; i < in.n_isotopes; i++ )
 			energy_high[i] = SD.nuclide_grid[i * in.n_gridpoints + 1].energy;
 
-		for( long e = 0; e < SD.length_unionized_energy_array; e++ )
+		for( size_t e = 0; e < SD.length_unionized_energy_array; e++ )
 		{
 			double unionized_energy = SD.unionized_energy_array[e];
 			for( long i = 0; i < in.n_isotopes; i++ )

@@ -141,13 +141,22 @@ While XSBench is primarily used to investigate "on node parallelism" issues, som
 
 AML is a memory management library featuring optimization abtractions. More information about the library can be found in the [online documentation](https://argo-aml.readthedocs.io/en/latest/). The library can be downloaded and installed from the [repository](https://xgitlab.cels.anl.gov/argo/aml).
 
-XSBench can be compiled to include these optimizations by toggling `make` `AML=yes` option. In order for `pkg-config` to find out the appropriate compilation flags, environment variable `PKG_CONFIG_PATH` must point to the install directory of `aml.pc`.
+XSBench can be compiled to include these optimizations by toggling `make` `AML=yes` option.  
+The current supported version of AML is commit: `ec81063961f2968a6fc051438bcae3dba0084b17`.  
+In order for `pkg-config` to find the appropriate compilation flags, the environment variable `PKG_CONFIG_PATH` must point to the install directory of `aml.pc`, usually in `<INSTALL_PREFIX>/lib/pkgconfig`.
 
 Current optimizations featured in XSBench are as follow:
 - **replicaset**: Performance sensitive data structures are replicated on memories close to processing elements. If a group of processing elements have several close memories (e.g a NUMA cluster on Intel Knights Landing processor with has both a MCDRAM and DRAM memory modules) then the memory with the smallest latency is elected. Upon accessing sensitive data, the accessor location is looked up and the closest replica (latency wise) is accessed.
 
+- **mapper**: AML mapper provides abstractions to describe the layout of a hierarchical data structure and deepcopy it into a target memory. Complex data structure that needs to be 
+copied on a cuda device can be copied with less code and inside a contiguous memory area.
+Therefore, this optimization moves the complexity of managing deep data copies into the 
+AML library.
+
 Optimizations implementation and availability may depend on the programming model. In the current version the following programming models feature AML optimizations:
 - **openmp-threading**: replicaset.
+- **cuda**: mapper.
+- **openmp-offload**: mapper using level zero backend for allocation and movements.
 
 ### Verification Support
 
