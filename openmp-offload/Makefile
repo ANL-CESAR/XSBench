@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = intel
+COMPILER    = nvidia
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -49,13 +49,19 @@ endif
 # Clang-ykt compiler Targeting P100
 ifeq ($(COMPILER),clang)
   CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60
+  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80
 endif
 
 # IBM XL Compiler Targeting K80
 ifeq ($(COMPILER),ibm)
   CC = xlc_r
   CFLAGS += -qsmp=omp -qoffload
+endif
+
+# NVIDIA
+ifeq ($(COMPILER),nvidia)
+  CC = nvc
+  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc80
 endif
 
 # AOMP
