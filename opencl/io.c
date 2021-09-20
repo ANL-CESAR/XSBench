@@ -66,7 +66,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 		border_print();
 
 		// Print the results
-		//printf("Threads:     %d\n", in.nthreads);
+    printf("NOTE: Timings are estimated -- use nvprof/nsys/iprof/rocprof for formal analysis\n");
 		#ifdef MPI
 		printf("MPI ranks:   %d\n", nprocs);
 		#endif
