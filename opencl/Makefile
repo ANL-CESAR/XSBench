@@ -33,24 +33,16 @@ obj = $(source:.c=.o)
 CFLAGS := -std=gnu99 -Wall
 
 # Linker Flags
-LDFLAGS = -lm
+LDFLAGS = -lm -lOpenCL
 
 # Regular gcc Compiler
 ifeq ($(COMPILER),gnu)
   CC = gcc
-  CFLAGS += -lOpenCL
 endif
 
 # clang
 ifeq ($(COMPILER),clang)
   CC = clang
-  LDFLAGS += -lOpenCL
-endif
-
-# Intel Compiler
-ifeq ($(COMPILER),intel)
-  CC = 
-  CFLAGS += 
 endif
 
 # Debug Flags
