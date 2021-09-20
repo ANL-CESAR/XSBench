@@ -7,7 +7,6 @@
 #include<math.h>
 #include<assert.h>
 #include<hip/hip_runtime.h>
-//#include <thrust/reduce.h>
 #include<stdint.h>
 #include <chrono> 
 

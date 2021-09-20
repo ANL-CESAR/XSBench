@@ -6,7 +6,6 @@ COMPILER    = amd
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
-SM_VERSION  = 70
 
 #===============================================================================
 # Program name & source code list
@@ -29,21 +28,14 @@ obj = $(source:.hip=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := 
+CFLAGS += -std=c++14
 
 # Linker Flags
 LDFLAGS = -lm
 
-# Regular gcc Compiler
-ifeq ($(COMPILER),nvidia)
-  CC = nvcc
-  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++11
-endif
-
 # AMD
 ifeq ($(COMPILER),amd)
   CC = hipcc
-  CFLAGS += -std=c++14
 endif
 
 # Debug Flags
