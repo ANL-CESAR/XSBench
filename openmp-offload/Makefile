@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-COMPILER    = intel
+COMPILER    = llvm
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
@@ -46,16 +46,28 @@ ifeq ($(COMPILER),intel)
   CFLAGS += -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ 
 endif
 
-# Clang-ykt compiler Targeting P100
-ifeq ($(COMPILER),clang)
+# LLVM Compiler Targeting A100 -- Change SM Level to Target Other GPUs
+ifeq ($(COMPILER),llvm)
   CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_60
+  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80
 endif
 
-# IBM XL Compiler Targeting K80
+# IBM XL Compiler
 ifeq ($(COMPILER),ibm)
   CC = xlc_r
   CFLAGS += -qsmp=omp -qoffload
+endif
+
+# NVIDIA Compiler Targeting A100 -- Change SM Level to Target Other GPUs
+ifeq ($(COMPILER),nvidia)
+  CC = nvc
+  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc80
+endif
+
+# AOMP Targeting MI100 -- Change march to Target Other GPUs
+ifeq ($(COMPILER),amd)
+  CC = clang
+  CFLAGS += -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
 endif
 
 # Debug Flags

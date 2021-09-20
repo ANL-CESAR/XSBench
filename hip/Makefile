@@ -2,11 +2,10 @@
 # User Options
 #===============================================================================
 
-COMPILER    = nvidia
+COMPILER    = amd
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
-SM_VERSION  = 80
 
 #===============================================================================
 # Program name & source code list
@@ -15,29 +14,28 @@ SM_VERSION  = 80
 program = XSBench
 
 source = \
-Main.cu \
-io.cu \
-Simulation.cu \
-GridInit.cu \
-XSutils.cu \
-Materials.cu
+Main.hip \
+io.hip \
+Simulation.hip \
+GridInit.hip \
+XSutils.hip \
+Materials.hip
 
-obj = $(source:.cu=.o)
+obj = $(source:.hip=.o)
 
 #===============================================================================
 # Sets Flags
 #===============================================================================
 
 # Standard Flags
-CFLAGS := 
+CFLAGS += -std=c++14
 
 # Linker Flags
 LDFLAGS = -lm
 
-# NVIDIA Compiler
-ifeq ($(COMPILER),nvidia)
-  CC = nvcc
-  CFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -std=c++14
+# AMD
+ifeq ($(COMPILER),amd)
+  CC = hipcc
 endif
 
 # Debug Flags
@@ -61,17 +59,17 @@ endif
 # Targets to Build
 #===============================================================================
 
-$(program): $(obj) XSbench_header.cuh Makefile
+$(program): $(obj) XSbench_header.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.cu XSbench_header.cuh Makefile
+%.o: %.hip XSbench_header.h Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(program) $(obj)
 
 edit:
-	vim -p $(source) XSbench_header.cuh
+	vim -p $(source) XSbench_header.h
 
 run:
 	./$(program)

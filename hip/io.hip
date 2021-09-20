@@ -1,9 +1,5 @@
 #include "XSbench_header.h"
 
-#ifdef MPI
-#include<mpi.h>
-#endif
-
 // Prints program logo
 void logo(int version)
 {
@@ -124,7 +120,12 @@ void print_inputs(Inputs in, int nprocs, int version )
 	logo(version);
 	center_print("INPUT SUMMARY", 79);
 	border_print();
-	printf("Programming Model:            OpenMP Target Offloading\n");
+	printf("Programming Model:            HIP\n");
+	hipDeviceProp_t prop;
+	int device;
+	hipGetDevice(&device);
+	hipGetDeviceProperties ( &prop, device );
+		printf("HIP Device:                   %s\n", prop.name); 
 	if( in.simulation_method == EVENT_BASED )
 		printf("Simulation Method:            Event Based\n");
 	else
@@ -217,7 +218,7 @@ void print_CLI_error(void)
 	printf("  -h <hash bins>           Number of hash bins (only relevant when used with \"-G hash\")\n");
 	printf("  -b <binary mode>         Read or write all data structures to file. If reading, this will skip initialization phase. (read, write)\n");
 	printf("  -k <kernel ID>           Specifies which kernel to run. 0 is baseline, 1, 2, etc are optimized variants. (0 is default.)\n");
-	printf("Default is equivalent to: -m history -s large -l 34 -p 500000 -G unionized\n");
+	printf("Default is equivalent to: -m history -s large -l 34 -p 500000 -G unionized -k 0\n");
 	printf("See readme for full description of default run values\n");
 	exit(4);
 }
@@ -230,7 +231,7 @@ Inputs read_CLI( int argc, char * argv[] )
 	input.simulation_method = HISTORY_BASED;
 	
 	// defaults to max threads on the system	
-	input.nthreads = omp_get_num_procs();
+	input.nthreads = 1;
 	
 	// defaults to 355 (corresponding to H-M Large benchmark)
 	input.n_isotopes = 355;
@@ -252,7 +253,7 @@ Inputs read_CLI( int argc, char * argv[] )
 
 	// default to no binary read/write
 	input.binary_mode = NONE;
-	
+
 	// defaults to baseline kernel
 	input.kernel_id = 0;
 	
@@ -441,7 +442,7 @@ Inputs read_CLI( int argc, char * argv[] )
 
 void binary_write( Inputs in, SimulationData SD )
 {
-	char * fname = "XS_data.dat";
+	const char * fname = "XS_data.dat";
 	printf("Writing all data structures to binary file %s...\n", fname);
 	FILE * fp = fopen(fname, "w");
 
@@ -463,7 +464,7 @@ SimulationData binary_read( Inputs in )
 {
 	SimulationData SD;
 	
-	char * fname = "XS_data.dat";
+	const char * fname = "XS_data.dat";
 	printf("Reading all data structures from binary file %s...\n", fname);
 
 	FILE * fp = fopen(fname, "r");

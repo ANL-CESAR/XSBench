@@ -19,8 +19,8 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Running baseline event-based simulation...\n");
 
-	int nthreads = 32;
-	int nblocks = ceil( (double) in.lookups / 32.0);
+	int nthreads = 256;
+	int nblocks = ceil( (double) in.lookups / (double) nthreads);
 
 	xs_lookup_kernel_baseline<<<nblocks, nthreads>>>( in, GSD );
 	gpuErrchk( cudaPeekAtLastError() );

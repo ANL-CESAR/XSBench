@@ -203,8 +203,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	if( mype == 0) printf("Running event based simulation...\n");
 
 	// Execute the OpenCL kernel on the list
+	size_t local_item_size = 256; // Divide work items into groups
 	size_t global_item_size = in.lookups; // Process the entire lists
-	size_t local_item_size = 64; // Divide work items into groups of 64
+
+  // Add extra work items if global size not evenly divisible by local size
+  if( in.lookups % local_item_size != 0 && in.lookups > local_item_size )
+    global_item_size = ((in.lookups / local_item_size) + 1) * local_item_size;
+
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
 	
@@ -216,6 +221,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	ret = clEnqueueReadBuffer(command_queue, verification_array, CL_TRUE, 0, in.lookups * sizeof(int), verification_array_host, 0, NULL, NULL);
 	check(ret);
 	
+  stop = get_time();
+	
 	if( mype == 0) printf("Reducing verification value...\n");
 	
 	unsigned long long verification = 0;
@@ -223,7 +230,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	for( int l = 0; l < in.lookups; l++ )
 		verification += verification_array_host[l];
 
-	stop = get_time();
 	*sim_runtime = stop-start;
 	if( mype == 0) printf("Simulation + Verification Reduction Runtime: %.3lf seconds\n", *sim_runtime);
 	

@@ -1,4 +1,10 @@
 =====================================================================
+NEW IN VERSION 20
+=====================================================================
+- (Feature) Adds a HIP port. This port is closely derived from the
+  CUDA port, with only a few very minor changes.
+
+=====================================================================
 NEW IN VERSION 19
 =====================================================================
 - (Feature) Ports of XSBench in a variety of accelerator oriented
