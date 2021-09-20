@@ -24,7 +24,7 @@
 //AML header
 #ifdef AML
 #include<aml.h>
-#include<aml/higher/replicaset/replicaset.h>
+#include<aml/higher/replicaset.h>
 #include<aml/higher/replicaset/hwloc.h>
 #endif
 
