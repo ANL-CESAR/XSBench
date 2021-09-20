@@ -47,6 +47,9 @@ This version of XSBench is written in OpenCL, and can be used for CPU, GPU, FPGA
 4. **XSBench/sycl**
 This version of XSBench is written in SYCL, and can be used for CPU, GPU, FPGA, or other architectures that support OpenCL and SYCL. It was written with GPUs in mind, so if running on other architectures you may need to heavily re-optimize the code. You will also likely need to edit the makefile to supply the path to your SYCL compiler.
 
+5. **XSBench/hip**
+This version of XSBench is written in HIP for use with GPU architectures. This version is derived from CUDA using an automatic conversion tool with only a few small manual changes.
+
 ## Compilation
 
 To compile XSBench with default settings, navigate to your selected source directory and use the following command:

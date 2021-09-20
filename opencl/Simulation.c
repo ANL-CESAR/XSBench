@@ -203,13 +203,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	if( mype == 0) printf("Running event based simulation...\n");
 
 	// Execute the OpenCL kernel on the list
-	size_t local_item_size = 256; // Divide work items into groups of 64
+	size_t local_item_size = 256; // Divide work items into groups
 	size_t global_item_size = in.lookups; // Process the entire lists
 
   // Add extra work items if global size not evenly divisible by local size
   if( in.lookups % local_item_size != 0 && in.lookups > local_item_size )
     global_item_size = ((in.lookups / local_item_size) + 1) * local_item_size;
-  printf("local = %lu global = %lu\n", local_item_size, global_item_size);
+
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
 	
