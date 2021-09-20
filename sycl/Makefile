@@ -2,7 +2,6 @@
 # User Options
 #===============================================================================
 
-# Compiler can be set below, or via environment variable
 CC          = llvm
 OPTIMIZE    = yes
 DEBUG       = no
