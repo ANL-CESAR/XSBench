@@ -20,7 +20,7 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Running baseline event-based simulation...\n");
 
-	int nthreads = 512;
+	int nthreads = 256;
 	int nblocks = ceil( (double) in.lookups / (double) nthreads);
 
 	hipLaunchKernelGGL(xs_lookup_kernel_baseline, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
