@@ -77,6 +77,16 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 
 }
 
+// Release device memory
+void release_device_memory(SimulationData GSD) {
+	cudaFree(GSD.num_nucs);
+	cudaFree(GSD.concs);
+	cudaFree(GSD.mats);
+	cudaFree(GSD.unionized_energy_array);
+	cudaFree(GSD.nuclide_grid);
+	cudaFree(GSD.verification);
+}
+
 SimulationData grid_init_do_not_profile( Inputs in, int mype )
 {
 	// Structure to hold all allocated simuluation data arrays
