@@ -137,6 +137,7 @@ unsigned long long run_event_based_simulation_optimization_6(Inputs in, Simulati
 // GridInit.cu
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
 SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationData SD );
+void release_device_memory(SimulationData GSD);
 
 // XSutils.cu
 int NGP_compare( const void * a, const void * b );
