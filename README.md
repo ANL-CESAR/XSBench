@@ -99,7 +99,7 @@ For non-default settings, XSBench supports the following command line options:
 |-g | # of gridpoints per nuclide (overrides -s defaults) | integer value| 11,303 |
 -G | Grid search type | unionized, nuclide, hash | unionized |
 -p | # of particle histories (if running using "history" method)| integer value | 500,000 |
--l | # of Cross-section (XS) lookups. If using using history based method, this is lookups per particle history. If using event-based method, this is total lookups. | integer value | (History: 34) (Event: 17,000,000) |
+-l | # of Cross-section (XS) lookups. If using history based method, this is lookups per particle history. If using event-based method, this is total lookups. | integer value | (History: 34) (Event: 17,000,000) |
 -h | # of hash bins (only used with hash-based grid search) | integer value | 10,000 |
 -b | Read/Write binary files | read, write |  |
 -k | Optimized kernel ID | integer value | 0
