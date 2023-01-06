@@ -41,8 +41,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Begin Actual Simulation Loop 
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long verification = 0;
+	int i = 0;
 	#pragma omp parallel for schedule(dynamic,100) reduction(+:verification)
-	for( int i = 0; i < in.lookups; i++ )
+	for( i = 0; i < in.lookups; i++ )
 	{
 		#ifdef AML
 		int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
@@ -140,8 +141,9 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 	unsigned long long verification = 0;
 
 	// Begin outer lookup loop over particles. This loop is independent.
+	int p = 0;
 	#pragma omp parallel for schedule(dynamic, 100) reduction(+:verification)
-	for( int p = 0; p < in.particles; p++ )
+	for( p = 0; p < in.particles; p++ )
 	{
 		#ifdef AML
 		int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
@@ -706,6 +708,10 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	size_t sz;
 	size_t total_sz = 0;
 	double start, stop;
+	
+	// loop variables
+	int i = 0;
+	int m = 0;
 
 	sz = in.lookups * sizeof(double);
 	SD.p_energy_samples = (double *) malloc(sz);
@@ -727,7 +733,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	// Sample Materials and Energies
 	////////////////////////////////////////////////////////////////////////////////
 	#pragma omp parallel for schedule(dynamic, 100)
-	for( int i = 0; i < in.lookups; i++ )
+	for( i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
@@ -793,10 +799,10 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 
 	// Individual Materials
 	offset = 0;
-	for( int m = 0; m < 12; m++ )
+	for( m = 0; m < 12; m++ )
 	{
 		#pragma omp parallel for schedule(dynamic,100) reduction(+:verification)
-		for( int i = offset; i < offset + num_samples_per_mat[m]; i++)
+		for( i = offset; i < offset + num_samples_per_mat[m]; i++)
 		{
 			#ifdef AML
 			int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
