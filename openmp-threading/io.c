@@ -86,8 +86,14 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	unsigned long long small = 0; 
 	if( in.simulation_method == EVENT_BASED )
 	{
-		small = 945990;
-		large = 952131;
+    if( sizeof(FP_PRECISION) == 4 )
+    {
+      small = 773272;
+      large = 795961;
+    } else {
+      small = 945990;
+      large = 952131;
+    }
 	}
 	else if( in.simulation_method == HISTORY_BASED )
 	{

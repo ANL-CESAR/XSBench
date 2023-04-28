@@ -288,8 +288,7 @@ void calculate_micro_xs(   FP_PRECISION p_energy, int nuc, long n_isotopes,
 		FP_PRECISION e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
 		FP_PRECISION e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
 		int lower;
-    // TODO: What if p_energy ids above or below the e_low or e_high due to incorrect hashing? Should check boundaries and change idx if needed?
-		if( p_energy <= e_low )
+		if( p_energy < e_low )
 			lower = 0;
 		else if( p_energy >= e_high )
 			lower = n_gridpoints - 1;
