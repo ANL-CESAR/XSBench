@@ -50,6 +50,12 @@
 // Starting Seed
 #define STARTING_SEED 1070
 
+typedef struct node {
+    FP_PRECISION data;
+    struct node* left;
+    struct node* right;
+} node_t;
+
 // Structures
 typedef struct{
 	FP_PRECISION energy;
@@ -139,6 +145,9 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
 
 // XSutils.c
+node_t* insert_node(node_t* root, FP_PRECISION data);
+int find_node(node_t* root, FP_PRECISION data);
+void free_tree(node_t* root);
 int NGP_compare( const void * a, const void * b );
 int FP_PRECISION_compare(const void * a, const void * b);
 size_t estimate_mem_usage( Inputs in );

@@ -39,7 +39,7 @@ CC    = gcc
 endif
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall -DFP_PRECISION=float
+CFLAGS := -std=gnu99 -Wall -DFP_PRECISION=float -fopenmp -DOPENMP
 
 # Linker Flags
 LDFLAGS = -lm
@@ -48,7 +48,6 @@ LDFLAGS = -lm
 ifneq (,$(findstring gcc,$(CC)))
   CFLAGS += -flto
   ifeq ($(OPENMP),yes)
-	CFLAGS += -fopenmp -DOPENMP
   endif
 endif
 
@@ -56,7 +55,6 @@ endif
 ifneq (,$(findstring clang,$(CC)))
   CFLAGS += -flto
   ifeq ($(OPENMP),yes)
-	CFLAGS += -fopenmp -DOPENMP
   endif
 endif
 
@@ -64,7 +62,6 @@ endif
 ifneq (,$(findstring intel,$(CC)))
   CFLAGS += -ipo
   ifeq ($(OPENMP),yes)
-	CFLAGS += -fopenmp -DOPENMP
   endif
 endif
 

@@ -36,15 +36,34 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.nuclide_grid     = (NuclideGridPoint *) malloc( SD.length_nuclide_grid * sizeof(NuclideGridPoint));
 	assert(SD.nuclide_grid != NULL);
 	nbytes += SD.length_nuclide_grid * sizeof(NuclideGridPoint);
+    
+  // Binary Search Tree (BST) for storing sampled energies
+  // This is used for ensuring that duplicate FP32 energy samples are not generated
+  node_t* root = NULL;
+
+  // Generated nuclide grid points
 	for( int i = 0; i < SD.length_nuclide_grid; i++ )
 	{
-		SD.nuclide_grid[i].energy        = LCG_random_FP_PRECISION(&seed);
+    int same = 1;
+    while(same)
+    {
+      FP_PRECISION energy = LCG_random_FP_PRECISION(&seed);
+      if( find_node(root, energy) == 0 )
+      {
+		    SD.nuclide_grid[i].energy        = energy;
+        root = insert_node(root, energy);
+        same = 0;
+      }
+    }
 		SD.nuclide_grid[i].total_xs      = LCG_random_FP_PRECISION(&seed);
 		SD.nuclide_grid[i].elastic_xs    = LCG_random_FP_PRECISION(&seed);
 		SD.nuclide_grid[i].absorbtion_xs = LCG_random_FP_PRECISION(&seed);
 		SD.nuclide_grid[i].fission_xs    = LCG_random_FP_PRECISION(&seed);
 		SD.nuclide_grid[i].nu_fission_xs = LCG_random_FP_PRECISION(&seed);
 	}
+
+  // Free BST
+  free_tree(root);
 
 	// Sort so that each nuclide has data stored in ascending energy order.
 	for( int i = 0; i < in.n_isotopes; i++ )
@@ -134,13 +153,13 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
 
-		FP_PRECISION du = 1.0 / in.hash_bins;
+		FP_PRECISION du = (FP_PRECISION) 1.0 / (FP_PRECISION) in.hash_bins;
 
 		// For each energy level in the hash table
 		#pragma omp parallel for
 		for( e = 0; e < in.hash_bins; e++ )
 		{
-			FP_PRECISION energy = e * du;
+			FP_PRECISION energy = (FP_PRECISION) e * du;
 
 			// We need to determine the bounding energy levels for all isotopes
 			for( long i = 0; i < in.n_isotopes; i++ )

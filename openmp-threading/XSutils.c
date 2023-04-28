@@ -1,5 +1,40 @@
 #include "XSbench_header.h"
 
+node_t* insert_node(node_t* root, FP_PRECISION data) {
+    if (root == NULL) {
+        node_t* new_node = (node_t*)malloc(sizeof(node_t));
+        new_node->data = data;
+        new_node->left = NULL;
+        new_node->right = NULL;
+        return new_node;
+    } else if (data < root->data) {
+        root->left = insert_node(root->left, data);
+    } else if (data > root->data) {
+        root->right = insert_node(root->right, data);
+    }
+    return root;
+}
+
+int find_node(node_t* root, FP_PRECISION data) {
+    if (root == NULL) {
+        return 0;
+    } else if (data < root->data) {
+        return find_node(root->left, data);
+    } else if (data > root->data) {
+        return find_node(root->right, data);
+    } else {
+        return 1;
+    }
+}
+
+void free_tree(node_t* root) {
+    if (root != NULL) {
+        free_tree(root->left);
+        free_tree(root->right);
+        free(root);
+    }
+}
+
 int FP_PRECISION_compare(const void * a, const void * b)
 {
 	FP_PRECISION A = *((FP_PRECISION *) a);
