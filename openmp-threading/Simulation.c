@@ -23,9 +23,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// offloaded manually if using an accelerator with a seperate memory space
 	////////////////////////////////////////////////////////////////////////////////
 	// int * num_nucs;                     // Length = length_num_nucs;
-	// double * concs;                     // Length = length_concs
+	// FP_PRECISION * concs;                     // Length = length_concs
 	// int * mats;                         // Length = length_mats
-	// double * unionized_energy_array;    // Length = length_unionized_energy_array
+	// FP_PRECISION * unionized_energy_array;    // Length = length_unionized_energy_array
 	// int * index_grid;                   // Length = length_index_grid
 	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
 	// 
@@ -47,14 +47,14 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	{
 		#ifdef AML
 		int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
-		double * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
-		double * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
+		FP_PRECISION * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
+		FP_PRECISION * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
 		int * index_grid = aml_replicaset_hwloc_local_replica(SD.index_grid_replica);
 		NuclideGridPoint * nuclide_grid = aml_replicaset_hwloc_local_replica(SD.nuclide_grid_replica);
 		#else
 		int * num_nucs = SD.num_nucs;
-		double * concs = SD.concs;
-		double * unionized_energy_array = SD.unionized_energy_array;
+		FP_PRECISION * concs = SD.concs;
+		FP_PRECISION * unionized_energy_array = SD.unionized_energy_array;
 		int * index_grid = SD.index_grid;
 		NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
 		#endif
@@ -66,10 +66,10 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		seed = fast_forward_LCG(seed, 2*i);
 
 		// Randomly pick an energy and material for the particle
-		double p_energy = LCG_random_double(&seed);
+		FP_PRECISION p_energy = LCG_random_FP_PRECISION(&seed);
 		int mat         = pick_mat(&seed); 
 
-		double macro_xs_vector[5] = {0};
+		FP_PRECISION macro_xs_vector[5] = {0};
 
 		// Perform macroscopic Cross Section Lookup
 		calculate_macro_xs(
@@ -97,7 +97,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		// For accelerators, a different approach might be required
 		// (e.g., atomics, reduction of thread-specific values in large
 		// array via CUDA thrust, etc).
-		double max = -1.0;
+		FP_PRECISION max = -1.0;
 		int max_idx = 0;
 		for(int j = 0; j < 5; j++ )
 		{
@@ -125,9 +125,9 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 	// offloaded manually if using an accelerator with a seperate memory space
 	////////////////////////////////////////////////////////////////////////////////
 	// int * num_nucs;                     // Length = length_num_nucs;
-	// double * concs;                     // Length = length_concs
+	// FP_PRECISION * concs;                     // Length = length_concs
 	// int * mats;                         // Length = length_mats
-	// double * unionized_energy_array;    // Length = length_unionized_energy_array
+	// FP_PRECISION * unionized_energy_array;    // Length = length_unionized_energy_array
 	// int * index_grid;                   // Length = length_index_grid
 	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
 	// 
@@ -147,14 +147,14 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 	{
 		#ifdef AML
 		int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
-		double * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
-		double * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
+		FP_PRECISION * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
+		FP_PRECISION * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
 		int * index_grid = aml_replicaset_hwloc_local_replica(SD.index_grid_replica);
 		NuclideGridPoint * nuclide_grid = aml_replicaset_hwloc_local_replica(SD.nuclide_grid_replica);
 		#else
 		int * num_nucs = SD.num_nucs;
-		double * concs = SD.concs;
-		double * unionized_energy_array = SD.unionized_energy_array;
+		FP_PRECISION * concs = SD.concs;
+		FP_PRECISION * unionized_energy_array = SD.unionized_energy_array;
 		int * index_grid = SD.index_grid;
 		NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
 		#endif
@@ -167,7 +167,7 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 		seed = fast_forward_LCG(seed, p*in.lookups*2*5);
 
 		// Randomly pick an energy and material for the particle
-		double p_energy = LCG_random_double(&seed);
+		FP_PRECISION p_energy = LCG_random_FP_PRECISION(&seed);
 		int mat         = pick_mat(&seed); 
 
 		// Inner XS Lookup Loop
@@ -175,7 +175,7 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 		// i.e., Next iteration uses data computed in previous iter.
 		for( int i = 0; i < in.lookups; i++ )
 		{
-			double macro_xs_vector[5] = {0};
+			FP_PRECISION macro_xs_vector[5] = {0};
 
 			// Perform macroscopic Cross Section Lookup
 			calculate_macro_xs(
@@ -203,7 +203,7 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 			// contention by using an OMP reduction on it. For other accelerators,
 			// a different approach might be required (e.g., atomics, reduction
 			// of thread-specific values in large array via CUDA thrust, etc)
-			double max = -1.0;
+			FP_PRECISION max = -1.0;
 			int max_idx = 0;
 			for(int j = 0; j < 5; j++ )
 			{
@@ -229,7 +229,7 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 			if( n_forward > 0 )
 				seed = fast_forward_LCG(seed, n_forward);
 
-			p_energy = LCG_random_double(&seed);
+			p_energy = LCG_random_FP_PRECISION(&seed);
 			mat      = pick_mat(&seed); 
 		}
 
@@ -238,13 +238,13 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy
-void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+void calculate_micro_xs(   FP_PRECISION p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           double * restrict egrid, int * restrict index_data,
+                           FP_PRECISION * restrict egrid, int * restrict index_data,
                            NuclideGridPoint * restrict nuclide_grids,
-                           long idx, double * restrict xs_vector, int grid_type, int hash_bins ){
+                           long idx, FP_PRECISION * restrict xs_vector, int grid_type, int hash_bins ){
 	// Variables
-	double f;
+	FP_PRECISION f;
 	NuclideGridPoint * low, * high;
 
 	// If using only the nuclide grid, we must perform a binary search
@@ -285,8 +285,8 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		// Check edge cases to make sure energy is actually between these
 		// Then, if things look good, search for gridpoint in the nuclide grid
 		// within the lower and higher limits we've calculated.
-		double e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
-		double e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
+		FP_PRECISION e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
+		FP_PRECISION e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
 		int lower;
 		if( p_energy <= e_low )
 			lower = 0;
@@ -323,16 +323,16 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
-void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+void calculate_macro_xs( FP_PRECISION p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int * restrict num_nucs,
-                         double * restrict concs,
-                         double * restrict egrid, int * restrict index_data,
+                         FP_PRECISION * restrict concs,
+                         FP_PRECISION * restrict egrid, int * restrict index_data,
                          NuclideGridPoint * restrict nuclide_grids,
                          int * restrict mats,
-                         double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
+                         FP_PRECISION * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
 	long idx = -1;	
-	double conc; // the concentration of the nuclide in the material
+	FP_PRECISION conc; // the concentration of the nuclide in the material
 
 	// cleans out macro_xs_vector
 	for( int k = 0; k < 5; k++ )
@@ -347,7 +347,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
 	else if( grid_type == HASH )
 	{
-		double du = 1.0 / hash_bins;
+		FP_PRECISION du = 1.0 / hash_bins;
 		idx = p_energy / du;
 	}
 	
@@ -363,7 +363,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	//  avoid simulataneous writing to the same data structure)
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
-		double xs_vector[5];
+		FP_PRECISION xs_vector[5];
 		p_nuc = mats[mat*max_num_nucs + j];
 		conc = concs[mat*max_num_nucs + j];
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
@@ -377,7 +377,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 
 // binary search for energy on unionized energy grid
 // returns lower index
-long grid_search( long n, double quarry, double * restrict A)
+long grid_search( long n, FP_PRECISION quarry, FP_PRECISION * restrict A)
 {
 	long lowerLimit = 0;
 	long upperLimit = n-1;
@@ -400,7 +400,7 @@ long grid_search( long n, double quarry, double * restrict A)
 }
 
 // binary search for energy on nuclide energy grid
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high)
+long grid_search_nuclide( long n, FP_PRECISION quarry, NuclideGridPoint * A, long low, long high)
 {
 	long lowerLimit = low;
 	long upperLimit = high;
@@ -430,7 +430,7 @@ int pick_mat( uint64_t * seed )
 	// *perfect* approximation of where XS lookups are going to occur,
 	// but this will do a good job of biasing the system nonetheless.
 
-	double dist[12];
+	FP_PRECISION dist[12];
 	dist[0]  = 0.140;	// fuel
 	dist[1]  = 0.052;	// cladding
 	dist[2]  = 0.275;	// cold, borated water
@@ -444,12 +444,12 @@ int pick_mat( uint64_t * seed )
 	dist[10] = 0.025;	// top of fuel assemblies
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
-	double roll = LCG_random_double(seed);
+	FP_PRECISION roll = LCG_random_FP_PRECISION(seed);
 
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )
 	{
-		double running = 0;
+		FP_PRECISION running = 0;
 		for( int j = i; j > 0; j-- )
 			running += dist[j];
 		if( roll < running )
@@ -459,14 +459,14 @@ int pick_mat( uint64_t * seed )
 	return 0;
 }
 
-double LCG_random_double(uint64_t * seed)
+FP_PRECISION LCG_random_FP_PRECISION(uint64_t * seed)
 {
 	// LCG parameters
 	const uint64_t m = 9223372036854775808ULL; // 2^63
 	const uint64_t a = 2806196910506780709ULL;
 	const uint64_t c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
-	return (double) (*seed) / (double) m;
+	return (FP_PRECISION) (*seed) / (FP_PRECISION) m;
 }	
 
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
@@ -534,10 +534,10 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 // Eduard's original implementation carries the following license, which applies to
 // the following functions only:
 //
-//	void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
-//  void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads)
-//  void quickSort_parallel_internal_d_i(double* key,int * value, int left, int right, int cutoff)
-//  void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads)
+//	void quickSort_parallel_internal_i_d(int* key,FP_PRECISION * value, int left, int right, int cutoff) 
+//  void quickSort_parallel_i_d(int* key,FP_PRECISION * value, int lenArray, int numThreads)
+//  void quickSort_parallel_internal_d_i(FP_PRECISION* key,int * value, int left, int right, int cutoff)
+//  void quickSort_parallel_d_i(FP_PRECISION* key,int * value, int lenArray, int numThreads)
 //
 // The MIT License (MIT)
 //
@@ -562,7 +562,7 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 // SOFTWARE.
 //
 ////////////////////////////////////////////////////////////////////////////////////
-void quickSort_parallel_internal_i_d(int* key,double * value, int left, int right, int cutoff) 
+void quickSort_parallel_internal_i_d(int* key,FP_PRECISION * value, int left, int right, int cutoff) 
 {
 	int i = left, j = right;
 	int tmp;
@@ -578,7 +578,7 @@ void quickSort_parallel_internal_i_d(int* key,double * value, int left, int righ
 				tmp = key[i];
 				key[i] = key[j];
 				key[j] = tmp;
-				double tmp_v = value[i];
+				FP_PRECISION tmp_v = value[i];
 				value[i] = value[j];
 				value[j] = tmp_v;
 				i++;
@@ -601,7 +601,7 @@ void quickSort_parallel_internal_i_d(int* key,double * value, int left, int righ
 
 }
 
-void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThreads){
+void quickSort_parallel_i_d(int* key,FP_PRECISION * value, int lenArray, int numThreads){
 
 	// Set minumum problem size to still spawn threads for
 	int cutoff = 10000;
@@ -620,11 +620,11 @@ void quickSort_parallel_i_d(int* key,double * value, int lenArray, int numThread
 
 }
 
-void quickSort_parallel_internal_d_i(double* key,int * value, int left, int right, int cutoff) 
+void quickSort_parallel_internal_d_i(FP_PRECISION* key,int * value, int left, int right, int cutoff) 
 {
 	int i = left, j = right;
-	double tmp;
-	double pivot = key[(left + right) / 2];
+	FP_PRECISION tmp;
+	FP_PRECISION pivot = key[(left + right) / 2];
 	
 	{
 		while (i <= j) {
@@ -659,7 +659,7 @@ void quickSort_parallel_internal_d_i(double* key,int * value, int left, int righ
 
 }
 
-void quickSort_parallel_d_i(double* key,int * value, int lenArray, int numThreads){
+void quickSort_parallel_d_i(FP_PRECISION* key,int * value, int lenArray, int numThreads){
 
 	// Set minumum problem size to still spawn threads for
 	int cutoff = 10000;
@@ -707,14 +707,14 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 	if( mype == 0)	printf("Allocating additional data required by optimized kernel...\n");
 	size_t sz;
 	size_t total_sz = 0;
-	double start, stop;
+	FP_PRECISION start, stop;
 	
 	// loop variables
 	int i = 0;
 	int m = 0;
 
-	sz = in.lookups * sizeof(double);
-	SD.p_energy_samples = (double *) malloc(sz);
+	sz = in.lookups * sizeof(FP_PRECISION);
+	SD.p_energy_samples = (FP_PRECISION *) malloc(sz);
 	total_sz += sz;
 	SD.length_p_energy_samples = in.lookups;
 
@@ -742,7 +742,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		seed = fast_forward_LCG(seed, 2*i);
 
 		// Randomly pick an energy and material for the particle
-		double p_energy = LCG_random_double(&seed);
+		FP_PRECISION p_energy = LCG_random_FP_PRECISION(&seed);
 		int mat         = pick_mat(&seed); 
 
 		SD.p_energy_samples[i] = p_energy;
@@ -806,23 +806,23 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 		{
 			#ifdef AML
 			int * num_nucs = aml_replicaset_hwloc_local_replica(SD.num_nucs_replica);
-			double * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
-			double * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
+			FP_PRECISION * concs = aml_replicaset_hwloc_local_replica(SD.concs_replica);
+			FP_PRECISION * unionized_energy_array = aml_replicaset_hwloc_local_replica(SD.unionized_energy_array_replica);
 			int * index_grid = aml_replicaset_hwloc_local_replica(SD.index_grid_replica);
 			NuclideGridPoint * nuclide_grid = aml_replicaset_hwloc_local_replica(SD.nuclide_grid_replica);
 			#else
 			int * num_nucs = SD.num_nucs;
-			double * concs = SD.concs;
-			double * unionized_energy_array = SD.unionized_energy_array;
+			FP_PRECISION * concs = SD.concs;
+			FP_PRECISION * unionized_energy_array = SD.unionized_energy_array;
 			int * index_grid = SD.index_grid;
 			NuclideGridPoint * nuclide_grid = SD.nuclide_grid;
 			#endif
 
 			// load pre-sampled energy and material for the particle
-			double p_energy = SD.p_energy_samples[i];
+			FP_PRECISION p_energy = SD.p_energy_samples[i];
 			int mat         = SD.mat_samples[i]; 
 
-			double macro_xs_vector[5] = {0};
+			FP_PRECISION macro_xs_vector[5] = {0};
 
 			// Perform macroscopic Cross Section Lookup
 			calculate_macro_xs(
@@ -850,7 +850,7 @@ unsigned long long run_event_based_simulation_optimization_1(Inputs in, Simulati
 			// For accelerators, a different approach might be required
 			// (e.g., atomics, reduction of thread-specific values in large
 			// array via CUDA thrust, etc).
-			double max = -1.0;
+			FP_PRECISION max = -1.0;
 			int max_idx = 0;
 			for(int j = 0; j < 5; j++ )
 			{

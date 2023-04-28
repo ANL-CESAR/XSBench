@@ -1,9 +1,9 @@
 #include "XSbench_header.h"
 
-int double_compare(const void * a, const void * b)
+int FP_PRECISION_compare(const void * a, const void * b)
 {
-	double A = *((double *) a);
-	double B = *((double *) b);
+	FP_PRECISION A = *((FP_PRECISION *) a);
+	FP_PRECISION B = *((FP_PRECISION *) b);
 
 	if( A > B )
 		return 1;

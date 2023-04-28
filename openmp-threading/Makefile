@@ -8,7 +8,7 @@ CC    = gcc
 endif
 OPTIMIZE    = yes
 OPENMP      = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
 AML         = no
@@ -39,7 +39,7 @@ CC    = gcc
 endif
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall
+CFLAGS := -std=gnu99 -Wall -DFP_PRECISION=float
 
 # Linker Flags
 LDFLAGS = -lm

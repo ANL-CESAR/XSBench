@@ -464,11 +464,11 @@ void binary_write( Inputs in, SimulationData SD )
 
 	// Write heap arrays in SimulationData Object
 	fwrite(SD.num_nucs,       sizeof(int), SD.length_num_nucs, fp);
-	fwrite(SD.concs,          sizeof(double), SD.length_concs, fp);
+	fwrite(SD.concs,          sizeof(FP_PRECISION), SD.length_concs, fp);
 	fwrite(SD.mats,           sizeof(int), SD.length_mats, fp);
 	fwrite(SD.nuclide_grid,   sizeof(NuclideGridPoint), SD.length_nuclide_grid, fp); 
 	fwrite(SD.index_grid, sizeof(int), SD.length_index_grid, fp);
-	fwrite(SD.unionized_energy_array, sizeof(double), SD.length_unionized_energy_array, fp);
+	fwrite(SD.unionized_energy_array, sizeof(FP_PRECISION), SD.length_unionized_energy_array, fp);
 
 	fclose(fp);
 }
@@ -488,19 +488,19 @@ SimulationData binary_read( Inputs in )
 
 	// Allocate space for arrays on heap
 	SD.num_nucs = (int *) malloc(SD.length_num_nucs * sizeof(int));
-	SD.concs = (double *) malloc(SD.length_concs * sizeof(double));
+	SD.concs = (FP_PRECISION *) malloc(SD.length_concs * sizeof(FP_PRECISION));
 	SD.mats = (int *) malloc(SD.length_mats * sizeof(int));
 	SD.nuclide_grid = (NuclideGridPoint *) malloc(SD.length_nuclide_grid * sizeof(NuclideGridPoint));
 	SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int));
-	SD.unionized_energy_array = (double *) malloc( SD.length_unionized_energy_array * sizeof(double));
+	SD.unionized_energy_array = (FP_PRECISION *) malloc( SD.length_unionized_energy_array * sizeof(FP_PRECISION));
 
 	// Read heap arrays into SimulationData Object
 	fread(SD.num_nucs,       sizeof(int), SD.length_num_nucs, fp);
-	fread(SD.concs,          sizeof(double), SD.length_concs, fp);
+	fread(SD.concs,          sizeof(FP_PRECISION), SD.length_concs, fp);
 	fread(SD.mats,           sizeof(int), SD.length_mats, fp);
 	fread(SD.nuclide_grid,   sizeof(NuclideGridPoint), SD.length_nuclide_grid, fp); 
 	fread(SD.index_grid, sizeof(int), SD.length_index_grid, fp);
-	fread(SD.unionized_energy_array, sizeof(double), SD.length_unionized_energy_array, fp);
+	fread(SD.unionized_energy_array, sizeof(FP_PRECISION), SD.length_unionized_energy_array, fp);
 
 	fclose(fp);
 

@@ -38,12 +38,12 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	nbytes += SD.length_nuclide_grid * sizeof(NuclideGridPoint);
 	for( int i = 0; i < SD.length_nuclide_grid; i++ )
 	{
-		SD.nuclide_grid[i].energy        = LCG_random_double(&seed);
-		SD.nuclide_grid[i].total_xs      = LCG_random_double(&seed);
-		SD.nuclide_grid[i].elastic_xs    = LCG_random_double(&seed);
-		SD.nuclide_grid[i].absorbtion_xs = LCG_random_double(&seed);
-		SD.nuclide_grid[i].fission_xs    = LCG_random_double(&seed);
-		SD.nuclide_grid[i].nu_fission_xs = LCG_random_double(&seed);
+		SD.nuclide_grid[i].energy        = LCG_random_FP_PRECISION(&seed);
+		SD.nuclide_grid[i].total_xs      = LCG_random_FP_PRECISION(&seed);
+		SD.nuclide_grid[i].elastic_xs    = LCG_random_FP_PRECISION(&seed);
+		SD.nuclide_grid[i].absorbtion_xs = LCG_random_FP_PRECISION(&seed);
+		SD.nuclide_grid[i].fission_xs    = LCG_random_FP_PRECISION(&seed);
+		SD.nuclide_grid[i].nu_fission_xs = LCG_random_FP_PRECISION(&seed);
 	}
 
 	// Sort so that each nuclide has data stored in ascending energy order.
@@ -77,16 +77,16 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 
 		// Allocate space to hold the union of all nuclide energy data
 		SD.length_unionized_energy_array = in.n_isotopes * in.n_gridpoints;
-		SD.unionized_energy_array = (double *) malloc( SD.length_unionized_energy_array * sizeof(double));
+		SD.unionized_energy_array = (FP_PRECISION *) malloc( SD.length_unionized_energy_array * sizeof(FP_PRECISION));
 		assert(SD.unionized_energy_array != NULL );
-		nbytes += SD.length_unionized_energy_array * sizeof(double);
+		nbytes += SD.length_unionized_energy_array * sizeof(FP_PRECISION);
 
 		// Copy energy data over from the nuclide energy grid
 		for( int i = 0; i < SD.length_unionized_energy_array; i++ )
 			SD.unionized_energy_array[i] = SD.nuclide_grid[i].energy;
 
 		// Sort unionized energy array
-		qsort( SD.unionized_energy_array, SD.length_unionized_energy_array, sizeof(double), double_compare);
+		qsort( SD.unionized_energy_array, SD.length_unionized_energy_array, sizeof(FP_PRECISION), FP_PRECISION_compare);
 
 		// Allocate space to hold the acceleration grid indices
 		SD.length_index_grid = SD.length_unionized_energy_array * in.n_isotopes;
@@ -97,7 +97,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		// Generates the double indexing grid
 		int * idx_low = (int *) calloc( in.n_isotopes, sizeof(int));
 		assert(idx_low != NULL );
-		double * energy_high = (double *) malloc( in.n_isotopes * sizeof(double));
+		FP_PRECISION * energy_high = (FP_PRECISION *) malloc( in.n_isotopes * sizeof(FP_PRECISION));
 		assert(energy_high != NULL );
 
 		for( int i = 0; i < in.n_isotopes; i++ )
@@ -105,7 +105,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 
 		for( long e = 0; e < SD.length_unionized_energy_array; e++ )
 		{
-			double unionized_energy = SD.unionized_energy_array[e];
+			FP_PRECISION unionized_energy = SD.unionized_energy_array[e];
 			for( long i = 0; i < in.n_isotopes; i++ )
 			{
 				if( unionized_energy < energy_high[i]  )
@@ -134,13 +134,13 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
 
-		double du = 1.0 / in.hash_bins;
+		FP_PRECISION du = 1.0 / in.hash_bins;
 
 		// For each energy level in the hash table
 		#pragma omp parallel for
 		for( e = 0; e < in.hash_bins; e++ )
 		{
-			double energy = e * du;
+			FP_PRECISION energy = e * du;
 
 			// We need to determine the bounding energy levels for all isotopes
 			for( long i = 0; i < in.n_isotopes; i++ )
