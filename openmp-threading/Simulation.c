@@ -349,6 +349,8 @@ void calculate_macro_xs( FP_PRECISION p_energy, int mat, long n_isotopes,
 	{
 		FP_PRECISION du = 1.0 / hash_bins;
 		idx = p_energy / du;
+    if( idx < 0 ) idx = 0;
+    if( idx >= hash_bins ) idx = hash_bins-1;
 	}
 	
 	// Once we find the pointer array on the UEG, we can pull the data
