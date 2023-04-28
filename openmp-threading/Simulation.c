@@ -347,7 +347,7 @@ void calculate_macro_xs( FP_PRECISION p_energy, int mat, long n_isotopes,
 		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
 	else if( grid_type == HASH )
 	{
-		FP_PRECISION du = (FP_PRECISION) 1.0 / (FP_PRECISION) hash_bins;
+		FP_PRECISION du = 1.0 / hash_bins;
 		idx = p_energy / du;
     if( idx < 0 ) idx = 0;
     if( idx >= hash_bins ) idx = hash_bins-1;

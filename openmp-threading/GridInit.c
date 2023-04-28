@@ -153,13 +153,13 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
 
-		FP_PRECISION du = (FP_PRECISION) 1.0 / (FP_PRECISION) in.hash_bins;
+		FP_PRECISION du = 1.0 / in.hash_bins;
 
 		// For each energy level in the hash table
 		#pragma omp parallel for
 		for( e = 0; e < in.hash_bins; e++ )
 		{
-			FP_PRECISION energy = (FP_PRECISION) e * du;
+			FP_PRECISION energy = e * du;
 
 			// We need to determine the bounding energy levels for all isotopes
 			for( long i = 0; i < in.n_isotopes; i++ )

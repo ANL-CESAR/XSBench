@@ -39,7 +39,7 @@ CC    = gcc
 endif
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall -DFP_PRECISION=double -fopenmp -DOPENMP
+CFLAGS := -std=gnu99 -Wall -DFP_PRECISION=float -fopenmp -DOPENMP
 
 # Linker Flags
 LDFLAGS = -lm
