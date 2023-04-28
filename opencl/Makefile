@@ -40,6 +40,11 @@ ifeq ($(COMPILER),gnu)
   CC = gcc
 endif
 
+# Regular gcc Compiler
+ifeq ($(COMPILER),intel)
+  CC = icx
+endif
+
 # clang
 ifeq ($(COMPILER),clang)
   CC = clang

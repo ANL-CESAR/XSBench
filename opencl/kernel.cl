@@ -1,11 +1,13 @@
+#define FP_PRECISION float
+
 // Structures
 typedef struct{
-	double energy;
-	double total_xs;
-	double elastic_xs;
-	double absorbtion_xs;
-	double fission_xs;
-	double nu_fission_xs;
+	FP_PRECISION energy;
+	FP_PRECISION total_xs;
+	FP_PRECISION elastic_xs;
+	FP_PRECISION absorbtion_xs;
+	FP_PRECISION fission_xs;
+	FP_PRECISION nu_fission_xs;
 } NuclideGridPoint;
 
 typedef struct{
@@ -36,6 +38,7 @@ typedef struct{
 // Starting Seed
 #define STARTING_SEED 1070
 
+
 unsigned long fast_forward_LCG(unsigned long seed, unsigned long n)
 {
 	// LCG parameters
@@ -65,14 +68,14 @@ unsigned long fast_forward_LCG(unsigned long seed, unsigned long n)
 
 }
 
-double LCG_random_double(unsigned long * seed)
+FP_PRECISION LCG_random_FP_PRECISION(unsigned long * seed)
 {
 	// LCG parameters
 	const unsigned long m = 9223372036854775808UL; // 2^63
 	const unsigned long a = 2806196910506780709UL;
 	const unsigned long c = 1UL;
 	*seed = (a * (*seed) + c) % m;
-	return (double) (*seed) / (double) m;
+	return (FP_PRECISION) (*seed) / (FP_PRECISION) m;
 }	
 
 // picks a material based on a probabilistic distribution
@@ -86,7 +89,7 @@ int pick_mat( unsigned long * seed )
 	// Also could be argued that doing fractions by weight would be 
 	// a better approximation, but volume does a good enough job for now.
 
-	double dist[12];
+	FP_PRECISION dist[12];
 	dist[0]  = 0.140;	// fuel
 	dist[1]  = 0.052;	// cladding
 	dist[2]  = 0.275;	// cold, borated water
@@ -100,12 +103,12 @@ int pick_mat( unsigned long * seed )
 	dist[10] = 0.025;	// top of fuel assemblies
 	dist[11] = 0.013;	// bottom of fuel assemblies
 	
-	double roll = LCG_random_double(seed);
+	FP_PRECISION roll = LCG_random_FP_PRECISION(seed);
 
 	// makes a pick based on the distro
 	for( int i = 0; i < 12; i++ )
 	{
-		double running = 0;
+		FP_PRECISION running = 0;
 		for( int j = i; j > 0; j-- )
 			running += dist[j];
 		if( roll < running )
@@ -117,7 +120,7 @@ int pick_mat( unsigned long * seed )
 
 // (fixed) binary search for energy on unionized energy grid
 // returns lower index
-long grid_search( long n, double quarry, __global const double * A)
+long grid_search( long n, FP_PRECISION quarry, __global const FP_PRECISION * A)
 {
 	long lowerLimit = 0;
 	long upperLimit = n-1;
@@ -140,7 +143,7 @@ long grid_search( long n, double quarry, __global const double * A)
 }
 
 // binary search for energy on nuclide energy grid
-long grid_search_nuclide( long n, double quarry, __global const NuclideGridPoint * A, long low, long high)
+long grid_search_nuclide( long n, FP_PRECISION quarry, __global const NuclideGridPoint * A, long low, long high)
 {
 	long lowerLimit = low;
 	long upperLimit = high;
@@ -163,13 +166,13 @@ long grid_search_nuclide( long n, double quarry, __global const NuclideGridPoint
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy
-void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+void calculate_micro_xs(   FP_PRECISION p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,
-                           __global const double * egrid, __global const int * index_data,
+                           __global const FP_PRECISION * egrid, __global const int * index_data,
                            __global const NuclideGridPoint * nuclide_grids,
-                           long idx, double * xs_vector, int grid_type, int hash_bins ){
+                           long idx, FP_PRECISION * xs_vector, int grid_type, int hash_bins ){
 	// Variables
-	double f;
+	FP_PRECISION f;
 	__global const NuclideGridPoint * low, * high;
 
 	// If using only the nuclide grid, we must perform a binary search
@@ -210,10 +213,10 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		// Check edge cases to make sure energy is actually between these
 		// Then, if things look good, search for gridpoint in the nuclide grid
 		// within the lower and higher limits we've calculated.
-		double e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
-		double e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
+		FP_PRECISION e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
+		FP_PRECISION e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
 		int lower;
-		if( p_energy <= e_low )
+		if( p_energy < e_low )
 			lower = 0;
 		else if( p_energy >= e_high )
 			lower = n_gridpoints - 1;
@@ -248,16 +251,16 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
-void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+void calculate_macro_xs( FP_PRECISION p_energy, int mat, long n_isotopes,
                          long n_gridpoints, __global const int * num_nucs,
-                         __global const double * restrict concs,
-                         __global const double * egrid, __global const int * index_data,
+                         __global const FP_PRECISION * restrict concs,
+                         __global const FP_PRECISION * egrid, __global const int * index_data,
                          __global const NuclideGridPoint * nuclide_grids,
                          __global const int * mats,
-                         double * macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
+                         FP_PRECISION * macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
 	long idx = -1;	
-	double conc; // the concentration of the nuclide in the material
+	FP_PRECISION conc; // the concentration of the nuclide in the material
 
 	// cleans out macro_xs_vector
 	for( int k = 0; k < 5; k++ )
@@ -272,8 +275,10 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
 	else if( grid_type == HASH )
 	{
-		double du = 1.0 / hash_bins;
+		FP_PRECISION du = 1.0 / hash_bins;
 		idx = p_energy / du;
+    if( idx < 0 ) idx = 0;
+    if( idx >= hash_bins ) idx = hash_bins-1;
 	}
 	
 	// Once we find the pointer array on the UEG, we can pull the data
@@ -288,7 +293,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	//  avoid simulataneous writing to the same data structure)
 	for( int j = 0; j < num_nucs[mat]; j++ )
 	{
-		double xs_vector[5];
+		FP_PRECISION xs_vector[5];
 		p_nuc = mats[mat*max_num_nucs + j];
 		conc = concs[mat*max_num_nucs + j];
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
@@ -302,8 +307,8 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 __kernel void macro_xs_lookup_kernel(		Inputs in,
 											int max_num_nucs,
 											__global const int *num_nucs,
-											__global const double *concs,
-											__global const double * unionized_energy_array,
+											__global const FP_PRECISION *concs,
+											__global const FP_PRECISION * unionized_energy_array,
 											__global const int * index_grid,
 											__global const NuclideGridPoint * nuclide_grid,
 											__global const int * mats,
@@ -322,10 +327,10 @@ __kernel void macro_xs_lookup_kernel(		Inputs in,
 	seed = fast_forward_LCG(seed, 2*i);
 		
 	// Randomly pick an energy and material for the particle
-	double p_energy = LCG_random_double(&seed);
+	FP_PRECISION p_energy = LCG_random_FP_PRECISION(&seed);
 	int mat         = pick_mat(&seed); 
 	
-	double macro_xs_vector[5] = {0};
+	FP_PRECISION macro_xs_vector[5] = {0};
 
 	// Perform macroscopic Cross Section Lookup
 	calculate_macro_xs(
@@ -353,7 +358,7 @@ __kernel void macro_xs_lookup_kernel(		Inputs in,
 	// For accelerators, a different approach might be required
 	// (e.g., atomics, reduction of thread-specific values in large
 	// array via CUDA thrust, etc).
-	double max = -1.0;
+	FP_PRECISION max = -1.0;
 	int max_idx = 0;
 	for(int j = 0; j < 5; j++ )
 	{

@@ -46,14 +46,22 @@
 // Starting Seed
 #define STARTING_SEED 1070
 
+#define FP_PRECISION float
+
+typedef struct node {
+    FP_PRECISION data;
+    struct node* left;
+    struct node* right;
+} node_t;
+
 // Structures
 typedef struct{
-	double energy;
-	double total_xs;
-	double elastic_xs;
-	double absorbtion_xs;
-	double fission_xs;
-	double nu_fission_xs;
+	FP_PRECISION energy;
+	FP_PRECISION total_xs;
+	FP_PRECISION elastic_xs;
+	FP_PRECISION absorbtion_xs;
+	FP_PRECISION fission_xs;
+	FP_PRECISION nu_fission_xs;
 } NuclideGridPoint;
 
 typedef struct{
@@ -74,9 +82,9 @@ typedef struct{
 
 typedef struct{
 	int * num_nucs;                     // Length = length_num_nucs;
-	double * concs;                     // Length = length_concs
+	FP_PRECISION * concs;                     // Length = length_concs
 	int * mats;                         // Length = length_mats
-	double * unionized_energy_array;    // Length = length_unionized_energy_array
+	FP_PRECISION * unionized_energy_array;    // Length = length_unionized_energy_array
 	int * index_grid;                   // Length = length_index_grid
 	NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
 	int length_num_nucs;
@@ -86,7 +94,7 @@ typedef struct{
 	long length_index_grid;
 	int length_nuclide_grid;
 	int max_num_nucs;
-	double * p_energy_samples;
+	FP_PRECISION * p_energy_samples;
 	int length_p_energy_samples;
 	int * mat_samples;
 	int length_mat_samples;
@@ -106,30 +114,21 @@ SimulationData binary_read( Inputs in );
 
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * sim_runtime);
-void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
-                           long n_gridpoints,
-                           double * restrict egrid, int * restrict index_data,
-                           NuclideGridPoint * restrict nuclide_grids,
-                           long idx, double * restrict xs_vector, int grid_type, int hash_bins );
-void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int * restrict num_nucs,
-                         double * restrict concs,
-                         double * restrict egrid, int * restrict index_data,
-                         NuclideGridPoint * restrict nuclide_grids,
-                         int * restrict mats,
-                         double * restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-long grid_search( long n, double quarry, double * restrict A);
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
+long grid_search( long n, FP_PRECISION quarry, FP_PRECISION * restrict A);
+long grid_search_nuclide( long n, FP_PRECISION quarry, NuclideGridPoint * A, long low, long high);
 int pick_mat(unsigned long * seed);
-double LCG_random_double(uint64_t * seed);
+FP_PRECISION LCG_random_FP_PRECISION(uint64_t * seed);
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 
 // GridInit.c
 SimulationData grid_init_do_not_profile( Inputs in, int mype );
 
 // XSutils.c
+node_t* insert_node(node_t* root, FP_PRECISION data);
+int find_node(node_t* root, FP_PRECISION data);
+void free_tree(node_t* root);
 int NGP_compare( const void * a, const void * b );
-int double_compare(const void * a, const void * b);
+int FP_PRECISION_compare(const void * a, const void * b);
 size_t estimate_mem_usage( Inputs in );
 double get_time(void);
 
@@ -143,5 +142,5 @@ void print_opencl_info(void);
 // Materials.c
 int * load_num_nucs(long n_isotopes);
 int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs );
-double * load_concs( int * num_nucs, int max_num_nucs );
+FP_PRECISION * load_concs( int * num_nucs, int max_num_nucs );
 #endif

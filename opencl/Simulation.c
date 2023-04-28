@@ -72,7 +72,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	ret = clEnqueueWriteBuffer(command_queue, num_nucs_d, CL_TRUE, 0, sz, SD.num_nucs, 0, NULL, NULL);
 	check(ret);
 
-	sz = SD.length_concs * sizeof(double);
+	sz = SD.length_concs * sizeof(FP_PRECISION);
 	cl_mem concs_d = clCreateBuffer(context, CL_MEM_READ_ONLY,  sz, NULL, &ret);
 	check(ret);
 	ret = clEnqueueWriteBuffer(command_queue, concs_d, CL_TRUE, 0, sz, SD.concs, 0, NULL, NULL);
@@ -86,7 +86,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	
 	// This buffer is not used if we are using the nuclide grid or hash grid methods,
 	// so only allocate it if we need it.
-	sz = SD.length_unionized_energy_array * sizeof(double);
+	sz = SD.length_unionized_energy_array * sizeof(FP_PRECISION);
 	cl_mem unionized_energy_array_d;
 	if( sz > 0 )
 	{
@@ -272,7 +272,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 }
 
 // binary search for energy on nuclide energy grid
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high)
+long grid_search_nuclide( long n, FP_PRECISION quarry, NuclideGridPoint * A, long low, long high)
 {
 	long lowerLimit = low;
 	long upperLimit = high;
@@ -294,12 +294,12 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 	return lowerLimit;
 }
 
-double LCG_random_double(uint64_t * seed)
+FP_PRECISION LCG_random_FP_PRECISION(uint64_t * seed)
 {
 	// LCG parameters
 	const uint64_t m = 9223372036854775808ULL; // 2^63
 	const uint64_t a = 2806196910506780709ULL;
 	const uint64_t c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
-	return (double) (*seed) / (double) m;
+	return (FP_PRECISION) (*seed) / (FP_PRECISION) m;
 }	

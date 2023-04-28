@@ -1,9 +1,43 @@
 #include "XSbench_header.h"
+node_t* insert_node(node_t* root, FP_PRECISION data) {
+    if (root == NULL) {
+        node_t* new_node = (node_t*)malloc(sizeof(node_t));
+        new_node->data = data;
+        new_node->left = NULL;
+        new_node->right = NULL;
+        return new_node;
+    } else if (data < root->data) {
+        root->left = insert_node(root->left, data);
+    } else if (data > root->data) {
+        root->right = insert_node(root->right, data);
+    }
+    return root;
+}
 
-int double_compare(const void * a, const void * b)
+int find_node(node_t* root, FP_PRECISION data) {
+    if (root == NULL) {
+        return 0;
+    } else if (data < root->data) {
+        return find_node(root->left, data);
+    } else if (data > root->data) {
+        return find_node(root->right, data);
+    } else {
+        return 1;
+    }
+}
+
+void free_tree(node_t* root) {
+    if (root != NULL) {
+        free_tree(root->left);
+        free_tree(root->right);
+        free(root);
+    }
+}
+
+int FP_PRECISION_compare(const void * a, const void * b)
 {
-	double A = *((double *) a);
-	double B = *((double *) b);
+	FP_PRECISION A = *((FP_PRECISION *) a);
+	FP_PRECISION B = *((FP_PRECISION *) b);
 
 	if( A > B )
 		return 1;
@@ -30,7 +64,7 @@ size_t estimate_mem_usage( Inputs in )
 {
 	size_t single_nuclide_grid = in.n_gridpoints * sizeof( NuclideGridPoint );
 	size_t all_nuclide_grids   = in.n_isotopes * single_nuclide_grid;
-	size_t size_UEG            = in.n_isotopes*in.n_gridpoints*sizeof(double) + in.n_isotopes*in.n_gridpoints*in.n_isotopes*sizeof(int);
+	size_t size_UEG            = in.n_isotopes*in.n_gridpoints*sizeof(FP_PRECISION) + in.n_isotopes*in.n_gridpoints*in.n_isotopes*sizeof(int);
 	size_t size_hash_grid      = in.hash_bins * in.n_isotopes * sizeof(int);
 	size_t memtotal;
 

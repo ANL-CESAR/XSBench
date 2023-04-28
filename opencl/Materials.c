@@ -96,14 +96,14 @@ int * load_mats( int * num_nucs, long n_isotopes, int * max_num_nucs )
 }
 
 // Randomizes the concentrations of all nuclides in a variety of materials
-double * load_concs( int * num_nucs, int max_num_nucs )
+FP_PRECISION * load_concs( int * num_nucs, int max_num_nucs )
 {
 	uint64_t seed = STARTING_SEED * STARTING_SEED;
-	double * concs = (double *) malloc( 12 * max_num_nucs * sizeof( double ) );
+	FP_PRECISION * concs = (FP_PRECISION *) malloc( 12 * max_num_nucs * sizeof( FP_PRECISION ) );
 	
 	for( int i = 0; i < 12; i++ )
 		for( int j = 0; j < num_nucs[i]; j++ )
-			concs[i * max_num_nucs + j] = LCG_random_double(&seed);
+			concs[i * max_num_nucs + j] = LCG_random_FP_PRECISION(&seed);
 
 	// test
 	/*
