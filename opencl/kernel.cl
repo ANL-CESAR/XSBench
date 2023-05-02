@@ -80,42 +80,53 @@ FP_PRECISION LCG_random_FP_PRECISION(unsigned long * seed)
 
 // picks a material based on a probabilistic distribution
 int pick_mat( unsigned long * seed )
-{
-	// I have a nice spreadsheet supporting these numbers. They are
-	// the fractions (by volume) of material in the core. Not a 
-	// *perfect* approximation of where XS lookups are going to occur,
-	// but this will do a good job of biasing the system nonetheless.
+{     
+  // I have a nice spreadsheet supporting these numbers. They are
+  // the fractions (by volume) of material in the core. Not a 
+  // *perfect* approximation of where XS lookups are going to occur,
+  // but this will do a good job of biasing the system nonetheless.
+    
+  FP_PRECISION dist[12];
+    
+  // Below is the PDF
+  /*  
+  dist[0]  = 0.140; // fuel
+  dist[1]  = 0.052; // cladding
+  dist[2]  = 0.275; // cold, borated water
+  dist[3]  = 0.134; // hot, borated water
+  dist[4]  = 0.154; // RPV
+  dist[5]  = 0.064; // Lower, radial reflector
+  dist[6]  = 0.066; // Upper reflector / top plate
+  dist[7]  = 0.055; // bottom plate
+  dist[8]  = 0.008; // bottom nozzle
+  dist[9]  = 0.015; // top nozzle
+  dist[10] = 0.025; // top of fuel assemblies
+  dist[11] = 0.013; // bottom of fuel assemblies
+   */
+  // CDF
+  dist  [ 0 ] = 0.140 ;
+dist  [ 1 ] = 0.192 ; 
+dist  [ 2 ] = 0.467 ;
+dist  [ 3 ] = 0.601 ;
+dist  [ 4 ] = 0.755 ;
+dist  [ 5 ] = 0.819 ;
+dist  [ 6 ] = 0.885 ;
+dist  [ 7 ] = 0.940 ;
+dist  [ 8 ] = 0.948 ;
+dist  [ 9 ] = 0.963 ;
+dist  [ 10  ] = 0.988 ;
+dist  [ 11  ] = 1.0 ;
 
-	// Also could be argued that doing fractions by weight would be 
-	// a better approximation, but volume does a good enough job for now.
+  FP_PRECISION roll = LCG_random_FP_PRECISION(seed);
 
-	FP_PRECISION dist[12];
-	dist[0]  = 0.140;	// fuel
-	dist[1]  = 0.052;	// cladding
-	dist[2]  = 0.275;	// cold, borated water
-	dist[3]  = 0.134;	// hot, borated water
-	dist[4]  = 0.154;	// RPV
-	dist[5]  = 0.064;	// Lower, radial reflector
-	dist[6]  = 0.066;	// Upper reflector / top plate
-	dist[7]  = 0.055;	// bottom plate
-	dist[8]  = 0.008;	// bottom nozzle
-	dist[9]  = 0.015;	// top nozzle
-	dist[10] = 0.025;	// top of fuel assemblies
-	dist[11] = 0.013;	// bottom of fuel assemblies
-	
-	FP_PRECISION roll = LCG_random_FP_PRECISION(seed);
+  // makes a pick based on the distro
+  for( int i = 0; i < 12; i++ )
+  {
+    if( roll < dist[i] )
+      return i;
+  }
 
-	// makes a pick based on the distro
-	for( int i = 0; i < 12; i++ )
-	{
-		FP_PRECISION running = 0;
-		for( int j = i; j > 0; j-- )
-			running += dist[j];
-		if( roll < running )
-			return i;
-	}
-
-	return 0;
+  return 11;
 }
 
 // (fixed) binary search for energy on unionized energy grid
@@ -210,23 +221,23 @@ void calculate_micro_xs(   FP_PRECISION p_energy, int nuc, long n_isotopes,
 		else
 			u_high = index_data[(idx+1)*n_isotopes + nuc] + 1;
 
-		// Check edge cases to make sure energy is actually between these
-		// Then, if things look good, search for gridpoint in the nuclide grid
-		// within the lower and higher limits we've calculated.
-		FP_PRECISION e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
-		FP_PRECISION e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
-		int lower;
-		if( p_energy < e_low )
-			lower = 0;
-		else if( p_energy >= e_high )
-			lower = n_gridpoints - 1;
-		else
-			lower = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], u_low, u_high);
-
-		if( lower == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc*n_gridpoints + lower - 1];
-		else
-			low = &nuclide_grids[nuc*n_gridpoints + lower];
+// Check edge cases to make sure energy is actually between these
+    // Then, if things look good, search for gridpoint in the nuclide grid
+    // within the lower and higher limits we've calculated.
+    FP_PRECISION e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
+    FP_PRECISION e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
+    int lower;
+    if( p_energy < nuclide_grids[nuc*n_gridpoints].energy )
+      lower = 0;
+    else if( p_energy >= nuclide_grids[nuc*n_gridpoints + n_gridpoints-1].energy )
+      lower = n_gridpoints - 1;
+    else
+      lower = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], u_low, u_high);
+    
+    if( lower == n_gridpoints - 1 )
+      low = &nuclide_grids[nuc*n_gridpoints + lower - 1];
+    else
+      low = &nuclide_grids[nuc*n_gridpoints + lower];
 	}
 	
 	high = low + 1;
