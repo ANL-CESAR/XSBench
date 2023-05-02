@@ -427,39 +427,55 @@ long grid_search_nuclide( long n, FP_PRECISION quarry, NuclideGridPoint * A, lon
 // picks a material based on a probabilistic distribution
 int pick_mat( uint64_t * seed )
 {
-	// I have a nice spreadsheet supporting these numbers. They are
-	// the fractions (by volume) of material in the core. Not a 
-	// *perfect* approximation of where XS lookups are going to occur,
-	// but this will do a good job of biasing the system nonetheless.
+  // I have a nice spreadsheet supporting these numbers. They are
+  // the fractions (by volume) of material in the core. Not a
+  // *perfect* approximation of where XS lookups are going to occur,
+  // but this will do a good job of biasing the system nonetheless.
 
-	FP_PRECISION dist[12];
-	dist[0]  = 0.140;	// fuel
-	dist[1]  = 0.052;	// cladding
-	dist[2]  = 0.275;	// cold, borated water
-	dist[3]  = 0.134;	// hot, borated water
-	dist[4]  = 0.154;	// RPV
-	dist[5]  = 0.064;	// Lower, radial reflector
-	dist[6]  = 0.066;	// Upper reflector / top plate
-	dist[7]  = 0.055;	// bottom plate
-	dist[8]  = 0.008;	// bottom nozzle
-	dist[9]  = 0.015;	// top nozzle
-	dist[10] = 0.025;	// top of fuel assemblies
-	dist[11] = 0.013;	// bottom of fuel assemblies
-	
-	FP_PRECISION roll = LCG_random_FP_PRECISION(seed);
+  FP_PRECISION dist[12];
 
-	// makes a pick based on the distro
-	for( int i = 0; i < 12; i++ )
-	{
-		FP_PRECISION running = 0;
-		for( int j = i; j > 0; j-- )
-			running += dist[j];
-		if( roll < running )
-			return i;
-	}
+  // To prevent issues with FP32 roundoff, we convert the PDF
+  // to a CDF
+  /*
+  dist[0]  = 0.140; // fuel
+  dist[1]  = 0.052; // cladding
+  dist[2]  = 0.275; // cold, borated water
+  dist[3]  = 0.134; // hot, borated water
+  dist[4]  = 0.154; // RPV
+  dist[5]  = 0.064; // Lower, radial reflector
+  dist[6]  = 0.066; // Upper reflector / top plate
+  dist[7]  = 0.055; // bottom plate
+  dist[8]  = 0.008; // bottom nozzle
+  dist[9]  = 0.015; // top nozzle
+  dist[10] = 0.025; // top of fuel assemblies
+  dist[11] = 0.013; // bottom of fuel assemblies
+   */
+  // CDF
+  dist[ 0 ] = 0.140 ;
+  dist[ 1 ] = 0.192 ;
+  dist[ 2 ] = 0.467 ;
+  dist[ 3 ] = 0.601 ;
+  dist[ 4 ] = 0.755 ;
+  dist[ 5 ] = 0.819 ;
+  dist[ 6 ] = 0.885 ;
+  dist[ 7 ] = 0.940 ;
+  dist[ 8 ] = 0.948 ;
+  dist[ 9 ] = 0.963 ;
+  dist[ 10  ] = 0.988 ;
+  dist[ 11  ] = 1.0 ;
 
-	return 0;
+  FP_PRECISION roll = LCG_random_FP_PRECISION(seed);
+
+  // makes a pick based on the distro
+  for( int i = 0; i < 12; i++ )
+  {
+    if( roll < dist[i] )
+      return i;
+  }
+
+  return 11;
 }
+
 
 FP_PRECISION LCG_random_FP_PRECISION(uint64_t * seed)
 {
