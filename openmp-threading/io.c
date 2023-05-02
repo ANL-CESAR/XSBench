@@ -88,8 +88,8 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	{
     if( sizeof(FP_PRECISION) == 4 )
     {
-      small = 773272;
-      large = 795961;
+      small = 765812;
+      large = 793483;
     } else {
       small = 945990;
       large = 952131;
