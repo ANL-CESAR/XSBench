@@ -282,23 +282,21 @@ void calculate_micro_xs(   FP_PRECISION p_energy, int nuc, long n_isotopes,
 		else
 			u_high = index_data[(idx+1)*n_isotopes + nuc] + 1;
 
-		// Check edge cases to make sure energy is actually between these
-		// Then, if things look good, search for gridpoint in the nuclide grid
-		// within the lower and higher limits we've calculated.
-		FP_PRECISION e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
-		FP_PRECISION e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
-		int lower;
-		if( p_energy < e_low )
-			lower = 0;
-		else if( p_energy >= e_high )
-			lower = n_gridpoints - 1;
-		else
-			lower = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], u_low, u_high);
+    // Check edge cases to make sure energy is actually between these
+    // Then, if things look good, search for gridpoint in the nuclide grid
+    // within the lower and higher limits we've calculated.
+    int lower;
+    if( p_energy < nuclide_grids[nuc*n_gridpoints].energy )
+      lower = 0;
+    else if( p_energy >= nuclide_grids[nuc*n_gridpoints + n_gridpoints-1].energy )
+      lower = n_gridpoints - 1;
+    else
+      lower = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], u_low, u_high);
 
-		if( lower == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc*n_gridpoints + lower - 1];
-		else
-			low = &nuclide_grids[nuc*n_gridpoints + lower];
+    if( lower == n_gridpoints - 1 )
+      low = &nuclide_grids[nuc*n_gridpoints + lower - 1];
+    else
+      low = &nuclide_grids[nuc*n_gridpoints + lower];
 	}
 	
 	high = low + 1;
