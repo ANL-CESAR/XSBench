@@ -212,6 +212,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
 	check(ret);
+
+  clFinish(command_queue);
+  stop = get_time();
 	
 	////////////////////////////////////////////////////////////////////////////////
 	// Retrieve verification data from device and reduce it
@@ -220,8 +223,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Read the memory buffer C on the device to the local variable C
 	ret = clEnqueueReadBuffer(command_queue, verification_array, CL_TRUE, 0, in.lookups * sizeof(int), verification_array_host, 0, NULL, NULL);
 	check(ret);
-	
-  stop = get_time();
 	
 	if( mype == 0) printf("Reducing verification value...\n");
 	
