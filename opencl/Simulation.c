@@ -203,7 +203,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	if( mype == 0) printf("Running event based simulation...\n");
 
 	// Execute the OpenCL kernel on the list
-	size_t local_item_size = 256; // Divide work items into groups
+	size_t local_item_size = in.nthreads; // Divide work items into groups
 	size_t global_item_size = in.lookups; // Process the entire lists
 
   // Add extra work items if global size not evenly divisible by local size

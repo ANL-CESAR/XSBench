@@ -176,6 +176,7 @@ void print_inputs(Inputs in, int nprocs, int version )
 		printf("XS Lookups per Particle:      "); fancy_int(in.lookups);
 	}
 	printf("Total XS Lookups:             "); fancy_int(in.lookups);
+	printf("Threads per GPU block:        "); fancy_int(in.nthreads);
 	#ifdef MPI
 	printf("MPI Ranks:                    %d\n", nprocs);
 	printf("Mem Usage per MPI Rank (MB):  "); fancy_int(mem_tot);
@@ -238,6 +239,7 @@ void print_CLI_error(void)
 	printf("Options include:\n");
 	printf("  -m <simulation method>   Simulation method (history, event)\n");
 	printf("  -s <size>                Size of H-M Benchmark to run (small, large, XL, XXL)\n");
+	printf("  -t <threads per block>>  Number of threads per GPU block/workgroup (default is 256)\n");
 	printf("  -g <gridpoints>          Number of gridpoints per nuclide (overrides -s defaults)\n");
 	printf("  -G <grid type>           Grid search type (unionized, nuclide, hash). Defaults to unionized.\n");
 	printf("  -p <particles>           Number of particle histories\n");
@@ -259,8 +261,8 @@ Inputs read_CLI( int argc, char * argv[] )
 	// defaults to the history based simulation method
 	input.simulation_method = HISTORY_BASED;
 	
-	// defaults to max threads on the system	
-	input.nthreads = 1;
+	// Will check for user input, then default to 256
+	input.nthreads = -1;
 	
 	// defaults to 355 (corresponding to H-M Large benchmark)
 	input.n_isotopes = 355;
@@ -345,6 +347,16 @@ Inputs read_CLI( int argc, char * argv[] )
 			{
 				input.lookups = atoi(argv[i]);
 				default_lookups = 0;
+			}
+			else
+				print_CLI_error();
+		}
+		// threads (-t)
+		else if( strcmp(arg, "-t") == 0 )
+		{
+			if( ++i < argc )
+			{
+				input.nthreads = atoi(argv[i]);
 			}
 			else
 				print_CLI_error();
@@ -454,7 +466,9 @@ Inputs read_CLI( int argc, char * argv[] )
 	
 	// Validate nthreads
 	if( input.nthreads < 1 )
-		print_CLI_error();
+  {
+    input.nthreads = 256;
+  }
 	
 	// Validate n_isotopes
 	if( input.n_isotopes < 1 )
