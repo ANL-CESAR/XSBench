@@ -80,7 +80,10 @@ const char *getErrorString(cl_int error)
 void check(cl_int error)
 {
   if( error != 0 )
+  {
     printf("%s\n", getErrorString(error));
+    exit(error);
+  }
 }
 
 void printCompilerError( cl_program program, cl_device_id device )
