@@ -7,7 +7,7 @@ OPTIMIZE    = yes
 DEBUG       = yes
 PROFILE     = no
 MPI         = no
-OPENACC     = no
+OPENACC     = yes
 
 #===============================================================================
 # Program name & source code list
@@ -47,7 +47,7 @@ ifeq ($(COMPILER),pgi)
   endif
   # OpenACC (assumes NVIDA GPU)
   ifeq ($(OPENACC),yes)
-    CFLAGS += -acc -Minfo=accel -gpu=cc80
+    CFLAGS += -acc -Minfo=accel -gpu=cc70
   endif
 endif
 
