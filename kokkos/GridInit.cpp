@@ -1,4 +1,5 @@
-#include "XSbench_header.h"
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
+#include "XSbench_header.hpp"
 
 SimulationData grid_init_do_not_profile( Inputs in, int mype )
 {
@@ -28,9 +29,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// energy level are read whenever the gridpoint is accessed, meaning the
 	// AOS is more cache efficient.
 
-        // Josh: need to create unmanaged View of Host memory and then deep copy
-        // it to the device. Layouts need to be the same, figure out left or right
-        
 	// Initialize Nuclide Grid
 	SD.length_nuclide_grid = in.n_isotopes * in.n_gridpoints;
 	SD.nuclide_grid     = (NuclideGridPoint *) malloc( SD.length_nuclide_grid * sizeof(NuclideGridPoint));
@@ -145,7 +143,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 			// We need to determine the bounding energy levels for all isotopes
 			for( long i = 0; i < in.n_isotopes; i++ )
 			{
-				SD.index_grid[e * in.n_isotopes + i] = grid_search_nuclide( in.n_gridpoints, energy, SD.nuclide_grid + i * in.n_gridpoints, 0, in.n_gridpoints-1);
+				SD.index_grid[e * in.n_isotopes + i] = grid_search_nuclide_old( in.n_gridpoints, energy, SD.nuclide_grid + i * in.n_gridpoints, 0, in.n_gridpoints-1);
 			}
 		}
 	}
@@ -173,6 +171,43 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
+        Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+			u_num_nucs(SD.num_nucs, SD.length_num_nucs);
+        SD.d_num_nucs = new IntView("d_num_nucs", SD.length_num_nucs);
+        Kokkos::deep_copy(*SD.d_num_nucs, u_num_nucs);
+        
+        Kokkos::View<double*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+			u_concs(SD.concs, SD.length_concs);
+        SD.d_concs = new DoubleView("d_concs", SD.length_concs);
+        Kokkos::deep_copy(*SD.d_concs, u_concs);
+        
+        Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+			u_mats(SD.mats, SD.length_mats);
+        SD.d_mats = new IntView("d_mats", SD.length_mats);
+        Kokkos::deep_copy(*SD.d_mats, u_mats);
+        
+        Kokkos::View<double*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+			u_unionized_energy_array(SD.unionized_energy_array, SD.length_unionized_energy_array);
+        SD.d_unionized_energy_array = new DoubleView("d_unionized_energy_array",
+						     SD.length_unionized_energy_array);
+        Kokkos::deep_copy(*SD.d_unionized_energy_array, u_unionized_energy_array);
+        
+        Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+            u_index_grid(SD.index_grid, SD.length_index_grid);
+        SD.d_index_grid = new IntView("d_index_grid", SD.length_index_grid);
+        Kokkos::deep_copy(*SD.d_index_grid, u_index_grid);
+        
+        Kokkos::View<NuclideGridPoint*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+            u_nuclide_grid(SD.nuclide_grid, SD.length_nuclide_grid);
+        SD.d_nuclide_grid = new PointView("d_nuclide_grid", SD.length_nuclide_grid);
+        Kokkos::deep_copy(*SD.d_nuclide_grid, u_nuclide_grid);
+        
 	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data.\n", nbytes/1024.0/1024.0 );
 
 	return SD;

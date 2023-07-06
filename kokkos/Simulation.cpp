@@ -1,4 +1,5 @@
-#include "XSbench_header.h"
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
+#include "XSbench_header.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////
 // BASELINE FUNCTIONS
@@ -39,8 +40,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	////////////////////////////////////////////////////////////////////////////////
 	// Begin Actual Simulation Loop 
 	////////////////////////////////////////////////////////////////////////////////
-	unsigned long long * verification = (unsigned long long *) malloc(in.lookups * sizeof(unsigned long long));
+	//unsigned long long * verification = (unsigned long long *) malloc(in.lookups * sizeof(unsigned long long));
+	Kokkos::View<unsigned long long*> d_verification("d_ver", in.lookups);
+	Kokkos::View<unsigned long long*>::HostMirror verification =
+			Kokkos::create_mirror_view(d_verification);
 
+	/*
 	#pragma omp target teams distribute parallel for\
 	map(to: SD.max_num_nucs)\
 	map(to: SD.num_nucs[:SD.length_num_nucs])\
@@ -49,9 +54,11 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
 	map(to: SD.index_grid[:SD.length_index_grid])\
 	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
-  map(from: verification[:in.lookups])
+	map(from: verification[:in.lookups])
 	for( int i = 0; i < in.lookups; i++ )
 	{
+	*/
+	Kokkos::parallel_for("Simulation", in.lookups, KOKKOS_LAMBDA (int i) {
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
@@ -73,12 +80,12 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				mat,             // Sampled material type index neutron is in
 				in.n_isotopes,   // Total number of isotopes in simulation
 				in.n_gridpoints, // Number of gridpoints per isotope in simulation
-				SD.num_nucs,     // 1-D array with number of nuclides per material
-				SD.concs,        // Flattened 2-D array with concentration of each nuclide in each material
-				SD.unionized_energy_array, // 1-D Unionized energy array
-				SD.index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
-				SD.nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
-				SD.mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
+				SD.d_num_nucs,     // 1-D array with number of nuclides per material
+				SD.d_concs,        // Flattened 2-D array with concentration of each nuclide in each material
+				SD.d_unionized_energy_array, // 1-D Unionized energy array
+				SD.d_index_grid,   // Flattened 2-D grid holding indices into nuclide grid for each unionized energy level
+				SD.d_nuclide_grid, // Flattened 2-D grid holding energy levels and XS_data for all nuclides in simulation
+				SD.d_mats,         // Flattened 2-D array with nuclide indices defining composition of each type of material
 				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
@@ -103,82 +110,97 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				max_idx = j;
 			}
 		}
-		verification[i] = max_idx+1;
-	}
+		d_verification(i) = max_idx+1;
+	});
 
-  // Reduce validation hash on the host
-  unsigned long long validation_hash = 0;
+	Kokkos::deep_copy(verification, d_verification);
+	Kokkos::fence();
+		
+	// Reduce validation hash on the host
+	unsigned long long validation_hash = 0;
 	for( int i = 0; i < in.lookups; i++ )
-    validation_hash += verification[i];
-
+		validation_hash += verification[i];
+	
 	return validation_hash;
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy
+KOKKOS_INLINE_FUNCTION
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
-                           long n_gridpoints,
-                           double *  egrid, int *  index_data,
-                           NuclideGridPoint *  nuclide_grids,
-                           long idx, double *  xs_vector, int grid_type, int hash_bins ){
+			   long n_gridpoints,
+			   DoubleView*  egrid, IntView*  index_data,
+			   PointView *  nuclide_grids,
+			   long idx, double *  xs_vector, int grid_type, int hash_bins ){
 	// Variables
 	double f;
 	NuclideGridPoint * low, * high;
+	long low_i, high_i;
 
 	// If using only the nuclide grid, we must perform a binary search
 	// to find the energy location in this particular nuclide's grid.
 	if( grid_type == NUCLIDE )
 	{
 		// Perform binary search on the Nuclide Grid to find the index
-		idx = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], 0, n_gridpoints-1);
+		idx = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids, nuc*n_gridpoints, 0, n_gridpoints-1);
 
 		// pull ptr from nuclide grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
-		if( idx == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc*n_gridpoints + idx - 1];
-		else
-			low = &nuclide_grids[nuc*n_gridpoints + idx];
+		if( idx == n_gridpoints - 1 ) {
+			low_i = nuc*n_gridpoints + idx - 1;
+			low = &(*nuclide_grids)(low_i);
+		} else {
+			low_i = nuc*n_gridpoints + idx;
+			low = &(*nuclide_grids)(low_i);
+		}
 	}
 	else if( grid_type == UNIONIZED) // Unionized Energy Grid - we already know the index, no binary search needed.
 	{
 		// pull ptr from energy grid and check to ensure that
 		// we're not reading off the end of the nuclide's grid
-		if( index_data[idx * n_isotopes + nuc] == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc] - 1];
-		else
-			low = &nuclide_grids[nuc*n_gridpoints + index_data[idx * n_isotopes + nuc]];
+		if( (*index_data)(idx * n_isotopes + nuc) == n_gridpoints - 1 ) {
+			low_i = nuc*n_gridpoints + (*index_data)(idx * n_isotopes + nuc) - 1;
+			low = &(*nuclide_grids)(low_i);
+		} else {
+			low_i = nuc*n_gridpoints + (*index_data)(idx * n_isotopes + nuc);
+			low = &(*nuclide_grids)(low_i);
+		}
 	}
 	else // Hash grid
 	{
 		// load lower bounding index
-		int u_low = index_data[idx * n_isotopes + nuc];
+		int u_low = (*index_data)(idx * n_isotopes + nuc);
 
 		// Determine higher bounding index
 		int u_high;
 		if( idx == hash_bins - 1 )
 			u_high = n_gridpoints - 1;
 		else
-			u_high = index_data[(idx+1)*n_isotopes + nuc] + 1;
+			u_high = (*index_data)((idx+1)*n_isotopes + nuc) + 1;
 
 		// Check edge cases to make sure energy is actually between these
 		// Then, if things look good, search for gridpoint in the nuclide grid
 		// within the lower and higher limits we've calculated.
-		double e_low  = nuclide_grids[nuc*n_gridpoints + u_low].energy;
-		double e_high = nuclide_grids[nuc*n_gridpoints + u_high].energy;
+		double e_low  = (*nuclide_grids)(nuc*n_gridpoints + u_low).energy;
+		double e_high = (*nuclide_grids)(nuc*n_gridpoints + u_high).energy;
 		int lower;
 		if( p_energy <= e_low )
 			lower = 0;
 		else if( p_energy >= e_high )
 			lower = n_gridpoints - 1;
 		else
-			lower = grid_search_nuclide( n_gridpoints, p_energy, &nuclide_grids[nuc*n_gridpoints], u_low, u_high);
+			lower = grid_search_nuclide( n_gridpoints, p_energy, nuclide_grids, nuc*n_gridpoints, u_low, u_high);
 
-		if( lower == n_gridpoints - 1 )
-			low = &nuclide_grids[nuc*n_gridpoints + lower - 1];
-		else
-			low = &nuclide_grids[nuc*n_gridpoints + lower];
+		if( lower == n_gridpoints - 1 ) {
+			low_i = nuc*n_gridpoints + lower - 1;
+			low = &(*nuclide_grids)(low_i);
+		} else {
+			low_i = nuc*n_gridpoints + lower;
+			low = &(*nuclide_grids)(low_i);
+		}
 	}
-	
-	high = low + 1;
+
+	high_i = low_i + 1;
+	high = &(*nuclide_grids)(high_i);
 	
 	// calculate the re-useable interpolation factor
 	f = (high->energy - p_energy) / (high->energy - low->energy);
@@ -211,13 +233,14 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	
 }
 
-// Calculates macroscopic cross section based on a given material & energy 
+// Calculates macroscopic cross section based on a given material & energy
+KOKKOS_INLINE_FUNCTION
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int *  num_nucs,
-                         double *  concs,
-                         double *  egrid, int *  index_data,
-                         NuclideGridPoint *  nuclide_grids,
-                         int *  mats,
+                         long n_gridpoints, IntView*  num_nucs,
+                         DoubleView*  concs,
+                         DoubleView*  egrid, IntView*  index_data,
+                         PointView*  nuclide_grids,
+                         IntView*  mats,
                          double *  macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
 	long idx = -1;	
@@ -233,7 +256,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// done inside of the "calculate_micro_xs" function for each different
 	// nuclide in the material.
 	if( grid_type == UNIONIZED )
-		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
+		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid, 0);	
 	else if( grid_type == HASH )
 	{
 		double du = 1.0 / hash_bins;
@@ -250,11 +273,11 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// (Independent -- though if parallelizing, must use atomic operations
 	//  or otherwise control access to the xs_vector and macro_xs_vector to
 	//  avoid simulataneous writing to the same data structure)
-	for( int j = 0; j < num_nucs[mat]; j++ )
+	for( int j = 0; j < (*num_nucs)(mat); j++ )
 	{
 		double xs_vector[5];
-		p_nuc = mats[mat*max_num_nucs + j];
-		conc = concs[mat*max_num_nucs + j];
+		p_nuc = (*mats)(mat*max_num_nucs + j);
+		conc = (*concs)(mat*max_num_nucs + j);
 		calculate_micro_xs( p_energy, p_nuc, n_isotopes,
 		                    n_gridpoints, egrid, index_data,
 		                    nuclide_grids, idx, xs_vector, grid_type, hash_bins );
@@ -273,7 +296,8 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 
 // binary search for energy on unionized energy grid
 // returns lower index
-long grid_search( long n, double quarry, double *  A)
+KOKKOS_INLINE_FUNCTION
+long grid_search( long n, double quarry, DoubleView* A, long off)
 {
 	long lowerLimit = 0;
 	long upperLimit = n-1;
@@ -284,7 +308,7 @@ long grid_search( long n, double quarry, double *  A)
 	{
 		examinationPoint = lowerLimit + ( length / 2 );
 		
-		if( A[examinationPoint] > quarry )
+		if( (*A)(examinationPoint + off) > quarry )
 			upperLimit = examinationPoint;
 		else
 			lowerLimit = examinationPoint;
@@ -296,7 +320,30 @@ long grid_search( long n, double quarry, double *  A)
 }
 
 // binary search for energy on nuclide energy grid
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high)
+KOKKOS_INLINE_FUNCTION
+long grid_search_nuclide( long n, double quarry, PointView* A, long off, long low, long high)
+{
+	long lowerLimit = low;
+	long upperLimit = high;
+	long examinationPoint;
+	long length = upperLimit - lowerLimit;
+
+	while( length > 1 )
+	{
+		examinationPoint = lowerLimit + ( length / 2 );
+		
+		if( (*A)(examinationPoint + off).energy > quarry )
+			upperLimit = examinationPoint;
+		else
+			lowerLimit = examinationPoint;
+		
+		length = upperLimit - lowerLimit;
+	}
+	
+	return lowerLimit;
+}
+
+long grid_search_nuclide_old( long n, double quarry, NuclideGridPoint* A, long low, long high)
 {
 	long lowerLimit = low;
 	long upperLimit = high;
@@ -318,7 +365,9 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 	return lowerLimit;
 }
 
+
 // picks a material based on a probabilistic distribution
+KOKKOS_INLINE_FUNCTION
 int pick_mat( uint64_t * seed )
 {
 	// I have a nice spreadsheet supporting these numbers. They are
@@ -358,6 +407,8 @@ int pick_mat( uint64_t * seed )
 	return 0;
 }
 
+// This won't compile if this is inline for some reason
+KOKKOS_FUNCTION
 double LCG_random_double(uint64_t * seed)
 {
 	// LCG parameters
@@ -368,8 +419,9 @@ double LCG_random_double(uint64_t * seed)
 	return (double) (*seed) / (double) m;
 	//return ldexp(*seed, -63);
 
-}	
+}
 
+KOKKOS_INLINE_FUNCTION
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 {
 	// LCG parameters

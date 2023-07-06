@@ -15,9 +15,6 @@
 #include<stdint.h>
 
 #include <Kokkos_Core.hpp>
-#include <Kokkos_Parallel.hpp>
-#include <Kokkos_View.hpp>
-#include <Kokkos_Sort.hpp>
 
 // Papi Header
 #ifdef PAPI
@@ -110,22 +107,30 @@ SimulationData binary_read( Inputs in );
 // Simulation.c
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
 unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
+KOKKOS_INLINE_FUNCTION
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
-                           long n_gridpoints,
-                           double *  egrid, int *  index_data,
-                           NuclideGridPoint *  nuclide_grids,
-                           long idx, double *  xs_vector, int grid_type, int hash_bins );
+			   long n_gridpoints,
+			   DoubleView*  egrid, IntView*  index_data,
+			   PointView *  nuclide_grids,
+			   long idx, double *  xs_vector, int grid_type, int hash_bins );
+KOKKOS_INLINE_FUNCTION
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int *  num_nucs,
-                         double *  concs,
-                         double *  egrid, int *  index_data,
-                         NuclideGridPoint *  nuclide_grids,
-                         int *  mats,
+                         long n_gridpoints, IntView*  num_nucs,
+                         DoubleView*  concs,
+                         DoubleView*  egrid, IntView*  index_data,
+                         PointView*  nuclide_grids,
+                         IntView*  mats,
                          double *  macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
-long grid_search( long n, double quarry, double *  A);
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high);
+KOKKOS_INLINE_FUNCTION
+long grid_search( long n, double quarry, DoubleView* A, long off);
+KOKKOS_INLINE_FUNCTION
+long grid_search_nuclide( long n, double quarry, PointView* A, long off, long low, long high);
+long grid_search_nuclide_old( long n, double quarry, NuclideGridPoint* A, long low, long high);
+KOKKOS_INLINE_FUNCTION
 int pick_mat( uint64_t * seed );
+KOKKOS_FUNCTION
 double LCG_random_double(uint64_t * seed);
+KOKKOS_INLINE_FUNCTION
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n);
 unsigned long long run_event_based_simulation_optimization_1(Inputs in, SimulationData SD, int mype);
 

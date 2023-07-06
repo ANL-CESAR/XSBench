@@ -2,11 +2,16 @@
 # User Options
 #===============================================================================
 
-COMPILER    = llvm
+KOKKOS_PATH = ${HOME}/repos/perf-port/kokkos
+CUDA_PATH   = /usr/local/cuda-11.6
+COMPILER    = nvidia
 OPTIMIZE    = yes
-DEBUG       = no
+DEBUG       = yes
 PROFILE     = no
 MPI         = no
+KOKKOS_DEVICES = OpenMP,Cuda
+KOKKOS_ARCH = Zen3,Ampere86
+SM_VERSION = 86
 
 #===============================================================================
 # Program name & source code list
@@ -29,79 +34,53 @@ obj = $(source:.cpp=.o)
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=gnu99 -Wall
+CXXFLAGS := -Wall
 
 # Linker Flags
 LDFLAGS = -lm
 
-# Regular gcc Compiler
-ifeq ($(COMPILER),gnu)
-  CC = gcc
-  CFLAGS += -fopenmp -flto
-endif
-
-# Intel Compiler
-ifeq ($(COMPILER),intel)
-  CC = icx 
-  CFLAGS += -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ 
-endif
-
-# LLVM Compiler Targeting A100 -- Change SM Level to Target Other GPUs
-ifeq ($(COMPILER),llvm)
-  CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80
-endif
-
-# IBM XL Compiler
-ifeq ($(COMPILER),ibm)
-  CC = xlc_r
-  CFLAGS += -qsmp=omp -qoffload
-endif
-
-# NVIDIA Compiler Targeting A100 -- Change SM Level to Target Other GPUs
+# NVIDIA Compiler
 ifeq ($(COMPILER),nvidia)
-  CC = nvc
-  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc80
-endif
-
-# AOMP Targeting MI100 -- Change march to Target Other GPUs
-ifeq ($(COMPILER),amd)
-  CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx908
+  CXX = ${KOKKOS_PATH}/bin/nvcc_wrapper
+  CXXFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION)
 endif
 
 # Debug Flags
 ifeq ($(DEBUG),yes)
-  CFLAGS += -g
-  LDFLAGS  += -g
+  CXXFLAGS += -g -G
+  LDFLAGS  += -g -G
 endif
 
 # Profiling Flags
 ifeq ($(PROFILE),yes)
-  CFLAGS += -pg
+  CXXFLAGS += -pg
   LDFLAGS  += -pg
 endif
 
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
-  CFLAGS += -O3
+  CXXFLAGS += -O3
 endif
 
 # MPI
 ifeq ($(MPI),yes)
-  CC = mpicc
-  CFLAGS += -DMPI
+  CXX = mpicxx
+  CXXFLAGS += -DMPI
 endif
 
 #===============================================================================
 # Targets to Build
 #===============================================================================
 
-$(program): $(obj) XSbench_header.hpp Makefile
-	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
+default: $(program)
 
-%.o: %.cpp XSbench_header.hpp Makefile
-	$(CC) $(CFLAGS) -c $< -o $@
+include $(KOKKOS_PATH)/Makefile.kokkos
+
+$(program): $(obj) XSbench_header.hpp Makefile $(KOKKOS_LINK_DEPENDS)
+	$(CXX) $(CXXFLAGS) $(KOKKOS_LDFLAGS) $(obj) $(KOKKOS_LIBS) -o $@ $(LDFLAGS)
+
+%.o: %.cpp XSbench_header.hpp Makefile $(KOKKOS_CPP_DEPENDS)
+	$(CXX) $(KOKKOS_CPPFLAGS) $(KOKKOS_CXXFLAGS) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(program) $(obj)

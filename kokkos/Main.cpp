@@ -1,4 +1,5 @@
-#include "XSbench_header.h"
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
+#include "XSbench_header.hpp"
 
 #ifdef MPI
 #include<mpi.h>
