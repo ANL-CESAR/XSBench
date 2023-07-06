@@ -1,4 +1,4 @@
-#include "XSbench_header.h"
+#include "XSbench_header.hpp"
 
 int double_compare(const void * a, const void * b)
 {
