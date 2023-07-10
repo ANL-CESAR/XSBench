@@ -74,6 +74,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 		// debugging
 		//printf("E = %lf mat = %d\n", p_energy, mat);
+		//if (i == 0 || i == 1) printf("d_max_num_nucs = %d\n", (*SD.d_max_num_nucs)());
 
 		double macro_xs_vector[5] = {0};
 		
@@ -92,7 +93,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 				macro_xs_vector, // 1-D array with result of the macroscopic cross section (5 different reaction channels)
 				in.grid_type,    // Lookup type (nuclide, hash, or unionized)
 				in.hash_bins,    // Number of hash bins used (if using hash lookup type)
-				SD.max_num_nucs  // Maximum number of nuclides present in any material
+				(*SD.d_max_num_nucs)()  // Maximum number of nuclides present in any material
 				);
 
 		// For verification, and to prevent the compiler from optimizing
