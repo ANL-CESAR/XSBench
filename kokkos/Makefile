@@ -10,7 +10,9 @@ DEBUG       = yes
 PROFILE     = no
 MPI         = no
 KOKKOS_DEVICES = OpenMP,Cuda
+#KOKKOS_DEVICES = OpenMP
 KOKKOS_ARCH = Zen3,Ampere86
+#KOKKOS_ARCH = Zen3
 SM_VERSION = 86
 
 #===============================================================================
@@ -45,10 +47,23 @@ ifeq ($(COMPILER),nvidia)
   CXXFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION)
 endif
 
+# Clang Compiler
+ifeq ($(COMPILER),llvm)
+  CXX = clang++
+  CXXFLAGS += -flto -fopenmp -DOPENMP
+endif
+
+# GCC Compiler
+ifeq ($(COMPILER),gnu)
+  CXX = g++
+  CXXFLAGS += -flto -fopenmp -DOPENMP
+endif
+
+
 # Debug Flags
 ifeq ($(DEBUG),yes)
-  CXXFLAGS += -g -G
-  LDFLAGS  += -g -G
+  CXXFLAGS += -g
+  LDFLAGS  += -g
 endif
 
 # Profiling Flags
