@@ -85,7 +85,7 @@ typedef struct{
 	int length_unionized_energy_array;
 	long length_index_grid;
 	int length_nuclide_grid;
-	Kokkos::View<int>* d_max_num_nucs;
+	IntView* d_max_num_nucs;
 	int max_num_nucs;
 	double * p_energy_samples;
 	int length_p_energy_samples;
@@ -111,21 +111,21 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 KOKKOS_INLINE_FUNCTION
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 			   long n_gridpoints,
-			   DoubleView*  egrid, IntView*  index_data,
+			   DoubleView  egrid, IntView  index_data,
 			   PointView *  nuclide_grids,
 			   long idx, double *  xs_vector, int grid_type, int hash_bins );
 KOKKOS_INLINE_FUNCTION
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, IntView*  num_nucs,
-                         DoubleView*  concs,
-                         DoubleView*  egrid, IntView*  index_data,
-                         PointView*  nuclide_grids,
-                         IntView*  mats,
+                         long n_gridpoints, IntView  num_nucs,
+                         DoubleView  concs,
+                         DoubleView  egrid, IntView  index_data,
+                         PointView  nuclide_grids,
+                         IntView  mats,
                          double *  macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs );
 KOKKOS_INLINE_FUNCTION
-long grid_search( long n, double quarry, DoubleView* A, long off);
+long grid_search( long n, double quarry, DoubleView A, long off);
 KOKKOS_INLINE_FUNCTION
-long grid_search_nuclide( long n, double quarry, PointView* A, long off, long low, long high);
+long grid_search_nuclide( long n, double quarry, PointView A, long off, long low, long high);
 long grid_search_nuclide_old( long n, double quarry, NuclideGridPoint* A, long low, long high);
 KOKKOS_INLINE_FUNCTION
 int pick_mat( uint64_t * seed );
