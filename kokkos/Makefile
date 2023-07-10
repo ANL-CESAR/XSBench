@@ -6,7 +6,7 @@ KOKKOS_PATH = ${HOME}/repos/perf-port/kokkos
 CUDA_PATH   = /usr/local/cuda-11.6
 COMPILER    = nvidia
 OPTIMIZE    = yes
-DEBUG       = yes
+DEBUG       = no
 PROFILE     = no
 MPI         = no
 KOKKOS_DEVICES = OpenMP,Cuda
@@ -64,6 +64,10 @@ endif
 ifeq ($(DEBUG),yes)
   CXXFLAGS += -g
   LDFLAGS  += -g
+ifeq ($(COMPILER),nvidia)
+  CXXFLAGS += -G
+  LDFLAGS  += -G
+endif
 endif
 
 # Profiling Flags

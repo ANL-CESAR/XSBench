@@ -171,11 +171,20 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
-	Kokkos::View<int, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-			u_max_num_nucs(&SD.max_num_nucs);
-        SD.d_max_num_nucs = new Kokkos::View<int>("d_max_num_nucs");
-        Kokkos::deep_copy(*SD.d_max_num_nucs, u_max_num_nucs);
+	int length_max_num_nucs = 1;
+
+	//Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+        //             Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+	//		u_max_num_nucs(&SD.max_num_nucs, 1);
+
+        SD.d_max_num_nucs = new IntView("d_max_num_nucs", length_max_num_nucs);
+
+	IntView::HostMirror* u_max_num_nucs = new IntView::HostMirror();
+	*u_max_num_nucs = Kokkos::create_mirror_view(*SD.d_max_num_nucs);
+	for (int i = 0; i < length_max_num_nucs; i++)
+		(*u_max_num_nucs)(0) = SD.max_num_nucs;
+
+        Kokkos::deep_copy(*SD.d_max_num_nucs, *u_max_num_nucs);
 
         Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                      Kokkos::MemoryTraits<Kokkos::Unmanaged>>
