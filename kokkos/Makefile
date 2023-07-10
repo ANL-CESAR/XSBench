@@ -2,18 +2,16 @@
 # User Options
 #===============================================================================
 
-KOKKOS_PATH = ${HOME}/repos/perf-port/kokkos
-CUDA_PATH   = /usr/local/cuda-11.6
+KOKKOS_PATH = /gpfs/alpine/csc452/proj-shared/perf_port_builds/kokkos
+CUDA_PATH   = /sw/summit/cuda/11.5.2
 COMPILER    = nvidia
 OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
 KOKKOS_DEVICES = OpenMP,Cuda
-#KOKKOS_DEVICES = OpenMP
-KOKKOS_ARCH = Zen3,Ampere86
-#KOKKOS_ARCH = Zen3
-SM_VERSION = 86
+KOKKOS_ARCH = Power9,Volta70
+SM_VERSION = 70
 
 #===============================================================================
 # Program name & source code list
