@@ -171,6 +171,12 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
+	Kokkos::View<int, Kokkos::LayoutLeft, Kokkos::HostSpace,
+                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+			u_max_num_nucs(&SD.max_num_nucs);
+        SD.d_max_num_nucs = new Kokkos::View<int>("d_max_num_nucs");
+        Kokkos::deep_copy(*SD.d_max_num_nucs, u_max_num_nucs);
+
         Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                      Kokkos::MemoryTraits<Kokkos::Unmanaged>>
 			u_num_nucs(SD.num_nucs, SD.length_num_nucs);

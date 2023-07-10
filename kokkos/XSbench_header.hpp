@@ -85,6 +85,7 @@ typedef struct{
 	int length_unionized_energy_array;
 	long length_index_grid;
 	int length_nuclide_grid;
+	Kokkos::View<int>* d_max_num_nucs;
 	int max_num_nucs;
 	double * p_energy_samples;
 	int length_p_energy_samples;
