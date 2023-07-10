@@ -44,6 +44,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	Kokkos::View<unsigned long long*> d_verification("d_ver", in.lookups);
 	Kokkos::View<unsigned long long*>::HostMirror verification =
 			Kokkos::create_mirror_view(d_verification);
+	//Kokkos::deep_copy(d_verification, verification);
 
 	/*
 	#pragma omp target teams distribute parallel for\
@@ -58,7 +59,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	for( int i = 0; i < in.lookups; i++ )
 	{
 	*/
-	Kokkos::parallel_for("Simulation", in.lookups, KOKKOS_LAMBDA (int i) {
+	Kokkos::parallel_for("Simulation",
+			     Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, in.lookups),
+			     KOKKOS_LAMBDA (int i) {
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
@@ -119,7 +122,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Reduce validation hash on the host
 	unsigned long long validation_hash = 0;
 	for( int i = 0; i < in.lookups; i++ )
-		validation_hash += verification[i];
+		validation_hash += verification(i);
 	
 	return validation_hash;
 }
