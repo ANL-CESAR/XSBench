@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #include "XSbench_header.cuh"
 
 // Moves all required data structures to the GPU's memory space
@@ -16,7 +17,7 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	// double * unionized_energy_array;    // Length = length_unionized_energy_array
 	// int * index_grid;                   // Length = length_index_grid
 	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
-	// 
+	//
 	// Note: "unionized_energy_array" and "index_grid" can be of zero length
 	//        depending on lookup method.
 	//
@@ -44,7 +45,7 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	gpuErrchk( cudaMalloc((void **) &GSD.mats, sz) );
 	gpuErrchk( cudaMemcpy(GSD.mats, SD.mats, sz, cudaMemcpyHostToDevice) );
 	total_sz += sz;
-	
+
 	sz = GSD.length_unionized_energy_array * sizeof(double);
 	gpuErrchk( cudaMalloc((void **) &GSD.unionized_energy_array, sz) );
 	gpuErrchk( cudaMemcpy(GSD.unionized_energy_array, SD.unionized_energy_array, sz, cudaMemcpyHostToDevice) );
@@ -59,18 +60,18 @@ SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationDa
 	gpuErrchk( cudaMalloc((void **) &GSD.nuclide_grid, sz) );
 	gpuErrchk( cudaMemcpy(GSD.nuclide_grid, SD.nuclide_grid, sz, cudaMemcpyHostToDevice) );
 	total_sz += sz;
-	
+
 	// Allocate verification array on device. This structure is not needed on CPU, so we don't
 	// have to copy anything over.
 	sz = in.lookups * sizeof(unsigned long);
 	gpuErrchk( cudaMalloc((void **) &GSD.verification, sz) );
 	total_sz += sz;
 	GSD.length_verification = in.lookups;
-	
+
 	// Synchronize
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
-	
+
 	if(mype == 0 ) printf("GPU Intialization complete. Allocated %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0 );
 
 	return GSD;
@@ -94,27 +95,27 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 
 	// Keep track of how much data we're allocating
 	size_t nbytes = 0;
-	
+
 	// Set the initial seed value
-	uint64_t seed = 42;	
+	uint64_t seed = 42;
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize Nuclide Grids
 	////////////////////////////////////////////////////////////////////
-	
+
 	if(mype == 0) printf("Intializing nuclide grids...\n");
 
 	// First, we need to initialize our nuclide grid. This comes in the form
 	// of a flattened 2D array that hold all the information we need to define
-	// the cross sections for all isotopes in the simulation. 
+	// the cross sections for all isotopes in the simulation.
 	// The grid is composed of "NuclideGridPoint" structures, which hold the
 	// energy level of the grid point and all associated XS data at that level.
 	// An array of structures (AOS) is used instead of
-	// a structure of arrays, as the grid points themselves are accessed in 
+	// a structure of arrays, as the grid points themselves are accessed in
 	// a random order, but all cross section interaction channels and the
 	// energy level are read whenever the gridpoint is accessed, meaning the
 	// AOS is more cache efficient.
-	
+
 	// Initialize Nuclide Grid
 	SD.length_nuclide_grid = in.n_isotopes * in.n_gridpoints;
 	SD.nuclide_grid     = (NuclideGridPoint *) malloc( SD.length_nuclide_grid * sizeof(NuclideGridPoint));
@@ -133,7 +134,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// Sort so that each nuclide has data stored in ascending energy order.
 	for( int i = 0; i < in.n_isotopes; i++ )
 		qsort( &SD.nuclide_grid[i*in.n_gridpoints], in.n_gridpoints, sizeof(NuclideGridPoint), NGP_compare);
-	
+
 	// error debug check
 	/*
 	for( int i = 0; i < in.n_isotopes; i++ )
@@ -143,18 +144,18 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 			printf("E%d = %lf\n", j, SD.nuclide_grid[i * in.n_gridpoints + j].energy);
 	}
 	*/
-	
+
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize Acceleration Structure
 	////////////////////////////////////////////////////////////////////
-	
+
 	if( in.grid_type == NUCLIDE )
 	{
 		SD.length_unionized_energy_array = 0;
 		SD.length_index_grid = 0;
 	}
-	
+
 	if( in.grid_type == UNIONIZED )
 	{
 		if(mype == 0) printf("Intializing unionized grid...\n");
@@ -200,7 +201,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 				{
 					idx_low[i]++;
 					SD.index_grid[e * in.n_isotopes + i] = idx_low[i];
-					energy_high[i] = SD.nuclide_grid[i * in.n_gridpoints + idx_low[i] + 1].energy;	
+					energy_high[i] = SD.nuclide_grid[i * in.n_gridpoints + idx_low[i] + 1].energy;
 				}
 			}
 		}
@@ -214,7 +215,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		if(mype == 0) printf("Intializing hash grid...\n");
 		SD.length_unionized_energy_array = 0;
 		SD.length_index_grid  = in.hash_bins * in.n_isotopes;
-		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int)); 
+		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int));
 		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
 
@@ -237,7 +238,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// Initialize Materials and Concentrations
 	////////////////////////////////////////////////////////////////////
 	if(mype == 0) printf("Intializing material data...\n");
-	
+
 	// Set the number of nuclides in each material
 	SD.num_nucs  = load_num_nucs(in.n_isotopes);
 	SD.length_num_nucs = 12; // There are always 12 materials in XSBench

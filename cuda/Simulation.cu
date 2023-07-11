@@ -13,7 +13,7 @@
 // line argument.
 ////////////////////////////////////////////////////////////////////////////////////
 
-unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData GSD, int mype)
+unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData GSD, int mype, double* end)
 {
 	////////////////////////////////////////////////////////////////////////////////
 	// Configure & Launch Simulation Kernel
@@ -26,6 +26,10 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	xs_lookup_kernel_baseline<<<nblocks, nthreads>>>( in, GSD );
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
+
+#ifdef ALIGNED_WORK
+	*end = get_time();
+#endif
 
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
