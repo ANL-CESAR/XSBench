@@ -62,7 +62,7 @@ endif
 $(program): $(obj) XSbench_header.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.hip XSbench_header.h Makefile
+%.o: %.cpp XSbench_header.h Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
