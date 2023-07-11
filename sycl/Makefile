@@ -7,6 +7,7 @@ OPTIMIZE    = yes
 DEBUG       = no
 PROFILE     = no
 MPI         = no
+CHECK_MAX   = no
 
 #===============================================================================
 # Program name & source code list
@@ -63,6 +64,11 @@ endif
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
+endif
+
+# Disable or enable checking SYCL max mem alloc
+ifeq ($(CHECK_MAX),yes)
+	CFLAGS += -DCHECK_MAX_ALLOC
 endif
 
 # MPI

@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #include "XSbench_header.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -15,7 +16,7 @@
 using namespace cl::sycl;
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time)
 {
-	
+
 	////////////////////////////////////////////////////////////////////////////////
 	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
 	// Here we list all heap arrays (and lengths) in SD that would need to be
@@ -27,18 +28,18 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// double * unionized_energy_array;    // Length = length_unionized_energy_array
 	// int * index_grid;                   // Length = length_index_grid
 	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
-	// 
+	//
 	// Note: "unionized_energy_array" and "index_grid" can be of zero length
 	//        depending on lookup method.
 	//
 	// Note: "Lengths" are given as the number of objects in the array, not the
 	//       number of bytes.
 	////////////////////////////////////////////////////////////////////////////////
-	
+
 	// Let's create an extra verification array to reduce manually later on
 	if( mype == 0 ) printf("Allocating an additional %.1lf MB of memory for verification arrays...\n", in.lookups * sizeof(int) /1024.0/1024.0);
 	int * verification_host = (int *) malloc(in.lookups * sizeof(int));
-	
+
 	// Timers
 	double start = get_time();
 	double stop;
@@ -53,7 +54,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		//queue sycl_q{cpu_selector()};
 		if(mype == 0 ) printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
 		if(mype == 0 ) printf("Initializing device buffers and JIT compiling kernel...\n");
-	
+
 		////////////////////////////////////////////////////////////////////////////////
 		// Create Device Buffers
 		////////////////////////////////////////////////////////////////////////////////
@@ -84,9 +85,11 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		// For the unionized grid, this is a large array. Enforce that it is able to be allocated on the
 		// OpenCL device (as some OpenCL devices have fairly low limts here for some reason...)
 		size_t index_grid_allocation_sz = ceil((SD.length_index_grid * sizeof(int)));
+#ifdef CHECK_MAX_ALLOC
 		assert( index_grid_allocation_sz <= sycl_q.get_device().get_info<cl::sycl::info::device::max_mem_alloc_size>() );
+#endif
 		buffer<int, 1> index_grid_d(SD.index_grid, (unsigned long long ) SD.length_index_grid);
-		
+
 		////////////////////////////////////////////////////////////////////////////////
 		// Define Device Kernel
 		////////////////////////////////////////////////////////////////////////////////
@@ -114,14 +117,14 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 					size_t i = idx[0];
 
 					// Set the initial seed value
-					uint64_t seed = STARTING_SEED;	
+					uint64_t seed = STARTING_SEED;
 
 					// Forward seed to lookup index (we need 2 samples per lookup)
 					seed = fast_forward_LCG(seed, 2*i);
 
 					// Randomly pick an energy and material for the particle
 					double p_energy = LCG_random_double(&seed);
-					int mat         = pick_mat(&seed); 
+					int mat         = pick_mat(&seed);
 
 					// debugging
 					//printf("E = %lf mat = %d\n", p_energy, mat);
@@ -299,7 +302,7 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 	xs_vector[4] = high.nu_fission_xs - f * (high.nu_fission_xs - low.nu_fission_xs);
 }
 
-// Calculates macroscopic cross section based on a given material & energy 
+// Calculates macroscopic cross section based on a given material & energy
 template <class Double_Type, class Int_Type, class NGP_Type, class E_GRID_TYPE, class INDEX_TYPE>
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		long n_gridpoints, Int_Type  num_nucs,
@@ -309,7 +312,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		Int_Type  mats,
 		double * macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
-	long idx = -1;	
+	long idx = -1;
 	double conc; // the concentration of the nuclide in the material
 
 	// cleans out macro_xs_vector
@@ -322,7 +325,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// done inside of the "calculate_micro_xs" function for each different
 	// nuclide in the material.
 	if( grid_type == UNIONIZED )
-		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
+		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);
 	else if( grid_type == HASH )
 	{
 		double du = 1.0 / hash_bins;
@@ -356,11 +359,11 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 int pick_mat( unsigned long * seed )
 {
 	// I have a nice spreadsheet supporting these numbers. They are
-	// the fractions (by volume) of material in the core. Not a 
+	// the fractions (by volume) of material in the core. Not a
 	// *perfect* approximation of where XS lookups are going to occur,
 	// but this will do a good job of biasing the system nonetheless.
 
-	// Also could be argued that doing fractions by weight would be 
+	// Also could be argued that doing fractions by weight would be
 	// a better approximation, but volume does a good enough job for now.
 
 	double dist[12];
@@ -400,7 +403,7 @@ double LCG_random_double(uint64_t * seed)
 	const uint64_t c = 1ULL;
 	*seed = (a * (*seed) + c) % m;
 	return (double) (*seed) / (double) m;
-}	
+}
 
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 {
@@ -414,7 +417,7 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 	uint64_t a_new = 1;
 	uint64_t c_new = 0;
 
-	while(n > 0) 
+	while(n > 0)
 	{
 		if(n & 1)
 		{
