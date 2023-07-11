@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #include "hip/hip_runtime.h"
 #include "XSbench_header.h"
 
@@ -13,7 +14,7 @@
 // line argument.
 ////////////////////////////////////////////////////////////////////////////////////
 
-unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData GSD, int mype)
+unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData GSD, int mype, double* end)
 {
 	////////////////////////////////////////////////////////////////////////////////
 	// Configure & Launch Simulation Kernel
@@ -26,20 +27,24 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	hipLaunchKernelGGL(xs_lookup_kernel_baseline, dim3(nblocks), dim3(nthreads), 0, 0,  in, GSD );
 	gpuErrchk( hipPeekAtLastError() );
 	gpuErrchk( hipDeviceSynchronize() );
-	
+
+#ifdef ALIGNED_WORK
+	*end = get_time();
+#endif
+
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Reducing verification results...\n");
 
-  
-  size_t sz = in.lookups * sizeof(unsigned long);
-  unsigned long * v = (unsigned long *) malloc(sz);
-  gpuErrchk( hipMemcpy(v, GSD.verification, sz, hipMemcpyDeviceToHost) );
 
-  unsigned long verification_scalar = 0;
-  for( int i =0; i < in.lookups; i++ )
-    verification_scalar += v[i];
+	size_t sz = in.lookups * sizeof(unsigned long);
+	unsigned long * v = (unsigned long *) malloc(sz);
+	gpuErrchk( hipMemcpy(v, GSD.verification, sz, hipMemcpyDeviceToHost) );
+
+	unsigned long verification_scalar = 0;
+	for( int i =0; i < in.lookups; i++ )
+		verification_scalar += v[i];
 
 	return verification_scalar;
 }
