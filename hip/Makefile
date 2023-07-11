@@ -14,14 +14,14 @@ PROFILE     = no
 program = XSBench
 
 source = \
-Main.hip \
-io.hip \
-Simulation.hip \
-GridInit.hip \
-XSutils.hip \
-Materials.hip
+Main.cpp \
+io.cpp \
+Simulation.cpp \
+GridInit.cpp \
+XSutils.cpp \
+Materials.cpp
 
-obj = $(source:.hip=.o)
+obj = $(source:.cpp=.o)
 
 #===============================================================================
 # Sets Flags
