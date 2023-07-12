@@ -65,6 +65,12 @@ typedef struct{
 typedef Kokkos::View<int*> IntView;
 typedef Kokkos::View<double*> DoubleView;
 typedef Kokkos::View<NuclideGridPoint*> PointView;
+typedef Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+		     Kokkos::MemoryTraits<Kokkos::Unmanaged>> UIntView;
+typedef Kokkos::View<double*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+		     Kokkos::MemoryTraits<Kokkos::Unmanaged>> UDoubleView;
+typedef Kokkos::View<NuclideGridPoint*, Kokkos::LayoutLeft, Kokkos::HostSpace,
+		     Kokkos::MemoryTraits<Kokkos::Unmanaged>> UPointView;
 
 typedef struct{
 	IntView* d_num_nucs;				// Length = length_num_nucs;
