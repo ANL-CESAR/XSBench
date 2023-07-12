@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #include "XSbench_header.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -11,11 +12,11 @@
 // are not yet implemented for this OpenMP targeting offload port.
 ////////////////////////////////////////////////////////////////////////////////////
 
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double* end)
 {
-	if( mype == 0)	
+	if( mype == 0)
 		printf("Beginning event based simulation...\n");
-	
+
 	////////////////////////////////////////////////////////////////////////////////
 	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
 	// Here we list all heap arrays (and lengths) in SD that would need to be
@@ -27,7 +28,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// double * unionized_energy_array;    // Length = length_unionized_energy_array
 	// int * index_grid;                   // Length = length_index_grid
 	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
-	// 
+	//
 	// Note: "unionized_energy_array" and "index_grid" can be of zero length
 	//        depending on lookup method.
 	//
@@ -37,7 +38,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 
 	////////////////////////////////////////////////////////////////////////////////
-	// Begin Actual Simulation Loop 
+	// Begin Actual Simulation Loop
 	////////////////////////////////////////////////////////////////////////////////
 	unsigned long long * verification = (unsigned long long *) malloc(in.lookups * sizeof(unsigned long long));
 
@@ -61,13 +62,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 		// Randomly pick an energy and material for the particle
 		double p_energy = LCG_random_double(&seed);
-		int mat         = pick_mat(&seed); 
+		int mat         = pick_mat(&seed);
 
 		// debugging
 		//printf("E = %lf mat = %d\n", p_energy, mat);
 
 		double macro_xs_vector[5] = {0};
-		
+
 		// Perform macroscopic Cross Section Lookup
 		calculate_macro_xs(
 				p_energy,        // Sampled neutron energy (in lethargy)
@@ -107,10 +108,14 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		verification[i] = max_idx+1;
 	}
 
-  // Reduce validation hash on the host
-  unsigned long long validation_hash = 0;
+#ifdef ALIGNED_WORK
+	*end = omp_get_wtime();
+#endif
+
+	// Reduce validation hash on the host
+	unsigned long long validation_hash = 0;
 	for( int i = 0; i < in.lookups; i++ )
-    validation_hash += verification[i];
+		validation_hash += verification[i];
 
 	return validation_hash;
 }
@@ -178,27 +183,27 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		else
 			low = &nuclide_grids[nuc*n_gridpoints + lower];
 	}
-	
+
 	high = low + 1;
-	
+
 	// calculate the re-useable interpolation factor
 	f = (high->energy - p_energy) / (high->energy - low->energy);
 
 	// Total XS
 	xs_vector[0] = high->total_xs - f * (high->total_xs - low->total_xs);
-	
+
 	// Elastic XS
 	xs_vector[1] = high->elastic_xs - f * (high->elastic_xs - low->elastic_xs);
-	
+
 	// Absorbtion XS
 	xs_vector[2] = high->absorbtion_xs - f * (high->absorbtion_xs - low->absorbtion_xs);
-	
+
 	// Fission XS
 	xs_vector[3] = high->fission_xs - f * (high->fission_xs - low->fission_xs);
-	
+
 	// Nu Fission XS
 	xs_vector[4] = high->nu_fission_xs - f * (high->nu_fission_xs - low->nu_fission_xs);
-	
+
 	//test
 	/*
 	if( omp_get_thread_num() == 0 )
@@ -209,10 +214,10 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 		printf("total_xs = %lf\n\n", xs_vector[1]);
 	}
 	*/
-	
+
 }
 
-// Calculates macroscopic cross section based on a given material & energy 
+// Calculates macroscopic cross section based on a given material & energy
 void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          long n_gridpoints, int *  num_nucs,
                          double *  concs,
@@ -221,7 +226,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
                          int *  mats,
                          double *  macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
-	long idx = -1;	
+	long idx = -1;
 	double conc; // the concentration of the nuclide in the material
 
 	// cleans out macro_xs_vector
@@ -234,13 +239,13 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 	// done inside of the "calculate_micro_xs" function for each different
 	// nuclide in the material.
 	if( grid_type == UNIONIZED )
-		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);	
+		idx = grid_search( n_isotopes * n_gridpoints, p_energy, egrid);
 	else if( grid_type == HASH )
 	{
 		double du = 1.0 / hash_bins;
 		idx = p_energy / du;
 	}
-	
+
 	// Once we find the pointer array on the UEG, we can pull the data
 	// from the respective nuclide grids, as well as the nuclide
 	// concentration data for the material
@@ -262,7 +267,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 		for( int k = 0; k < 5; k++ )
 			macro_xs_vector[k] += xs_vector[k] * conc;
 	}
-	
+
 	//test
 	/*
 	for( int k = 0; k < 5; k++ )
@@ -284,15 +289,15 @@ long grid_search( long n, double quarry, double *  A)
 	while( length > 1 )
 	{
 		examinationPoint = lowerLimit + ( length / 2 );
-		
+
 		if( A[examinationPoint] > quarry )
 			upperLimit = examinationPoint;
 		else
 			lowerLimit = examinationPoint;
-		
+
 		length = upperLimit - lowerLimit;
 	}
-	
+
 	return lowerLimit;
 }
 
@@ -307,15 +312,15 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 	while( length > 1 )
 	{
 		examinationPoint = lowerLimit + ( length / 2 );
-		
+
 		if( A[examinationPoint].energy > quarry )
 			upperLimit = examinationPoint;
 		else
 			lowerLimit = examinationPoint;
-		
+
 		length = upperLimit - lowerLimit;
 	}
-	
+
 	return lowerLimit;
 }
 
@@ -323,11 +328,11 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 int pick_mat( uint64_t * seed )
 {
 	// I have a nice spreadsheet supporting these numbers. They are
-	// the fractions (by volume) of material in the core. Not a 
+	// the fractions (by volume) of material in the core. Not a
 	// *perfect* approximation of where XS lookups are going to occur,
 	// but this will do a good job of biasing the system nonetheless.
 
-	// Also could be argued that doing fractions by weight would be 
+	// Also could be argued that doing fractions by weight would be
 	// a better approximation, but volume does a good enough job for now.
 
 	double dist[12];
@@ -343,7 +348,7 @@ int pick_mat( uint64_t * seed )
 	dist[9]  = 0.015;	// top nozzle
 	dist[10] = 0.025;	// top of fuel assemblies
 	dist[11] = 0.013;	// bottom of fuel assemblies
-	
+
 	double roll = LCG_random_double(seed);
 
 	// makes a pick based on the distro
@@ -369,7 +374,7 @@ double LCG_random_double(uint64_t * seed)
 	return (double) (*seed) / (double) m;
 	//return ldexp(*seed, -63);
 
-}	
+}
 
 uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 {
@@ -383,7 +388,7 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 	uint64_t a_new = 1;
 	uint64_t c_new = 0;
 
-	while(n > 0) 
+	while(n > 0)
 	{
 		if(n & 1)
 		{
@@ -399,4 +404,3 @@ uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 	return (a_new * seed + c_new) % m;
 
 }
-

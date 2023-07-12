@@ -8,6 +8,7 @@ DEBUG       = yes
 PROFILE     = no
 MPI         = no
 OPENACC     = yes
+ALIGNED     = no
 
 #===============================================================================
 # Program name & source code list
@@ -80,6 +81,11 @@ endif
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
+endif
+
+# Align workload for comparison purposes
+ifeq ($(ALIGNED),yes)
+  CFLAGS += -DALIGNED_WORK
 endif
 
 # MPI
