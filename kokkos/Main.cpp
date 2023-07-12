@@ -79,7 +79,7 @@ int main( int argc, char* argv[] )
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-			verification = run_event_based_simulation(in, SD, mype);
+			verification = run_event_based_simulation(in, SD, mype, &omp_end);
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);
@@ -88,7 +88,7 @@ int main( int argc, char* argv[] )
 	}
 	else
 	{
-		printf("History-based simulation not implemented in OpenMP offload code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
+		printf("History-based simulation not implemented in Kokkos code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
 		exit(1);
 	}
 
@@ -97,9 +97,6 @@ int main( int argc, char* argv[] )
 		printf("\n" );
 		printf("Simulation complete.\n" );
 	}
-
-	// End Simulation Timer
-	omp_end = omp_get_wtime();
 
 	// =====================================================================
 	// Output Results & Finalize

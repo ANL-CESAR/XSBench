@@ -112,7 +112,7 @@ void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.c
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double* end);
 unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
 KOKKOS_INLINE_FUNCTION
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
