@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #include "XSbench_header.h"
 
 #ifdef MPI
@@ -26,7 +27,7 @@ int main( int argc, char* argv[] )
 	Inputs in = read_CLI( argc, argv );
 
 	// Set number of OpenMP Threads
-	//omp_set_num_threads(in.nthreads); 
+	//omp_set_num_threads(in.nthreads);
 
 	// Print-out of Input Summary
 	if( mype == 0 )
@@ -37,7 +38,7 @@ int main( int argc, char* argv[] )
 	// This is not reflective of a real Monte Carlo simulation workload,
 	// therefore, do not profile this region!
 	// =====================================================================
-	
+
 	SimulationData SD;
 
 	// If read from file mode is selected, skip initialization and load
@@ -55,7 +56,7 @@ int main( int argc, char* argv[] )
 
 	// =====================================================================
 	// Cross Section (XS) Parallel Lookup Simulation
-	// This is the section that should be profiled, as it reflects a 
+	// This is the section that should be profiled, as it reflects a
 	// realistic continuous energy Monte Carlo macroscopic cross section
 	// lookup kernel.
 	// =====================================================================
@@ -91,8 +92,8 @@ int main( int argc, char* argv[] )
 		exit(1);
 	}
 
-	if( mype == 0)	
-	{	
+	if( mype == 0)
+	{
 		printf("\n" );
 		printf("Simulation complete.\n" );
 	}
