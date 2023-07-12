@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #ifndef __XSBENCH_HEADER_H__
 #define __XSBENCH_HEADER_H__
 
@@ -92,7 +93,7 @@ void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.c
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype);
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double* end);
 unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, int mype);
 void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,

@@ -12,7 +12,7 @@
 // are not yet implemented for this OpenMP targeting offload port.
 ////////////////////////////////////////////////////////////////////////////////////
 
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double* end)
 {
 	if( mype == 0)
 		printf("Beginning event based simulation...\n");
@@ -50,7 +50,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
 	map(to: SD.index_grid[:SD.length_index_grid])\
 	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
-  map(from: verification[:in.lookups])
+	map(from: verification[:in.lookups])
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
@@ -106,6 +106,10 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		}
 		verification[i] = max_idx+1;
 	}
+
+#ifdef ALIGNED_WORK
+	*end = omp_get_wtime();
+#endif
 
 	// Reduce validation hash on the host
 	unsigned long long validation_hash = 0;
