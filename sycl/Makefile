@@ -2,11 +2,11 @@
 # User Options
 #===============================================================================
 
-CC          = llvm
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-MPI         = no
+CC          ?= llvm
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+MPI         ?= no
 
 #===============================================================================
 # Program name & source code list
