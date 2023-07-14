@@ -37,3 +37,9 @@ jobs:
       run: ./openmp-offload/XSBench -m event -s small -G hash
     - name: run openmp-offload unionized
       run: ./openmp-offload/XSBench -m event -s small -G unionized
+    - name: install opencl packages
+      run: |
+        apt-get -y update && apt-get install -y --no-install-recommends intel-oneapi-runtime-opencl clinfo opencl-headers intel-opencl-icd
+        clinfo
+    - name: make opencl
+      run: cd opencl; COMPILER=gnu make -j4
