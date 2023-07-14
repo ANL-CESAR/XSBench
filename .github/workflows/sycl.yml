@@ -1,0 +1,32 @@
+name: SYCL Tests
+
+on:
+  push:
+    branches: [ master, 'pr/*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  sycl-oneapi-run-cpu:
+    runs-on: ubuntu-latest
+    container: intel/oneapi-basekit:2023.1.0-devel-ubuntu22.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      ONEAPI_DEVICE_SELECTOR: opencl:cpu
+      BACKEND: sycl
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: sycl-ls
+      run: |
+        which sycl-ls
+        sycl-ls
+    - name: make
+      run: cd $BACKEND; CC=oneapi make -j4
+    - name: run nuclide
+      run: ./$BACKEND/XSBench -m event -s small -G nuclide
+    - name: run hash
+      run: ./$BACKEND/XSBench -m event -s small -G hash
+    - name: run unionized
+      run: ./$BACKEND/XSBench -m event -s small -G unionized
