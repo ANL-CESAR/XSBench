@@ -48,9 +48,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 
-		queue sycl_q{default_selector()};
-		//queue sycl_q{gpu_selector()};
-		//queue sycl_q{cpu_selector()};
+		queue sycl_q{default_selector_v};
 		if(mype == 0 ) printf("Running on: %s\n", sycl_q.get_device().get_info<sycl::info::device::name>().c_str());
 		if(mype == 0 ) printf("Initializing device buffers and JIT compiling kernel...\n");
 	
