@@ -13,7 +13,6 @@ jobs:
     env:
       DEBIAN_FRONTEND: noninteractive
       ONEAPI_DEVICE_SELECTOR: opencl:cpu
-      BACKEND: sycl
     steps:
     - uses: actions/checkout@v3
       with:
@@ -22,11 +21,19 @@ jobs:
       run: |
         which sycl-ls
         sycl-ls
-    - name: make
-      run: cd $BACKEND; CC=oneapi make -j4
-    - name: run nuclide
-      run: ./$BACKEND/XSBench -m event -s small -G nuclide
-    - name: run hash
-      run: ./$BACKEND/XSBench -m event -s small -G hash
-    - name: run unionized
-      run: ./$BACKEND/XSBench -m event -s small -G unionized
+    - name: make sycl
+      run: cd sycl; CC=oneapi make -j4
+    - name: run sycl nuclide
+      run: ./sycl/XSBench -m event -s small -G nuclide
+    - name: run sycl hash
+      run: ./sycl/XSBench -m event -s small -G hash
+    - name: run sycl unionized
+      run: ./sycl/XSBench -m event -s small -G unionized
+    - name: make openmp-offload
+      run: cd openmp-offload; COMPILER=intel make -j4
+    - name: run openmp-offload nuclide
+      run: ./openmp-offload/XSBench -m event -s small -G nuclide
+    - name: run openmp-offload hash
+      run: ./openmp-offload/XSBench -m event -s small -G hash
+    - name: run openmp-offload unionized
+      run: ./openmp-offload/XSBench -m event -s small -G unionized
