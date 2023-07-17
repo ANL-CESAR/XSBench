@@ -1,0 +1,27 @@
+name: OMP Tests
+
+on:
+  push:
+    branches: [ master, 'pr/*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  omp-run-cpu:
+    runs-on: ubuntu-latest
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CC: gcc
+      BACKEND: openmp-threading
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: make
+      run: cd $BACKEND; make -j4
+    - name: run nuclide
+      run: ./$BACKEND/XSBench -m event -s small -G nuclide
+    - name: run hash
+      run: ./$BACKEND/XSBench -m event -s small -G hash
+    - name: run unionized
+      run: ./$BACKEND/XSBench -m event -s small -G unionized

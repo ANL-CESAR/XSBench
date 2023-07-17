@@ -1,0 +1,45 @@
+name: SYCL Tests
+
+on:
+  push:
+    branches: [ master, 'pr/*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  sycl-oneapi-run-cpu:
+    runs-on: ubuntu-latest
+    container: intel/oneapi-basekit:2023.1.0-devel-ubuntu22.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      ONEAPI_DEVICE_SELECTOR: opencl:cpu
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: sycl-ls
+      run: |
+        which sycl-ls
+        sycl-ls
+    - name: make sycl
+      run: cd sycl; CC=oneapi make -j4
+    - name: run sycl nuclide
+      run: ./sycl/XSBench -m event -s small -G nuclide
+    - name: run sycl hash
+      run: ./sycl/XSBench -m event -s small -G hash
+    - name: run sycl unionized
+      run: ./sycl/XSBench -m event -s small -G unionized
+    - name: make openmp-offload
+      run: cd openmp-offload; COMPILER=intel make -j4
+    - name: run openmp-offload nuclide
+      run: ./openmp-offload/XSBench -m event -s small -G nuclide
+    - name: run openmp-offload hash
+      run: ./openmp-offload/XSBench -m event -s small -G hash
+    - name: run openmp-offload unionized
+      run: ./openmp-offload/XSBench -m event -s small -G unionized
+    - name: install opencl packages
+      run: |
+        apt-get -y update && apt-get install -y --no-install-recommends intel-oneapi-runtime-opencl clinfo opencl-headers intel-opencl-icd
+        clinfo
+    - name: make opencl
+      run: cd opencl; COMPILER=gnu make -j4

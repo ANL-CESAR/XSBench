@@ -2,11 +2,11 @@
 # User Options
 #===============================================================================
 
-COMPILER    = gnu
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-MPI         = no
+COMPILER    ?= gnu
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+MPI         ?= no
 
 #===============================================================================
 # Program name & source code list
