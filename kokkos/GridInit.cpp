@@ -10,21 +10,21 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	size_t nbytes = 0;
 
 	// Set the initial seed value
-	uint64_t seed = 42;	
+	uint64_t seed = 42;
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize Nuclide Grids
 	////////////////////////////////////////////////////////////////////
-	
+
 	if(mype == 0) printf("Intializing nuclide grids...\n");
 
 	// First, we need to initialize our nuclide grid. This comes in the form
 	// of a flattened 2D array that hold all the information we need to define
-	// the cross sections for all isotopes in the simulation. 
+	// the cross sections for all isotopes in the simulation.
 	// The grid is composed of "NuclideGridPoint" structures, which hold the
 	// energy level of the grid point and all associated XS data at that level.
 	// An array of structures (AOS) is used instead of
-	// a structure of arrays, as the grid points themselves are accessed in 
+	// a structure of arrays, as the grid points themselves are accessed in
 	// a random order, but all cross section interaction channels and the
 	// energy level are read whenever the gridpoint is accessed, meaning the
 	// AOS is more cache efficient.
@@ -47,7 +47,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// Sort so that each nuclide has data stored in ascending energy order.
 	for( int i = 0; i < in.n_isotopes; i++ )
 		qsort( &SD.nuclide_grid[i*in.n_gridpoints], in.n_gridpoints, sizeof(NuclideGridPoint), NGP_compare);
-	
+
 	// error debug check
 	/*
 	for( int i = 0; i < in.n_isotopes; i++ )
@@ -57,18 +57,18 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 			printf("E%d = %lf\n", j, SD.nuclide_grid[i * in.n_gridpoints + j].energy);
 	}
 	*/
-	
+
 
 	////////////////////////////////////////////////////////////////////
 	// Initialize Acceleration Structure
 	////////////////////////////////////////////////////////////////////
-	
+
 	if( in.grid_type == NUCLIDE )
 	{
 		SD.length_unionized_energy_array = 0;
 		SD.length_index_grid = 0;
 	}
-	
+
 	if( in.grid_type == UNIONIZED )
 	{
 		if(mype == 0) printf("Intializing unionized grid...\n");
@@ -114,7 +114,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 				{
 					idx_low[i]++;
 					SD.index_grid[e * in.n_isotopes + i] = idx_low[i];
-					energy_high[i] = SD.nuclide_grid[i * in.n_gridpoints + idx_low[i] + 1].energy;	
+					energy_high[i] = SD.nuclide_grid[i * in.n_gridpoints + idx_low[i] + 1].energy;
 				}
 			}
 		}
@@ -128,7 +128,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		if(mype == 0) printf("Intializing hash grid...\n");
 		SD.length_unionized_energy_array = 0;
 		SD.length_index_grid  = in.hash_bins * in.n_isotopes;
-		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int)); 
+		SD.index_grid = (int *) malloc( SD.length_index_grid * sizeof(int));
 		assert(SD.index_grid != NULL);
 		nbytes += SD.length_index_grid * sizeof(int);
 
@@ -152,7 +152,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	// Initialize Materials and Concentrations
 	////////////////////////////////////////////////////////////////////
 	if(mype == 0) printf("Intializing material data...\n");
-	
+
 	// Set the number of nuclides in each material
 	SD.num_nucs  = load_num_nucs(in.n_isotopes);
 	SD.length_num_nucs = 12; // There are always 12 materials in XSBench
@@ -171,51 +171,6 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
-	int length_max_num_nucs = 1;
-
-	Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-			u_max_num_nucs(&SD.max_num_nucs, 1);
-        SD.d_max_num_nucs = new IntView("d_max_num_nucs", length_max_num_nucs);
-        Kokkos::deep_copy(*SD.d_max_num_nucs, u_max_num_nucs);
-
-        Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-			u_num_nucs(SD.num_nucs, SD.length_num_nucs);
-        SD.d_num_nucs = new IntView("d_num_nucs", SD.length_num_nucs);
-        Kokkos::deep_copy(*SD.d_num_nucs, u_num_nucs);
-        
-        Kokkos::View<double*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-			u_concs(SD.concs, SD.length_concs);
-        SD.d_concs = new DoubleView("d_concs", SD.length_concs);
-        Kokkos::deep_copy(*SD.d_concs, u_concs);
-        
-        Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-			u_mats(SD.mats, SD.length_mats);
-        SD.d_mats = new IntView("d_mats", SD.length_mats);
-        Kokkos::deep_copy(*SD.d_mats, u_mats);
-        
-        Kokkos::View<double*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-			u_unionized_energy_array(SD.unionized_energy_array, SD.length_unionized_energy_array);
-        SD.d_unionized_energy_array = new DoubleView("d_unionized_energy_array",
-						     SD.length_unionized_energy_array);
-        Kokkos::deep_copy(*SD.d_unionized_energy_array, u_unionized_energy_array);
-        
-        Kokkos::View<int*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-            u_index_grid(SD.index_grid, SD.length_index_grid);
-        SD.d_index_grid = new IntView("d_index_grid", SD.length_index_grid);
-        Kokkos::deep_copy(*SD.d_index_grid, u_index_grid);
-        
-        Kokkos::View<NuclideGridPoint*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                     Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-            u_nuclide_grid(SD.nuclide_grid, SD.length_nuclide_grid);
-        SD.d_nuclide_grid = new PointView("d_nuclide_grid", SD.length_nuclide_grid);
-        Kokkos::deep_copy(*SD.d_nuclide_grid, u_nuclide_grid);
-        
 	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data.\n", nbytes/1024.0/1024.0 );
 
 	return SD;
