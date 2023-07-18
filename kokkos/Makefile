@@ -102,7 +102,7 @@ $(program): $(obj) XSbench_header.hpp Makefile $(KOKKOS_LINK_DEPENDS)
 	$(CXX) $(KOKKOS_CPPFLAGS) $(KOKKOS_CXXFLAGS) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(program) $(obj)
+	rm -rf $(program) $(obj) *.tmp Kokkos* desul/ libkokkos.a Lock_Array_CUDA.o
 
 edit:
 	vim -p $(source) XSbench_header.hpp
