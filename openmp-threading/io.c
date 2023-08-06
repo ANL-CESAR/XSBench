@@ -108,7 +108,7 @@ int print_results( Inputs in, int mype, double runtime, int nprocs,
 	if(mype == 0 )
 	{
 		if( is_invalid_result )
-			printf("Verification checksum: %llu (WARNING - INAVALID CHECKSUM!)\n", vhash);
+			printf("Verification checksum: %llu (WARNING - INVALID CHECKSUM!)\n", vhash);
 		else
 			printf("Verification checksum: %llu (Valid)\n", vhash);
 		border_print();
