@@ -1,0 +1,19 @@
+name: CUDA Tests
+
+on:
+  push:
+    branches: [ master, 'pr/*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-cuda:
+    runs-on: ubuntu-latest
+    container: nvidia/cuda:11.0.3-devel-ubuntu20.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      BACKEND: cuda
+    steps:
+    - uses: actions/checkout@v3
+    - name: make
+      run: cd $BACKEND; make -j4

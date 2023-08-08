@@ -10,7 +10,7 @@
 #include<assert.h>
 #include<stdint.h>
 #include <chrono> 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 // Papi Header
 #ifdef PAPI
