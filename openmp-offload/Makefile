@@ -2,12 +2,13 @@
 # User Options
 #===============================================================================
 
-COMPILER    = llvm
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-MPI         = no
-ALIGNED     = no
+COMPILER    ?= llvm
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+MPI         ?= no
+ALIGNED     ?= yes
+CUDA_ARCH   ?= 80
 
 #===============================================================================
 # Program name & source code list
@@ -50,7 +51,7 @@ endif
 # LLVM Compiler Targeting A100 -- Change SM Level to Target Other GPUs
 ifeq ($(COMPILER),llvm)
   CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_70
+  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_$(CUDA_ARCH)
 endif
 
 # IBM XL Compiler
@@ -62,7 +63,7 @@ endif
 # NVIDIA Compiler Targeting A100 -- Change SM Level to Target Other GPUs
 ifeq ($(COMPILER),nvidia)
   CC = nvc
-  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc80
+  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc$(CUDA_ARCH)
 endif
 
 # AOMP Targeting MI100 -- Change march to Target Other GPUs

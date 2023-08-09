@@ -2,7 +2,7 @@
 # User Options
 #===============================================================================
 
-CC          = llvm
+COMPILER    ?= llvm
 OPTIMIZE    ?= yes
 DEBUG       ?= no
 PROFILE     ?= no
@@ -38,14 +38,14 @@ CFLAGS := -std=c++17 -Wall
 LDFLAGS = -lm
 
 # Codeplay Compiler
-ifeq ($(CC),codeplay)
+ifeq ($(COMPILER),codeplay)
   CC = compute++
   CFLAGS += -sycl -sycl-driver
   LDFLAGS += -lComputeCpp
 endif
 
 # LLVM Compiler
-ifeq ($(CC),llvm)
+ifeq ($(COMPILER),llvm)
   CC = clang++
   CFLAGS += -fsycl
   ifeq ($(USE_CUDA),yes)

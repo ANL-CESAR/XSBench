@@ -2,13 +2,14 @@
 # User Options
 #===============================================================================
 
-COMPILER    = pgi
-OPTIMIZE    = yes
-DEBUG       = yes
-PROFILE     = no
-MPI         = no
-OPENACC     = yes
-ALIGNED     = no
+COMPILER    ?= pgi
+OPTIMIZE    ?= yes
+DEBUG       ?= yes
+PROFILE     ?= no
+MPI         ?= no
+OPENACC     ?= yes
+ALIGNED     ?= yes
+CUDA_ARCH   ?= 80
 
 #===============================================================================
 # Program name & source code list
@@ -48,7 +49,7 @@ ifeq ($(COMPILER),pgi)
   endif
   # OpenACC (assumes NVIDA GPU)
   ifeq ($(OPENACC),yes)
-    CFLAGS += -acc -Minfo=accel -gpu=cc70
+    CFLAGS += -acc -Minfo=accel -gpu=cc$(CUDA_ARCH)
   endif
 endif
 

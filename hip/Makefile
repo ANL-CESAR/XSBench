@@ -2,11 +2,11 @@
 # User Options
 #===============================================================================
 
-COMPILER    = amd
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-ALIGNED     = yes
+COMPILER    ?= amd
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+ALIGNED     ?= yes
 
 #===============================================================================
 # Program name & source code list

@@ -2,12 +2,12 @@
 # User Options
 #===============================================================================
 
-COMPILER    = nvidia
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-SM_VERSION  = 70
-ALIGNED     = no
+COMPILER    ?= nvidia
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+SM_VERSION  ?= 80
+ALIGNED     ?= yes
 
 #===============================================================================
 # Program name & source code list
