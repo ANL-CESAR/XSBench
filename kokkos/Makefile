@@ -2,16 +2,16 @@
 # User Options
 #===============================================================================
 
-KOKKOS_PATH = /gpfs/alpine/csc452/proj-shared/perf_port_builds/kokkos
-CUDA_PATH   = /sw/summit/cuda/11.5.2
-COMPILER    = nvidia
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-MPI         = no
-KOKKOS_DEVICES = OpenMP,Cuda
-KOKKOS_ARCH = Power9,Volta70
-SM_VERSION = 70
+KOKKOS_PATH ?= /global/homes/j/jhdavis/XSBench/kokkos/kokkos
+CUDA_PATH   ?= ${CUDA_HOME}
+COMPILER    ?= gnu
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+MPI         ?= no
+KOKKOS_DEVICES ?= OpenMP,Cuda
+KOKKOS_ARCH ?= Zen3,Ampere80
+SM_VERSION ?= 80
 
 #===============================================================================
 # Program name & source code list
@@ -42,7 +42,7 @@ LDFLAGS = -lm
 # NVIDIA Compiler
 ifeq ($(COMPILER),nvidia)
   CXX = ${KOKKOS_PATH}/bin/nvcc_wrapper
-  CXXFLAGS += -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION)
+  CXXFLAGS += -ccbin nvc++ -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION)
 endif
 
 # Clang Compiler
@@ -53,8 +53,13 @@ endif
 
 # GCC Compiler
 ifeq ($(COMPILER),gnu)
-  CXX = g++
-  CXXFLAGS += -flto -fopenmp -DOPENMP
+  ifneq (,$(findstring Cuda,$(KOKKOS_DEVICES)))
+    CXX = ${KOKKOS_PATH}/bin/nvcc_wrapper
+    CXXFLAGS += -ccbin g++ -Xcompiler -Wall -Xcompiler -O3 -arch=sm_$(SM_VERSION) -Xcompiler -fopenmp -DOPENMP
+  else
+    CXX = g++
+    CXXFLAGS += -flto -fopenmp -DOPENMP
+  endif
 endif
 
 
