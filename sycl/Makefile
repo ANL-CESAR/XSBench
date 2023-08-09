@@ -3,11 +3,13 @@
 #===============================================================================
 
 CC          = llvm
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-MPI         = no
-CHECK_MAX   = no
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+MPI         ?= no
+CHECK_MAX   ?= no
+USE_CUDA    ?= yes
+CUDA_ARCH   ?= sm_80
 
 #===============================================================================
 # Program name & source code list
@@ -46,7 +48,10 @@ endif
 ifeq ($(CC),llvm)
   CC = clang++
   CFLAGS += -fsycl
-  LDFLAGS += -lOpenCL
+  ifeq ($(USE_CUDA),yes)
+    CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend --cuda-include-ptx=$(CUDA_ARCH)
+  endif
+  #LDFLAGS += -lOpenCL
 endif
 
 # Debug Flags
