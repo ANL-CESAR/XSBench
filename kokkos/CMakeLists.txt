@@ -12,7 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -20,5 +20,5 @@ find_package(Kokkos REQUIRED)
 
 set(SOURCE Main.cpp io.cpp Simulation.cpp GridInit.cpp XSutils.cpp Materials.cpp)
 
-add_executable(xsbench ${SOURCE})
-target_link_libraries(xsbench Kokkos::kokkos)
+add_executable(XSBench ${SOURCE})
+target_link_libraries(XSBench Kokkos::kokkos)
