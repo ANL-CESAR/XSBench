@@ -23,4 +23,4 @@ set(SOURCE Main.cpp io.cpp Simulation.cpp GridInit.cpp XSutils.cpp Materials.cpp
 add_executable(XSBench ${SOURCE})
 target_link_libraries(XSBench Kokkos::kokkos)
 
-install(TARGETS XSBench DESTINATION PROJECT_BINARY_DIR)
+install(TARGETS XSBench DESTINATION bin)
