@@ -13,7 +13,7 @@
 ////////////////////////////////////////////////////////////////////////////////////
 
 // use SYCL namespace to reduce symbol names
-using namespace cl::sycl;
+using namespace sycl;
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time)
 {
 
@@ -49,10 +49,8 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	{
 		// create a queue using the default device for the platform (cpu, gpu)
 
-		queue sycl_q{default_selector()};
-		//queue sycl_q{gpu_selector()};
-		//queue sycl_q{cpu_selector()};
-		if(mype == 0 ) printf("Running on: %s\n", sycl_q.get_device().get_info<cl::sycl::info::device::name>().c_str());
+		queue sycl_q{default_selector_v};
+		if(mype == 0 ) printf("Running on: %s\n", sycl_q.get_device().get_info<sycl::info::device::name>().c_str());
 		if(mype == 0 ) printf("Initializing device buffers and JIT compiling kernel...\n");
 
 		////////////////////////////////////////////////////////////////////////////////
@@ -86,7 +84,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 		// OpenCL device (as some OpenCL devices have fairly low limts here for some reason...)
 		size_t index_grid_allocation_sz = ceil((SD.length_index_grid * sizeof(int)));
 #ifdef CHECK_MAX_ALLOC
-		assert( index_grid_allocation_sz <= sycl_q.get_device().get_info<cl::sycl::info::device::max_mem_alloc_size>() );
+		assert( index_grid_allocation_sz <= sycl_q.get_device().get_info<sycl::info::device::max_mem_alloc_size>() );
 #endif
 		buffer<int, 1> index_grid_d(SD.index_grid, (unsigned long long ) SD.length_index_grid);
 

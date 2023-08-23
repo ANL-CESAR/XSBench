@@ -54,6 +54,17 @@ ifeq ($(COMPILER),llvm)
   #LDFLAGS += -lOpenCL
 endif
 
+# IntelOneAPI Compiler
+ifeq ($(COMPILER),oneapi)
+  CC = icpx
+  CFLAGS += -fsycl
+endif
+
+ifeq ($(COMPILER),opensycl)
+  CC = syclcc
+  CFLAGS += -fsycl
+endif
+
 # Debug Flags
 ifeq ($(DEBUG),yes)
   CFLAGS += -g
