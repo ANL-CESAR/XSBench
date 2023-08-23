@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
 #ifndef __XSBENCH_HEADER_H__
 #define __XSBENCH_HEADER_H__
 
@@ -9,7 +10,7 @@
 #include <thrust/reduce.h>
 #include <thrust/partition.h>
 #include<stdint.h>
-#include <chrono> 
+#include <chrono>
 
 // Grid types
 #define UNIONIZED 0
@@ -31,7 +32,7 @@
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
-	if (code != cudaSuccess) 
+	if (code != cudaSuccess)
 	{
 		fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
 		if (abort) exit(code);
@@ -97,7 +98,7 @@ void binary_write( Inputs in, SimulationData SD );
 SimulationData binary_read( Inputs in );
 
 // Simulation.cu
-unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData SD, int mype);
+unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData SD, int mype, double* end);
 __global__ void xs_lookup_kernel_baseline(Inputs in, SimulationData GSD );
 __device__ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
                            long n_gridpoints,

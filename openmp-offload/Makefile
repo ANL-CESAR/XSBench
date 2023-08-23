@@ -7,6 +7,8 @@ OPTIMIZE    ?= yes
 DEBUG       ?= no
 PROFILE     ?= no
 MPI         ?= no
+ALIGNED     ?= yes
+CUDA_ARCH   ?= 80
 
 #===============================================================================
 # Program name & source code list
@@ -42,14 +44,14 @@ endif
 
 # Intel Compiler
 ifeq ($(COMPILER),intel)
-  CC = icx 
-  CFLAGS += -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ 
+  CC = icx
+  CFLAGS += -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__
 endif
 
 # LLVM Compiler Targeting A100 -- Change SM Level to Target Other GPUs
 ifeq ($(COMPILER),llvm)
   CC = clang
-  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_80
+  CFLAGS += -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_$(CUDA_ARCH)
 endif
 
 # IBM XL Compiler
@@ -61,7 +63,7 @@ endif
 # NVIDIA Compiler Targeting A100 -- Change SM Level to Target Other GPUs
 ifeq ($(COMPILER),nvidia)
   CC = nvc
-  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc80
+  CFLAGS += -mp=gpu -Minfo=mp -gpu=cc$(CUDA_ARCH)
 endif
 
 # AOMP Targeting MI100 -- Change march to Target Other GPUs
@@ -85,6 +87,11 @@ endif
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
+endif
+
+# Workload alignment for accurate comparison
+ifeq ($(ALIGNED),yes)
+	CFLAGS += -DALIGNED_WORK
 endif
 
 # MPI

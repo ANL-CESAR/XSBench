@@ -2,11 +2,12 @@
 # User Options
 #===============================================================================
 
-COMPILER    = nvidia
-OPTIMIZE    = yes
-DEBUG       = no
-PROFILE     = no
-SM_VERSION  = 80
+COMPILER    ?= nvidia
+OPTIMIZE    ?= yes
+DEBUG       ?= no
+PROFILE     ?= no
+SM_VERSION  ?= 80
+ALIGNED     ?= yes
 
 #===============================================================================
 # Program name & source code list
@@ -55,6 +56,11 @@ endif
 # Optimization Flags
 ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
+endif
+
+# Align workload to match other implementations
+ifeq ($(ALIGNED),yes)
+  CFLAGS += -DALIGNED_WORK
 endif
 
 #===============================================================================

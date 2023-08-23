@@ -9,6 +9,9 @@
 #include<strings.h>
 #include<math.h>
 #include<omp.h>
+#ifdef _OPENACC
+#include<openacc.h>
+#endif
 #include<unistd.h>
 #include<sys/time.h>
 #include<assert.h>

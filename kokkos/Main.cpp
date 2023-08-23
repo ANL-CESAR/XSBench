@@ -1,5 +1,5 @@
 // -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
-#include "XSbench_header.h"
+#include "XSbench_header.hpp"
 
 #ifdef MPI
 #include<mpi.h>
@@ -22,6 +22,9 @@ int main( int argc, char* argv[] )
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mype);
 	#endif
+
+        // Start Kokkos
+        Kokkos::initialize();
 
 	// Process CLI Fields -- store in "Inputs" structure
 	Inputs in = read_CLI( argc, argv );
@@ -70,16 +73,13 @@ int main( int argc, char* argv[] )
 	}
 
 	// Start Simulation Timer
-	omp_start = get_time();
-	double kernel_init_time;
+	omp_start = omp_get_wtime();
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-		{
-			verification = run_event_based_simulation(in, SD, mype, &kernel_init_time);
-		}
+			verification = run_event_based_simulation(in, SD, mype, &omp_end);
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);
@@ -88,7 +88,7 @@ int main( int argc, char* argv[] )
 	}
 	else
 	{
-		printf("History-based simulation not implemented in OpenMP offload code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
+		printf("History-based simulation not implemented in Kokkos code. Instead,\nuse the event-based method with \"-m event\" argument.\n");
 		exit(1);
 	}
 
@@ -98,9 +98,6 @@ int main( int argc, char* argv[] )
 		printf("Simulation complete.\n" );
 	}
 
-	// End Simulation Timer
-	omp_end = get_time();
-
 	// =====================================================================
 	// Output Results & Finalize
 	// =====================================================================
@@ -109,7 +106,9 @@ int main( int argc, char* argv[] )
 	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification, kernel_init_time );
+	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
+
+        Kokkos::finalize();
 
 	#ifdef MPI
 	MPI_Finalize();

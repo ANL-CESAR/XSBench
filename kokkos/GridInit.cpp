@@ -1,92 +1,5 @@
 // -*- c-basic-offset: 8; tab-width: 8; indent-tabs-mode: t; -*-
-#include "XSbench_header.cuh"
-
-// Moves all required data structures to the GPU's memory space
-SimulationData move_simulation_data_to_device( Inputs in, int mype, SimulationData SD )
-{
-	if(mype == 0) printf("Allocating and moving simulation data to GPU memory space...\n");
-
-	////////////////////////////////////////////////////////////////////////////////
-	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
-	// Here we list all heap arrays (and lengths) in SD that would need to be
-	// offloaded manually if using an accelerator with a seperate memory space
-	////////////////////////////////////////////////////////////////////////////////
-	// int * num_nucs;                     // Length = length_num_nucs;
-	// double * concs;                     // Length = length_concs
-	// int * mats;                         // Length = length_mats
-	// double * unionized_energy_array;    // Length = length_unionized_energy_array
-	// int * index_grid;                   // Length = length_index_grid
-	// NuclideGridPoint * nuclide_grid;    // Length = length_nuclide_grid
-	//
-	// Note: "unionized_energy_array" and "index_grid" can be of zero length
-	//        depending on lookup method.
-	//
-	// Note: "Lengths" are given as the number of objects in the array, not the
-	//       number of bytes.
-	////////////////////////////////////////////////////////////////////////////////
-	size_t sz;
-	size_t total_sz = 0;
-
-	// Shallow copy of CPU simulation data to GPU simulation data
-	SimulationData GSD = SD;
-
-	// Move data to GPU memory space
-	sz = GSD.length_num_nucs * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.num_nucs, sz) );
-	gpuErrchk( cudaMemcpy(GSD.num_nucs, SD.num_nucs, sz, cudaMemcpyHostToDevice) );
-	total_sz += sz;
-
-	sz = GSD.length_concs * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.concs, sz) );
-	gpuErrchk( cudaMemcpy(GSD.concs, SD.concs, sz, cudaMemcpyHostToDevice) );
-	total_sz += sz;
-
-	sz = GSD.length_mats * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.mats, sz) );
-	gpuErrchk( cudaMemcpy(GSD.mats, SD.mats, sz, cudaMemcpyHostToDevice) );
-	total_sz += sz;
-
-	sz = GSD.length_unionized_energy_array * sizeof(double);
-	gpuErrchk( cudaMalloc((void **) &GSD.unionized_energy_array, sz) );
-	gpuErrchk( cudaMemcpy(GSD.unionized_energy_array, SD.unionized_energy_array, sz, cudaMemcpyHostToDevice) );
-	total_sz += sz;
-
-	sz = GSD.length_index_grid * sizeof(int);
-	gpuErrchk( cudaMalloc((void **) &GSD.index_grid, sz) );
-	gpuErrchk( cudaMemcpy(GSD.index_grid, SD.index_grid, sz, cudaMemcpyHostToDevice) );
-	total_sz += sz;
-
-	sz = GSD.length_nuclide_grid * sizeof(NuclideGridPoint);
-	gpuErrchk( cudaMalloc((void **) &GSD.nuclide_grid, sz) );
-	gpuErrchk( cudaMemcpy(GSD.nuclide_grid, SD.nuclide_grid, sz, cudaMemcpyHostToDevice) );
-	total_sz += sz;
-
-	// Allocate verification array on device. This structure is not needed on CPU, so we don't
-	// have to copy anything over.
-	sz = in.lookups * sizeof(unsigned long);
-	gpuErrchk( cudaMalloc((void **) &GSD.verification, sz) );
-	total_sz += sz;
-	GSD.length_verification = in.lookups;
-
-	// Synchronize
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
-
-	if(mype == 0 ) printf("GPU Intialization complete. Allocated %.0lf MB of data on GPU.\n", total_sz/1024.0/1024.0 );
-
-	return GSD;
-
-}
-
-// Release device memory
-void release_device_memory(SimulationData GSD) {
-	cudaFree(GSD.num_nucs);
-	cudaFree(GSD.concs);
-	cudaFree(GSD.mats);
-	cudaFree(GSD.unionized_energy_array);
-	cudaFree(GSD.nuclide_grid);
-	cudaFree(GSD.verification);
-}
+#include "XSbench_header.hpp"
 
 SimulationData grid_init_do_not_profile( Inputs in, int mype )
 {
@@ -222,6 +135,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 		double du = 1.0 / in.hash_bins;
 
 		// For each energy level in the hash table
+		#pragma omp parallel for
 		for( long e = 0; e < in.hash_bins; e++ )
 		{
 			double energy = e * du;
@@ -229,7 +143,7 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 			// We need to determine the bounding energy levels for all isotopes
 			for( long i = 0; i < in.n_isotopes; i++ )
 			{
-				SD.index_grid[e * in.n_isotopes + i] = grid_search_nuclide( in.n_gridpoints, energy, SD.nuclide_grid + i * in.n_gridpoints, 0, in.n_gridpoints-1);
+				SD.index_grid[e * in.n_isotopes + i] = grid_search_nuclide_old( in.n_gridpoints, energy, SD.nuclide_grid + i * in.n_gridpoints, 0, in.n_gridpoints-1);
 			}
 		}
 	}
@@ -257,7 +171,8 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 	SD.concs = load_concs(SD.num_nucs, SD.max_num_nucs);
 	SD.length_concs = SD.length_mats;
 
-	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data on CPU.\n", nbytes/1024.0/1024.0 );
+	if(mype == 0) printf("Intialization complete. Allocated %.0lf MB of data.\n", nbytes/1024.0/1024.0 );
 
 	return SD;
+
 }
