@@ -22,7 +22,7 @@ jobs:
         which sycl-ls
         sycl-ls
     - name: make sycl
-      run: cd sycl; CC=oneapi make -j4
+      run: cd sycl; COMPILER=oneapi make -j4
     - name: run sycl nuclide
       run: ./sycl/XSBench -m event -s small -G nuclide
     - name: run sycl hash
