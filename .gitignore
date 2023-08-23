@@ -1,2 +1,8 @@
 *.o
+*~
+*.tmp
+KokkosCore_*
+kokkos/desul
+*.a
+XSBench
 */XSBench

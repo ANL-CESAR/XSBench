@@ -2,14 +2,14 @@
 # User Options
 #===============================================================================
 
-COMPILER    ?= llvm
+COMPILER    ?= pgi
 OPTIMIZE    ?= yes
-DEBUG       ?= no
+DEBUG       ?= yes
 PROFILE     ?= no
 MPI         ?= no
-CHECK_MAX   ?= no
-USE_CUDA    ?= yes
-CUDA_ARCH   ?= sm_80
+OPENACC     ?= yes
+ALIGNED     ?= yes
+CUDA_ARCH   ?= 80
 
 #===============================================================================
 # Program name & source code list
@@ -18,51 +18,53 @@ CUDA_ARCH   ?= sm_80
 program = XSBench
 
 source = \
-Main.cpp \
-io.cpp \
-Simulation.cpp \
-GridInit.cpp \
-XSutils.cpp \
-Materials.cpp
+Main.c \
+io.c \
+Simulation.c \
+GridInit.c \
+XSutils.c \
+Materials.c
 
-obj = $(source:.cpp=.o)
+obj = $(source:.c=.o)
 
 #===============================================================================
 # Sets Flags
 #===============================================================================
 
 # Standard Flags
-CFLAGS := -std=c++17 -Wall
+CFLAGS := -std=gnu99 -Wall
 
 # Linker Flags
 LDFLAGS = -lm
 
-# Codeplay Compiler
-ifeq ($(COMPILER),codeplay)
-  CC = compute++
-  CFLAGS += -sycl -sycl-driver
-  LDFLAGS += -lComputeCpp
-endif
-
-# LLVM Compiler
-ifeq ($(COMPILER),llvm)
-  CC = clang++
-  CFLAGS += -fsycl
-  ifeq ($(USE_CUDA),yes)
-    CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda
+# PGI Compiler
+ifeq ($(COMPILER),pgi)
+  CC = pgcc
+  CFLAGS = -c99 -Minform=warn -mp -Minfo=mp
+  ifeq ($(OPTIMIZE),yes)
+    CFLAGS += -fast
   endif
-  #LDFLAGS += -lOpenCL
+  ifeq ($(VEC_INFO),yes)
+    CFLAGS += -Minfo=vect
+  endif
+  # OpenACC (assumes NVIDA GPU)
+  ifeq ($(OPENACC),yes)
+    CFLAGS += -acc -Minfo=accel -gpu=cc$(CUDA_ARCH)
+  endif
 endif
 
-# IntelOneAPI Compiler
-ifeq ($(COMPILER),oneapi)
-  CC = icpx
-  CFLAGS += -fsycl
-endif
-
-ifeq ($(COMPILER),opensycl)
-  CC = syclcc
-  CFLAGS += -fsycl
+# GNU Compiler
+ifeq ($(COMPILER),gnu)
+  CC = gcc
+  CFLAGS += -std=gnu99 -Wall -fopenmp
+  # Optimization
+  ifeq ($(OPTIMIZE),yes)
+    CFLAGS += -O3
+    # Compiler Vectorization (needs -O3 flag) information
+    ifeq ($(VEC_INFO),yes)
+      CFLAGS += -ftree-vectorizer-verbose=6
+    endif
+  endif
 endif
 
 # Debug Flags
@@ -82,9 +84,9 @@ ifeq ($(OPTIMIZE),yes)
   CFLAGS += -O3
 endif
 
-# Disable or enable checking SYCL max mem alloc
-ifeq ($(CHECK_MAX),yes)
-	CFLAGS += -DCHECK_MAX_ALLOC
+# Align workload for comparison purposes
+ifeq ($(ALIGNED),yes)
+  CFLAGS += -DALIGNED_WORK
 endif
 
 # MPI
@@ -100,7 +102,7 @@ endif
 $(program): $(obj) XSbench_header.h Makefile
 	$(CC) $(CFLAGS) $(obj) -o $@ $(LDFLAGS)
 
-%.o: %.cpp XSbench_header.h Makefile
+%.o: %.c XSbench_header.h Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
