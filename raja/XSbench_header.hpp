@@ -61,6 +61,9 @@ using policy_list = camp::list<RAJA::seq_exec
 #if defined(RAJA_ENABLE_CUDA)
                                ,RAJA::cuda_exec<256>
                                ,RAJA::cuda_exec<512>
+#elif defined(RAJA_ENABLE_HIP)
+                               ,RAJA::hip_exec<256>
+                               ,RAJA::hip_exec<512>
 #endif
                                >;
 

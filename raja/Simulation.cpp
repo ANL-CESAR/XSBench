@@ -77,7 +77,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	NuclideGridPoint* nuclide_grid = static_cast<NuclideGridPoint*>(d_allocator.allocate(SD.length_nuclide_grid * sizeof(NuclideGridPoint)));
 	rm.copy(nuclide_grid, SD.nuclide_grid);
 
-  	RAJA::forall<RAJA::cuda_exec<256>>(RAJA::TypedRangeSegment<int>(0, in.lookups), [=] RAJA_DEVICE (int i) {
+  	RAJA::forall<RAJA::hip_exec<256>>(RAJA::TypedRangeSegment<int>(0, in.lookups), [=] RAJA_DEVICE (int i) {
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
@@ -264,11 +264,11 @@ unsigned long long run_history_based_simulation(Inputs in, SimulationData SD, in
 }
 
 // Calculates the microscopic cross section for a given nuclide & energy
-void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
-                           long n_gridpoints,
-                           double * __restrict egrid, int * __restrict index_data,
-                           NuclideGridPoint * __restrict nuclide_grids,
-                           long idx, double * __restrict xs_vector, int grid_type, int hash_bins ){
+RAJA_HOST_DEVICE void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
+                                            long n_gridpoints,
+                                            double * __restrict egrid, int * __restrict index_data,
+                                            NuclideGridPoint * __restrict nuclide_grids,
+                                            long idx, double * __restrict xs_vector, int grid_type, int hash_bins ){
 	// Variables
 	double f;
 	NuclideGridPoint * low, * high;
@@ -349,13 +349,14 @@ void calculate_micro_xs(   double p_energy, int nuc, long n_isotopes,
 }
 
 // Calculates macroscopic cross section based on a given material & energy 
-void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
-                         long n_gridpoints, int * __restrict num_nucs,
-                         double * __restrict concs,
-                         double * __restrict egrid, int * __restrict index_data,
-                         NuclideGridPoint * __restrict nuclide_grids,
-                         int * __restrict mats,
-                         double * __restrict macro_xs_vector, int grid_type, int hash_bins, int max_num_nucs ){
+RAJA_HOST_DEVICE void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
+                                          long n_gridpoints, int * __restrict num_nucs,
+                                          double * __restrict concs,
+                                          double * __restrict egrid, int * __restrict index_data,
+                                          NuclideGridPoint * __restrict nuclide_grids,
+                                          int * __restrict mats,
+                                          double * __restrict macro_xs_vector, int grid_type,
+                                          int hash_bins, int max_num_nucs ){
 	int p_nuc; // the nuclide we are looking up
 	long idx = -1;	
 	double conc; // the concentration of the nuclide in the material
@@ -403,7 +404,7 @@ void calculate_macro_xs( double p_energy, int mat, long n_isotopes,
 
 // binary search for energy on unionized energy grid
 // returns lower index
-long grid_search( long n, double quarry, double * __restrict A)
+RAJA_HOST_DEVICE long grid_search( long n, double quarry, double * __restrict A)
 {
 	long lowerLimit = 0;
 	long upperLimit = n-1;
@@ -426,7 +427,7 @@ long grid_search( long n, double quarry, double * __restrict A)
 }
 
 // binary search for energy on nuclide energy grid
-long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high)
+RAJA_HOST_DEVICE long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low, long high)
 {
 	long lowerLimit = low;
 	long upperLimit = high;
@@ -449,7 +450,7 @@ long grid_search_nuclide( long n, double quarry, NuclideGridPoint * A, long low,
 }
 
 // picks a material based on a probabilistic distribution
-int pick_mat( uint64_t * seed )
+RAJA_HOST_DEVICE int pick_mat( uint64_t * seed )
 {
 	// I have a nice spreadsheet supporting these numbers. They are
 	// the fractions (by volume) of material in the core. Not a 
@@ -485,7 +486,7 @@ int pick_mat( uint64_t * seed )
 	return 0;
 }
 
-double LCG_random_double(uint64_t * seed)
+RAJA_HOST_DEVICE double LCG_random_double(uint64_t * seed)
 {
 	// LCG parameters
 	const uint64_t m = 9223372036854775808ULL; // 2^63
@@ -495,7 +496,7 @@ double LCG_random_double(uint64_t * seed)
 	return (double) (*seed) / (double) m;
 }	
 
-uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
+RAJA_HOST_DEVICE uint64_t fast_forward_LCG(uint64_t seed, uint64_t n)
 {
 	// LCG parameters
 	const uint64_t m = 9223372036854775808ULL; // 2^63
