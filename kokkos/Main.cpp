@@ -72,14 +72,14 @@ int main( int argc, char* argv[] )
 	}
 
 	// Start Simulation Timer
-    Kokkos::Timer start;
-	start.reset()
-
+    
+    double elapsed_time = 0;
+    
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-			verification = run_event_based_simulation(in, SD, mype, &omp_end);
+			verification = run_event_based_simulation(in, SD, mype, &elapsed_time);
 		else
 		{
 			printf("Error: No kernel ID %d found!\n", in.kernel_id);
@@ -106,7 +106,7 @@ int main( int argc, char* argv[] )
 	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	int is_invalid_result = print_results( in, mype, start.seconds(), nprocs, verification );
+	int is_invalid_result = print_results( in, mype, elapsed_time, nprocs, verification );
 
         Kokkos::finalize();
 
