@@ -16,7 +16,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 {
 	if( mype == 0)
 		printf("Beginning event based simulation...\n");
-
 	////////////////////////////////////////////////////////////////////////////////
 	// SUMMARY: Simulation Data Structure Manifest for "SD" Object
 	// Here we list all heap arrays (and lengths) in SD that would need to be
@@ -38,6 +37,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Data movment and setup
 	int length_max_num_nucs = 1;
+
+    Kokkos::Timer start;
+    start.reset();
 
 	UIntView u_max_num_nucs(&SD.max_num_nucs, 1);
         SD.d_max_num_nucs = new IntView("d_max_num_nucs", length_max_num_nucs);
@@ -146,7 +148,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	Kokkos::fence();
 
 	// End Simulation Timer
-	*end = omp_get_wtime();
+	*end = start.seconds();
 
 	// Reduce validation hash on the host
 	unsigned long long validation_hash = 0;
