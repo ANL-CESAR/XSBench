@@ -12,7 +12,6 @@ int main( int argc, char* argv[] )
 	// =====================================================================
 	int version = 20;
 	int mype = 0;
-	double omp_start, omp_end;
 	int nprocs = 1;
 	unsigned long long verification;
 
@@ -73,7 +72,8 @@ int main( int argc, char* argv[] )
 	}
 
 	// Start Simulation Timer
-	omp_start = omp_get_wtime();
+    Kokkos::Timer start;
+	start.reset()
 
 	// Run simulation
 	if( in.simulation_method == EVENT_BASED )
@@ -106,7 +106,7 @@ int main( int argc, char* argv[] )
 	verification = verification % 999983;
 
 	// Print / Save Results and Exit
-	int is_invalid_result = print_results( in, mype, omp_end-omp_start, nprocs, verification );
+	int is_invalid_result = print_results( in, mype, start.seconds(), nprocs, verification );
 
         Kokkos::finalize();
 
