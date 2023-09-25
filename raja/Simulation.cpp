@@ -12,7 +12,11 @@
 // line argument.
 ////////////////////////////////////////////////////////////////////////////////////
 
-
+#ifdef HIP_EXEC
+using policy = RAJA::hip_exec<256>;
+#elif defined(CUDA_EXEC)
+using policy = RAJA::cuda_exec<256>;
+#endif
 
 
 unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
@@ -77,7 +81,7 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	NuclideGridPoint* nuclide_grid = static_cast<NuclideGridPoint*>(d_allocator.allocate(SD.length_nuclide_grid * sizeof(NuclideGridPoint)));
 	rm.copy(nuclide_grid, SD.nuclide_grid);
 
-  	RAJA::forall<RAJA::hip_exec<256>>(RAJA::TypedRangeSegment<int>(0, in.lookups), [=] RAJA_DEVICE (int i) {
+  	RAJA::forall<policy>(RAJA::TypedRangeSegment<int>(0, in.lookups), [=] RAJA_DEVICE (int i) {
 		// Set the initial seed value
 		uint64_t seed = STARTING_SEED;	
 
