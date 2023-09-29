@@ -99,8 +99,9 @@ int main( int argc, char* argv[] )
 	}
 
 	// End Simulation Timer
+#ifndef ALIGNED_WORK
 	omp_end = get_time();
-
+#endif
 	// =====================================================================
 	// Output Results & Finalize
 	// =====================================================================

@@ -10,6 +10,7 @@ MPI         ?= no
 CHECK_MAX   ?= no
 USE_CUDA    ?= yes
 CUDA_ARCH   ?= sm_80
+ALIGNED     ?= yes
 
 #===============================================================================
 # Program name & source code list
@@ -47,9 +48,9 @@ endif
 # LLVM Compiler
 ifeq ($(COMPILER),llvm)
   CC = clang++
-  CFLAGS += -fsycl
+  CFLAGS += -fsycl 
   ifeq ($(USE_CUDA),yes)
-    CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda
+    CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend --cuda-gpu-arch=sm_70
   endif
   #LDFLAGS += -lOpenCL
 endif
@@ -91,6 +92,12 @@ endif
 ifeq ($(MPI),yes)
   CC = mpicc
   CFLAGS += -DMPI
+endif
+
+LDFLAGS += -L/sw/summit/gcc/11.2.0-0/lib64
+
+ifeq ($(ALIGNED),yes)
+  CFLAGS += -DALIGNED_WORK
 endif
 
 #===============================================================================
