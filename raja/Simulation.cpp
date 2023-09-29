@@ -19,7 +19,7 @@ using policy = RAJA::cuda_exec<256>;
 #endif
 
 
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double* end)
 {
 	if( mype == 0)	
 		printf("Beginning event based simulation...\n");
@@ -136,6 +136,10 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// cudaDeviceSynchronize();
 	// Copy back the verifications and do a sum to get the verification hash
 	rm.copy(verifications, d_verifications);
+#ifdef ALIGNED_WORK
+    *end = get_time();
+#endif
+
 	unsigned long long verification_hash = 0;
 	for (std::size_t i = 0; i < in.lookups; i++) {
     	verification_hash += verifications[i];

@@ -10,6 +10,7 @@ MPI         ?= no
 CHECK_MAX   ?= no
 USE_CUDA    ?= yes
 CUDA_ARCH   ?= sm_80
+ALIGNED     ?= yes
 
 #===============================================================================
 # Program name & source code list
@@ -47,7 +48,7 @@ endif
 # LLVM Compiler
 ifeq ($(COMPILER),llvm)
   CC = clang++
-  CFLAGS += -fsycl
+  CFLAGS += -fsycl 
   ifeq ($(USE_CUDA),yes)
     CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda
   endif
@@ -91,6 +92,10 @@ endif
 ifeq ($(MPI),yes)
   CC = mpicc
   CFLAGS += -DMPI
+endif
+
+ifeq ($(ALIGNED),yes)
+  CFLAGS += -DALIGNED_WORK
 endif
 
 #===============================================================================
