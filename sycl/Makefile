@@ -94,8 +94,6 @@ ifeq ($(MPI),yes)
   CFLAGS += -DMPI
 endif
 
-LDFLAGS += -L/sw/summit/gcc/11.2.0-0/lib64
-
 ifeq ($(ALIGNED),yes)
   CFLAGS += -DALIGNED_WORK
 endif
