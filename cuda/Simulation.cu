@@ -27,6 +27,10 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
 
+    size_t sz = in.lookups * sizeof(unsigned long);
+	unsigned long * v = (unsigned long *) malloc(sz);
+	gpuErrchk( cudaMemcpy(v, GSD.verification, sz, cudaMemcpyDeviceToHost) );
+
 #ifdef ALIGNED_WORK
 	*end = get_time();
 #endif
@@ -34,13 +38,12 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	////////////////////////////////////////////////////////////////////////////////
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
+
 	if( mype == 0)	printf("Reducing verification results...\n");
 
-	unsigned long long verification_scalar;
-
-	verification_scalar = thrust::reduce(thrust::device, GSD.verification, GSD.verification + in.lookups, 0);
-	gpuErrchk( cudaPeekAtLastError() );
-	gpuErrchk( cudaDeviceSynchronize() );
+	unsigned long verification_scalar = 0;
+	for( int i =0; i < in.lookups; i++ )
+		verification_scalar += v[i];
 
 	return verification_scalar;
 }
