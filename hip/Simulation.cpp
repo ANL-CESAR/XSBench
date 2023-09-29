@@ -28,6 +28,10 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	gpuErrchk( hipPeekAtLastError() );
 	gpuErrchk( hipDeviceSynchronize() );
 
+	size_t sz = in.lookups * sizeof(unsigned long);
+	unsigned long * v = (unsigned long *) malloc(sz);
+	gpuErrchk( hipMemcpy(v, GSD.verification, sz, hipMemcpyDeviceToHost) );
+
 #ifdef ALIGNED_WORK
 	*end = get_time();
 #endif
@@ -36,11 +40,6 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Reducing verification results...\n");
-
-
-	size_t sz = in.lookups * sizeof(unsigned long);
-	unsigned long * v = (unsigned long *) malloc(sz);
-	gpuErrchk( hipMemcpy(v, GSD.verification, sz, hipMemcpyDeviceToHost) );
 
 	unsigned long verification_scalar = 0;
 	for( int i =0; i < in.lookups; i++ )
