@@ -50,7 +50,7 @@ ifeq ($(COMPILER),llvm)
   CC = clang++
   CFLAGS += -fsycl 
   ifeq ($(USE_CUDA),yes)
-    CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend --cuda-gpu-arch=sm_70
+    CFLAGS += -fsycl-targets=nvptx64-nvidia-cuda
   endif
   #LDFLAGS += -lOpenCL
 endif
