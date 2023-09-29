@@ -80,7 +80,7 @@ int main( int argc, char* argv[] )
 	if( in.simulation_method == EVENT_BASED )
 	{
 		if( in.kernel_id == 0 )
-			verification = run_event_based_simulation(in, SD, mype);
+			verification = run_event_based_simulation(in, SD, mype, &omp_end);
 		else if( in.kernel_id == 1 )
 			verification = run_event_based_simulation_optimization_1(in, SD, mype);
 		else
@@ -99,8 +99,9 @@ int main( int argc, char* argv[] )
 	}
 
 	// End Simulation Timer
+#ifndef ALIGNED_WORK
 	omp_end = get_time();
-
+#endif
 	// =====================================================================
 	// Output Results & Finalize
 	// =====================================================================
