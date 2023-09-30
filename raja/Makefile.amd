@@ -23,6 +23,7 @@ MPI         ?= no
 RAJA_DEVICES ?= Cuda#OpenMP#,Cuda
 RAJA_ARCH ?= Power9# Zen3,Ampere80
 SM_VERSION ?= 70
+ALIGNED ?= yes
 
 #===============================================================================
 # Program name & source code list
@@ -109,6 +110,10 @@ endif
 ifeq ($(MPI),yes)
   CXX = mpicxx
   CXXFLAGS += -DMPI
+endif
+
+ifeq ($(ALIGNED),yes)
+  CFLAGS += -DALIGNED_WORK
 endif
 
 #===============================================================================
