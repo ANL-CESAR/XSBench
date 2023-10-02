@@ -14,7 +14,7 @@
 
 // use SYCL namespace to reduce symbol names
 using namespace sycl;
-unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time)
+unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int mype, double * kernel_init_time, double * stop)
 {
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 	// Timers
 	double start = get_time();
-	double stop;
 
 	// Scope here is important, as when we exit this blocl we will automatically sync with device
 	// to ensure all work is done and that we can read from verification_host array.
@@ -166,13 +165,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 
 					});
 				});
-		stop = get_time();
-		if(mype==0) printf("Kernel initialization, compilation, and launch took %.2lf seconds.\n", stop-start);
+		*kernel_init_time = get_time();
+		if(mype==0) printf("Kernel initialization, compilation, and launch took %.2lf seconds.\n", *kernel_init_time-start);
 		if(mype==0) printf("Beginning event based simulation...\n");
 	}
 
 #ifdef ALIGNED_WORK
-	stop = get_time();
+	*stop = get_time();
 #endif
 
 	// Host reduces the verification array

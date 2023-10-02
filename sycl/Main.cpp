@@ -78,7 +78,7 @@ int main( int argc, char* argv[] )
 	{
 		if( in.kernel_id == 0 )
 		{
-			verification = run_event_based_simulation(in, SD, mype, &kernel_init_time);
+			verification = run_event_based_simulation(in, SD, mype, &kernel_init_time, &omp_end);
 		}
 		else
 		{
