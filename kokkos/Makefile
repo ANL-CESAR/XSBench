@@ -2,8 +2,8 @@
 # User Options
 #===============================================================================
 
-KOKKOS_PATH ?= /global/homes/j/jhdavis/XSBench/kokkos/kokkos
-CUDA_PATH   ?= ${CUDA_HOME}
+MAKEFILE_PATH := $(subst Makefile,,$(abspath $(lastword $(MAKEFILE_LIST))))
+KOKKOS_PATH ?= $(MAKEFILE_PATH)kokkos
 COMPILER    ?= gnu
 OPTIMIZE    ?= yes
 DEBUG       ?= no
