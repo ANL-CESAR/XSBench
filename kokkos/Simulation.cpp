@@ -38,9 +38,6 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	// Data movment and setup
 	int length_max_num_nucs = 1;
 
-    Kokkos::Timer start;
-    start.reset();
-
 	UIntView u_max_num_nucs(&SD.max_num_nucs, 1);
         SD.d_max_num_nucs = new IntView("d_max_num_nucs", length_max_num_nucs);
         Kokkos::deep_copy(*SD.d_max_num_nucs, u_max_num_nucs);
@@ -86,6 +83,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	Kokkos::View<unsigned long long*>::HostMirror verification =
 			Kokkos::create_mirror_view(d_verification);
 	Kokkos::deep_copy(d_verification, verification);
+
+    Kokkos::Timer start;
+    start.reset();
 
 	Kokkos::parallel_for("Simulation",
 			     Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, in.lookups),
@@ -148,12 +148,13 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	Kokkos::fence();
 
 	// End Simulation Timer
-	*end = start.seconds();
 
 	// Reduce validation hash on the host
 	unsigned long long validation_hash = 0;
 	for( int i = 0; i < in.lookups; i++ )
 		validation_hash += verification(i);
+
+    *end = start.seconds();
 
 	return validation_hash;
 }
