@@ -100,6 +100,8 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 {
 	// Structure to hold all allocated simuluation data arrays
 	SimulationData SD;
+	
+
 
 	// Keep track of how much data we're allocating
 	size_t nbytes = 0;
@@ -152,6 +154,11 @@ SimulationData grid_init_do_not_profile( Inputs in, int mype )
 			printf("E%d = %lf\n", j, SD.nuclide_grid[i * in.n_gridpoints + j].energy);
 	}
 	*/
+
+    // Allocate Verification Array
+    size_t sz = in.lookups * sizeof(unsigned long);
+    SD.verification = (unsigned long *) malloc(sz);
+    nbytes += sz;
 	
 
 	////////////////////////////////////////////////////////////////////

@@ -14,9 +14,6 @@
 
 unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData SD, int mype)
 {
-    size_t sz = in.lookups * sizeof(unsigned long);
-    unsigned long * v = (unsigned long *) malloc(sz);
-    
     // Move Data to GPU
     SimulationData GSD = move_simulation_data_to_device(in, mype, SD);
 
@@ -36,11 +33,11 @@ unsigned long long run_event_based_simulation_baseline(Inputs in, SimulationData
 	// Reduce Verification Results
 	////////////////////////////////////////////////////////////////////////////////
 	if( mype == 0)	printf("Reducing verification results...\n");
-    gpuErrchk(cudaMemcpy(v, GSD.verification, sz, cudaMemcpyDeviceToHost) );
+    gpuErrchk(cudaMemcpy(SD.verification, GSD.verification, in.lookups * sizeof(unsigned long), cudaMemcpyDeviceToHost) );
 
     unsigned long verification_scalar = 0;
     for( int i =0; i < in.lookups; i++ )
-        verification_scalar += v[i];
+        verification_scalar += SD.verification[i];
 
     release_device_memory(GSD);
 
