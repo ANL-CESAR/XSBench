@@ -8,25 +8,32 @@ XSBench is a mini-app representing a key computational kernel of the Monte Carlo
 
 ## Table of Contents
 
-1. [Selecting a Programming Model](#selecting-a-programming-model)
-2. [Compilation](#Compilation)
-3. [Running XSBench / Command Line Interface](#Running-XSBench)
-4. [Feature Discussion](#Feature-Discussion)
-	* [MPI Support](#MPI-Support)
-	* [AML Optimizations](#AML-Optimizations)
-	* [Verification Support](#Verification-Support)
-	* [Binary File Support](#Binary-File-Support)
-5. [Theory & Algorithms](#Algorithms)
-	* [Transport Simulation Styles](#Transport-Simulation-Styles)
-		- [History-Based Transport](#History-Based-Transport)
-		- [Event-Based Transport](#Event-Based-Transport)
-	* [Cross Section Lookup Methods](#Cross-Section-Lookup-Methods)
-		- [Nuclide Grid](#Nuclide-Grid)
-		- [Unionized Energy Grid](#Unionized-Energy-Grid)
-		- [Logarithmic Hash Grid](#Logarithmic-Hash-Grid)
-6. [Optimized Kernels](#Optimized-Kernels)
-7. [Citing XSBench](#Citing-XSBench)
-8. [Development Team](#Development-Team) 
+1. [Understanding the FOM](#understanding-the-xsbench-figure-of-merit)
+2. [Selecting a Programming Model](#selecting-a-programming-model)
+3. [Compilation](#compilation)
+4. [Running XSBench / Command Line Interface](#running-xsbench)
+5. [Feature Discussion](#feature-discussion)
+	* [MPI Support](#mpi-support)
+	* [AML Optimizations](#aml-optimizations)
+	* [Verification Support](#verification-support)
+	* [Binary File Support](#binary-file-support)
+6. [Theory & Algorithms](#algorithms)
+	* [Transport Simulation Styles](#transport-simulation-styles)
+		- [History-Based Transport](#history-based-transport)
+		- [Event-Based Transport](#event-based-transport)
+	* [Cross Section Lookup Methods](#cross-section-lookup-methods)
+		- [Nuclide Grid](#nuclide-grid)
+		- [Unionized Energy Grid](#unionized-energy-grid)
+		- [Logarithmic Hash Grid](#logarithmic-hash-grid)
+7. [Optimized Kernels](#optimized-kernels)
+8. [Citing XSBench](#citing-xsbench)
+9. [Development Team](#development-team) 
+
+## Understanding the XSBench Figure of Merit
+
+The figure of merit (FOM) in XSBench is the number of macroscopic cross section lookups performed per second. This value includes only the time spent performing the cross section lookups themselves. It is intended to exclude any time spent on program initialization (e.g., generating randomized cross section data) and data movement to/from device memory spaces. In some of the GPU implementations of XSBench, timing data may be limited to host CPU timers, in which case they sometimes may include data movement costs to and from the device memory space. Thus, it is recommended to use device kernel timers (e.g., nsys, nvprof, rocprof, iprof, etc) to ascertain the true kernel runtime of the simulation loop alone. The true FOM can then be computing by dividing the number of lookups (reported by XSBench at the end of the simulation) by the kernel runtime.
+
+In some cases, users may want to extend the runtime of XSBench (e.g., for investigating thermal effects that only arise after several seconds of execution). The best way of doing this while still representing a realistic cross section lookup kernel is to increase the number of lookups (in event-based mode), or particle histories (in history-based mode), as described in the [running XSBench](#running-xsbench) section below.
 
 ## Selecting A Programming Model
 
