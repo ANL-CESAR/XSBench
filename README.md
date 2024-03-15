@@ -57,6 +57,9 @@ This version of XSBench is written in SYCL, and can be used for CPU, GPU, FPGA, 
 5. **XSBench/hip**
 This version of XSBench is written in HIP for use with GPU architectures. This version is derived from CUDA using an automatic conversion tool with only a few small manual changes.
 
+6. XSBench/kokkos 
+This version of XSBench is written using the Kokkos programming model allowing it to execute on multiple different GPUs or CPUs. We have provided both Makefile and CMake build system options for convenience
+
 ## Compilation
 
 To compile XSBench with default settings, navigate to your selected source directory and use the following command:
