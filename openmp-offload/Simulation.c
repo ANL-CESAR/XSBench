@@ -48,8 +48,9 @@ unsigned long long run_event_based_simulation(Inputs in, SimulationData SD, int 
 	map(to: SD.mats[:SD.length_mats])\
 	map(to: SD.unionized_energy_array[:SD.length_unionized_energy_array])\
 	map(to: SD.index_grid[:SD.length_index_grid])\
-	map(to: SD.nuclide_grid[:SD.length_nuclide_grid])\
-  map(from: verification[:in.lookups])
+        map(to: in)\
+        map(from: verification[:in.lookups])\
+        defaultmap(none)
 	for( int i = 0; i < in.lookups; i++ )
 	{
 		// Set the initial seed value
