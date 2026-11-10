@@ -1,0 +1,84 @@
+name: GPU Simulator
+
+# Optional, non-required check. The hosted runners have no GPU, so hip.yml only
+# builds the HIP version. This builds it too and runs it with small inputs on a
+# simulated AMD Instinct MI300X (https://github.com/pantheongpu/pantheonsim),
+# then checks that the verification checksum equals the one printed by the
+# openmp-threading build for the same inputs (README: "Running on GPU vs CPU
+# should not change the hash number"). A simulator cannot reproduce
+# hardware-specific behavior or timing, so it complements real-GPU testing and
+# does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - "hip/**"
+      - "openmp-threading/**"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  hip-checksum:
+    name: HIP checksum vs OpenMP (ROCm 7.1 and simulated MI300X)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+
+      - name: Set up the simulated GPU and ROCm compiler
+        uses: pantheongpu/setup-pantheonsim@ca87fe3143b29166822b923d6050945c5179408c # v0.1.5
+        with:
+          gpu: amd/mi300x
+          cuda-toolkit: none
+          rocm: "7.1"
+
+      # Only gfx942 is built (the Makefile appends to the CFLAGS environment
+      # variable); without it hipcc builds for many architectures. io.cpp calls
+      # strcmp without including <string.h>, which ROCm 7.1 headers no longer
+      # pull in, so the header is force-included here instead of editing the
+      # source. io.cpp calls
+      # strcmp without including <string.h>, which ROCm 7.1 headers no longer
+      # pull in, so the header is force-included here instead of editing the
+      # source.
+      - name: Build the HIP version
+        run: |
+          export PATH=/opt/rocm/bin:$PATH
+          cd hip
+          CFLAGS="--offload-arch=gfx942 -include string.h" make COMPILER=amd OPTIMIZE=yes -j3
+
+      - name: Build the OpenMP reference
+        run: |
+          cd openmp-threading
+          make -j3
+
+      # The HIP version only implements the event-based method. The reported
+      # checksum is only flagged "Valid" for the default problem size, so the
+      # check compares the number itself, for the three grid types.
+      - name: Compare checksums
+        run: |
+          set -u
+          fail=0
+          for grid in unionized hash nuclide; do
+            for lookups in 20000 100000; do
+              args="-m event -s small -G $grid -l $lookups"
+              cpu=$(./openmp-threading/XSBench $args | sed -n 's/^Verification checksum: \([0-9]*\).*/\1/p')
+              gpu=$(cd hip && vgpu run ./XSBench $args | sed -n 's/^Verification checksum: \([0-9]*\).*/\1/p')
+              echo "$args: openmp=$cpu hip=$gpu"
+              if [ -z "$cpu" ] || [ "$cpu" != "$gpu" ]; then
+                echo "::error::checksum mismatch for: $args"
+                fail=1
+              fi
+            done
+          done
+          exit $fail
